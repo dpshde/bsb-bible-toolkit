@@ -24,15 +24,27 @@ python add_route_links.py --input bsb-book-9.pdf --output bsb-linked.pdf
 
 ## Add route.bible Links
 
-`add_route_links.py` detects every BSB section heading (e.g., "The Creation", "Elkanah and His Wives") by font heuristics and inserts a clickable link to `https://route.bible/skill.md`.
+`add_route_links.py` detects every BSB section heading (e.g., "The Creation", "Elkanah and His Wives") by font heuristics and inserts a clickable link to the exact OSIS verse range on `https://route.bible`.
+
+### Verse-Range Links
+
+Each heading is linked to its specific verse range rather than the full chapter:
+
+- `The Creation` → `https://route.bible/Gen.1.1-2`
+- `The First Day` → `https://route.bible/Gen.1.3-5`
+- `The Fourth Day` → `https://route.bible/Gen.1.14-19`
+- `Hannah's Prayer` → `https://route.bible/1Sam.2.1-11`
+- `The LORD Calls Samuel` → `https://route.bible/1Sam.3.1-14`
+
+The script detects verse numbers by their small `Cambria-Bold` font (~6.8pt) and tracks them through the two-column layout to compute exact start/end verses for every heading.
 
 ```bash
-# Add links to every chapter heading in a BSB PDF
-python add_route_links.py --input bsb-book-9.pdf --output bsb-linked.pdf
+# Add verse-range links to every heading in a BSB PDF
+python add_route_links.py bsb-book-9.pdf bsb-linked.pdf
 
 # Works on any BSB PDF, including combined or customized ones
 python customize_bsb.py --input bsb-book-9.pdf --output temp.pdf --no-footnotes
-python add_route_links.py --input temp.pdf --output final.pdf
+python add_route_links.py temp.pdf final.pdf
 ```
 
 ## What You Can Customize
