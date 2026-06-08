@@ -24,25 +24,32 @@ DEFAULT_FONT_MAP = {
 
 
 def load_font_map(font_dir: Path):
-    """Build a font map pointing to actual font files."""
+    """Build a font map pointing to actual font files and their PyMuPDF font names."""
     font_map = {}
     for pattern, (rel_path, synth_bold) in DEFAULT_FONT_MAP.items():
         font_path = font_dir / rel_path
         if font_path.exists():
-            font_map[pattern] = (str(font_path), synth_bold)
+            try:
+                font = fitz.Font(fontfile=str(font_path))
+                # Sanitize font name for PyMuPDF (no spaces allowed)
+                safe_name = font.name.replace(" ", "-")
+                font_map[pattern] = (str(font_path), safe_name, synth_bold)
+            except Exception as e:
+                print(f"Warning: could not load font {font_path}: {e}", file=sys.stderr)
         else:
             print(f"Warning: font file not found: {font_path}", file=sys.stderr)
     return font_map
 
 
 def get_lexend_font(span: dict, font_map: dict):
-    """Determine the Lexend font file for a given span."""
+    """Determine the Lexend font (path, name) for a given span."""
     font = span.get("font", "")
-    for pattern, (font_path, synth_bold) in font_map.items():
+    for pattern, (font_path, font_name, synth_bold) in font_map.items():
         if pattern in font:
-            return font_path, synth_bold
+            return font_path, font_name, synth_bold
     # Fallback to regular
-    return font_map.get("Cambria", ("fonts/Lexend-Regular.ttf", False))[0], False
+    fallback = font_map.get("Cambria", (None, "Lexend-Regular", False))
+    return fallback[0], fallback[1], fallback[2]
 
 
 def change_font_page(page: fitz.Page, font_map: dict, scale: float = 1.0):
@@ -70,13 +77,14 @@ def change_font_page(page: fitz.Page, font_map: dict, scale: float = 1.0):
                 text = span["text"]
                 if not text.strip():
                     continue
-                font_path, _ = get_lexend_font(span, font_map)
+                font_path, font_name, _ = get_lexend_font(span, font_map)
                 spans_to_insert.append({
                     "text": text,
                     "origin": span["origin"],
                     "bbox": span["bbox"],
                     "size": span["size"] * scale,
                     "font_path": font_path,
+                    "font_name": font_name,
                     "flags": span.get("flags", 0),
                 })
 
@@ -90,13 +98,22 @@ def change_font_page(page: fitz.Page, font_map: dict, scale: float = 1.0):
     # Apply redactions (removes text but keeps images)
     page.apply_redactions()
 
+    # Load all needed fonts into the page before inserting text
+    needed_fonts = {s["font_name"]: s["font_path"] for s in spans_to_insert}
+    for font_name, font_path in needed_fonts.items():
+        if font_path:
+            try:
+                page.insert_font(fontname=font_name, fontfile=font_path)
+            except Exception as e:
+                print(f"Warning: could not insert font {font_name}: {e}", file=sys.stderr)
+
     # Re-insert text with new font
     for span in spans_to_insert:
         page.insert_text(
             span["origin"],
             span["text"],
             fontsize=span["size"],
-            fontfile=span["font_path"],
+            fontname=span["font_name"],
             color=(0, 0, 0),
         )
     
