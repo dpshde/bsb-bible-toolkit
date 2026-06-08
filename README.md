@@ -1,6 +1,6 @@
 # BSB Bible PDF Toolkit
 
-Generate custom PDFs from the Berean Standard Bible (BSB) source files.
+Generate custom PDFs and EPUBs from the Berean Standard Bible (BSB) source files.
 
 ## Quick Start
 
@@ -20,37 +20,69 @@ python customize_bsb.py --input bsb-book-9.pdf --output my-bsb.pdf \
 
 # Add route.bible links to all chapter headings
 python add_route_links.py bsb-book-9.pdf bsb-linked.pdf
-
-# Change font to Lexend (preserves links)
-python change_font.py bsb-linked.pdf bsb-lexend.pdf
 ```
 
-## Change Font to Lexend
+## Two Paths: PDF vs EPUB
 
-`change_font.py` replaces the default Cambria font with the Lexend family throughout the PDF. Images, page structure, and clickable links are preserved.
+This toolkit supports both PDF and EPUB output. Choose based on your needs:
+
+| Feature | PDF | EPUB |
+|---------|-----|------|
+| **Font changes** | Layout breaks (fixed format) | ✓ Reflows naturally |
+| **route.bible links** | ✓ Verse-range precision | ✓ Chapter-level (easy) |
+| **File size** | ~18 MB (full Bible) | ~3.7 MB (full Bible) |
+| **Mobile reading** | Heavy | Lightweight |
+| **Print-ready** | ✓ Exact layout | Reflows to screen |
+
+**Recommendation:** Use **EPUB** for font customization. Use **PDF** for print-ready output with verse-range links.
+
+---
+
+## EPUB Path (Recommended for Font Changes)
+
+The EPUB is HTML-based, so font changes are trivial and text reflows automatically. No layout breakage.
 
 ```bash
-# Convert to Lexend (requires fonts in ./fonts/ directory)
-python change_font.py input.pdf output.pdf
+# Download the BSB EPUB
+# https://bereanbible.com/bsb.epub
 
-# The fonts/ directory should contain:
-#   Lexend-Regular.ttf
-#   Lexend-Bold.ttf
+# Customize with Lexend fonts + add route.bible links
+python customize_epub.py bsb.epub bsb-lexend.epub \
+    --font-dir fonts/ --add-links
+
+# Output: bsb-lexend.epub with embedded Lexend fonts and clickable headings
 ```
 
-**Note on workflow:** Add links *before* changing font, so the link detection works with the original font metrics:
+The script:
+1. Extracts the EPUB
+2. Embeds all Lexend font variants (Regular, Medium, Bold, etc.)
+3. Updates CSS to use `font-family: "Lexend"`
+4. Adds `route.bible/{book}.{chapter}` links to every `<p class="hdg">` heading
+5. Re-packages the EPUB
+
+### EPUB Customization Options
+
+| Flag | Description |
+|------|-------------|
+| `--font-dir` | Directory containing `.ttf` or `.otf` files |
+| `--add-links` | Add `route.bible` links to section headings |
+
+---
+
+## PDF Path (Best for Print + Verse-Range Links)
+
+### Add route.bible Links
+
+`add_route_links.py` detects every BSB section heading by font heuristics and inserts a clickable link to the exact OSIS verse range on `https://route.bible`.
 
 ```bash
-# Correct order:
+# Add verse-range links to every heading in a BSB PDF
 python add_route_links.py bsb-book-9.pdf bsb-linked.pdf
-python change_font.py bsb-linked.pdf bsb-lexend.pdf
 
-# The sample PDF above was generated this way.
+# Works on any BSB PDF, including combined or customized ones
+python customize_bsb.py --input bsb-book-9.pdf --output temp.pdf --no-footnotes
+python add_route_links.py temp.pdf final.pdf
 ```
-
-## Add route.bible Links
-
-`add_route_links.py` detects every BSB section heading (e.g., "The Creation", "Elkanah and His Wives") by font heuristics and inserts a clickable link to the exact OSIS verse range on `https://route.bible`.
 
 ### Verse-Range Links
 
@@ -64,14 +96,35 @@ Each heading is linked to its specific verse range rather than the full chapter:
 
 The script detects verse numbers by their small `Cambria-Bold` font (~6.8pt) and tracks them through the two-column layout to compute exact start/end verses for every heading.
 
+### Change Font to Lexend (PDF)
+
+**⚠️ Warning:** PDF is a fixed-layout format. Changing fonts breaks text wrapping because the new font has different character widths. The output is usable but may have overflow or spacing issues.
+
 ```bash
-# Add verse-range links to every heading in a BSB PDF
+# Convert to Lexend (requires fonts in ./fonts/ directory)
+python change_font.py input.pdf output.pdf
+
+# The fonts/ directory should contain:
+#   Lexend-Regular.ttf
+#   Lexend-Bold.ttf
+#   Lexend-Medium.ttf
+#   Lexend-SemiBold.ttf
+#   (and optionally others)
+```
+
+**Correct workflow for PDF:**
+
+```bash
+# 1. Add links first (detection needs original font names)
 python add_route_links.py bsb-book-9.pdf bsb-linked.pdf
 
-# Works on any BSB PDF, including combined or customized ones
-python customize_bsb.py --input bsb-book-9.pdf --output temp.pdf --no-footnotes
-python add_route_links.py temp.pdf final.pdf
+# 2. Then change font (layout will shift)
+python change_font.py bsb-linked.pdf bsb-lexend.pdf
 ```
+
+**For perfect font rendering, use the EPUB path instead.**
+
+---
 
 ## What You Can Customize
 
@@ -116,6 +169,10 @@ python customize_bsb.py --input bsb-book-9.pdf --range 100-200 \
 # Generate a grayscale pocket edition
 python customize_bsb.py --input bsb-book-9.pdf --output pocket.pdf \
     --page-size 5x8 --grayscale --font-size 9
+
+# EPUB: Lexend font + route.bible links
+python customize_epub.py bsb.epub bsb-lexend.epub \
+    --font-dir fonts/ --add-links
 ```
 
 ## License

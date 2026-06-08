@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-Change the font of a BSB Bible PDF to Lexend (or any custom font).
+Change the font of a BSB Bible PDF to Lexend (or any custom font family).
 
 This script extracts text from the source PDF, redacts the original text,
 and re-inserts it with the new font. Images and page structure are preserved.
+
+The script dynamically selects the appropriate font variant based on the
+original text's style (bold, italic, etc.).
 
 Note: Because font metrics differ (character widths, line heights), the
 layout may shift slightly. For best results, regenerate the PDF with
@@ -15,44 +18,76 @@ import sys
 from pathlib import Path
 import fitz
 
-# Font mapping: original font pattern → (fontfile, synthetic_bold)
+# Font mapping: original font name pattern → Lexend variant
+# The script also uses font flags to determine bold/italic properties
 DEFAULT_FONT_MAP = {
-    "Cambria-Bold": ("Lexend-Bold.ttf", False),
-    "Cambria-Italic": ("Lexend-Regular.ttf", False),
-    "Cambria": ("Lexend-Regular.ttf", False),
+    "Cambria-BoldItalic": "Lexend-SemiBold.ttf",
+    "Cambria-Bold": "Lexend-Bold.ttf",
+    "Cambria-Italic": "Lexend-Medium.ttf",
+    "Cambria": "Lexend-Regular.ttf",
+}
+
+# Fallback mapping for dynamic selection based on font properties
+STYLE_MAP = {
+    (True, True): "Lexend-SemiBold.ttf",    # bold + italic
+    (True, False): "Lexend-Bold.ttf",       # bold only
+    (False, True): "Lexend-Medium.ttf",     # italic only
+    (False, False): "Lexend-Regular.ttf",   # regular
 }
 
 
 def load_font_map(font_dir: Path):
     """Build a font map pointing to actual font files and their PyMuPDF font names."""
     font_map = {}
-    for pattern, (rel_path, synth_bold) in DEFAULT_FONT_MAP.items():
+    for pattern, rel_path in DEFAULT_FONT_MAP.items():
         font_path = font_dir / rel_path
         if font_path.exists():
             try:
                 font = fitz.Font(fontfile=str(font_path))
                 # Sanitize font name for PyMuPDF (no spaces allowed)
                 safe_name = font.name.replace(" ", "-")
-                font_map[pattern] = (str(font_path), safe_name, synth_bold)
+                font_map[pattern] = (str(font_path), safe_name)
             except Exception as e:
                 print(f"Warning: could not load font {font_path}: {e}", file=sys.stderr)
         else:
             print(f"Warning: font file not found: {font_path}", file=sys.stderr)
-    return font_map
+    
+    # Also build style map
+    style_font_map = {}
+    for (bold, italic), rel_path in STYLE_MAP.items():
+        font_path = font_dir / rel_path
+        if font_path.exists():
+            try:
+                font = fitz.Font(fontfile=str(font_path))
+                safe_name = font.name.replace(" ", "-")
+                style_font_map[(bold, italic)] = (str(font_path), safe_name)
+            except Exception as e:
+                print(f"Warning: could not load font {font_path}: {e}", file=sys.stderr)
+    
+    return font_map, style_font_map
 
 
-def get_lexend_font(span: dict, font_map: dict):
-    """Determine the Lexend font (path, name) for a given span."""
-    font = span.get("font", "")
-    for pattern, (font_path, font_name, synth_bold) in font_map.items():
-        if pattern in font:
-            return font_path, font_name, synth_bold
-    # Fallback to regular
-    fallback = font_map.get("Cambria", (None, "Lexend-Regular", False))
-    return fallback[0], fallback[1], fallback[2]
+def get_font_for_span(span: dict, font_map: dict, style_font_map: dict):
+    """Determine the appropriate font for a given span based on original font name and flags."""
+    font_name = span.get("font", "")
+    
+    # First try exact font name match
+    for pattern, (font_path, safe_name) in font_map.items():
+        if pattern in font_name:
+            return font_path, safe_name
+    
+    # Fallback: use font flags to determine style
+    flags = span.get("flags", 0)
+    # PyMuPDF font flags: bit 0 = fixed pitch, bit 1 = serif, bit 2 = symbolic, bit 3 = script
+    # But we can use the font name patterns to detect bold/italic
+    is_bold = "Bold" in font_name or (flags & 16) != 0
+    is_italic = "Italic" in font_name or (flags & 2) != 0
+    
+    font_path, safe_name = style_font_map.get((is_bold, is_italic), style_font_map.get((False, False)))
+    return font_path, safe_name
 
 
-def change_font_page(page: fitz.Page, font_map: dict, scale: float = 1.0):
+def change_font_page(page: fitz.Page, font_map: dict, style_font_map: dict, scale: float = 1.0):
     """Replace all text on a single page with the new font."""
     # Extract text structure
     blocks = page.get_text("dict")["blocks"]
@@ -77,7 +112,7 @@ def change_font_page(page: fitz.Page, font_map: dict, scale: float = 1.0):
                 text = span["text"]
                 if not text.strip():
                     continue
-                font_path, font_name, _ = get_lexend_font(span, font_map)
+                font_path, font_name = get_font_for_span(span, font_map, style_font_map)
                 spans_to_insert.append({
                     "text": text,
                     "origin": span["origin"],
@@ -99,7 +134,11 @@ def change_font_page(page: fitz.Page, font_map: dict, scale: float = 1.0):
     page.apply_redactions()
 
     # Load all needed fonts into the page before inserting text
-    needed_fonts = {s["font_name"]: s["font_path"] for s in spans_to_insert}
+    needed_fonts = {}
+    for s in spans_to_insert:
+        if s["font_name"] not in needed_fonts:
+            needed_fonts[s["font_name"]] = s["font_path"]
+    
     for font_name, font_path in needed_fonts.items():
         if font_path:
             try:
@@ -134,7 +173,7 @@ def change_font(
     page_range: str = None,
 ):
     """Change font throughout a PDF."""
-    font_map = load_font_map(font_dir)
+    font_map, style_font_map = load_font_map(font_dir)
     if not font_map:
         print("Error: No font files found in", font_dir, file=sys.stderr)
         sys.exit(1)
@@ -153,7 +192,7 @@ def change_font(
     print(f"Processing pages {start_page + 1}–{end_page + 1}...")
     for page_num in range(start_page, end_page + 1):
         page = doc[page_num]
-        change_font_page(page, font_map, font_scale)
+        change_font_page(page, font_map, style_font_map, font_scale)
         if (page_num + 1) % 50 == 0:
             print(f"  {page_num + 1} pages done")
 
