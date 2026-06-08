@@ -434,10 +434,9 @@ def build_url(osis, chapter, start_verse, end_verse):
     return f"https://route.bible/{osis}.{chapter}.{start_verse}-{end_verse}"
 
 
-def add_links(doc, events, heading_ranges):
-    """Add clickable links to the PDF for each heading."""
+def add_heading_links(doc, events, heading_ranges):
+    """Add clickable verse-range links to section headings."""
     link_count = 0
-
     for idx, start_verse, end_verse in heading_ranges:
         event = events[idx]
         page_num = event["page"]
@@ -449,7 +448,6 @@ def add_links(doc, events, heading_ranges):
             continue
 
         url = build_url(osis, chapter, start_verse, end_verse)
-
         page = doc[page_num]
         link_rect = fitz.Rect(bbox)
         page.insert_link({
@@ -458,8 +456,54 @@ def add_links(doc, events, heading_ranges):
             "uri": url,
         })
         link_count += 1
+    return link_count
+
+
+def add_chapter_links(doc, events):
+    """Add clickable full-chapter links to chapter numbers and book titles."""
+    link_count = 0
+    for event in events:
+        etype = event["type"]
+        page_num = event["page"]
+        bbox = event["bbox"]
+        osis = event["osis"]
+        chapter = event["chapter"]
+
+        if not osis:
+            continue
+
+        page = doc[page_num]
+        link_rect = fitz.Rect(bbox)
+
+        if etype == "chapter":
+            if chapter is None:
+                continue
+            url = f"https://route.bible/{osis}.{chapter}"
+            page.insert_link({
+                "kind": fitz.LINK_URI,
+                "from": link_rect,
+                "uri": url,
+            })
+            link_count += 1
+
+        elif etype == "book":
+            # Link book title to chapter 1 of that book
+            url = f"https://route.bible/{osis}.1"
+            page.insert_link({
+                "kind": fitz.LINK_URI,
+                "from": link_rect,
+                "uri": url,
+            })
+            link_count += 1
 
     return link_count
+
+
+def add_links(doc, events, heading_ranges):
+    """Add all clickable links (headings + chapters + books)."""
+    heading_links = add_heading_links(doc, events, heading_ranges)
+    chapter_links = add_chapter_links(doc, events)
+    return heading_links + chapter_links
 
 
 def main():
