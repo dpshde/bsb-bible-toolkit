@@ -19,7 +19,33 @@ python customize_bsb.py --input bsb-book-9.pdf --output my-bsb.pdf \
     --font-size 11 --margin 36 --no-footnotes
 
 # Add route.bible links to all chapter headings
-python add_route_links.py --input bsb-book-9.pdf --output bsb-linked.pdf
+python add_route_links.py bsb-book-9.pdf bsb-linked.pdf
+
+# Change font to Lexend (preserves links)
+python change_font.py bsb-linked.pdf bsb-lexend.pdf
+```
+
+## Change Font to Lexend
+
+`change_font.py` replaces the default Cambria font with the Lexend family throughout the PDF. Images, page structure, and clickable links are preserved.
+
+```bash
+# Convert to Lexend (requires fonts in ./fonts/ directory)
+python change_font.py input.pdf output.pdf
+
+# The fonts/ directory should contain:
+#   Lexend-Regular.ttf
+#   Lexend-Bold.ttf
+```
+
+**Note on workflow:** Add links *before* changing font, so the link detection works with the original font metrics:
+
+```bash
+# Correct order:
+python add_route_links.py bsb-book-9.pdf bsb-linked.pdf
+python change_font.py bsb-linked.pdf bsb-lexend.pdf
+
+# The sample PDF above was generated this way.
 ```
 
 ## Add route.bible Links
