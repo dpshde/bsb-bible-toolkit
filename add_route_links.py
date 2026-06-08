@@ -147,6 +147,23 @@ def is_verse_number(span, page_height):
     return True
 
 
+def is_psalm_chapter(span):
+    """Detect Psalm chapter headings (e.g. 'Psalm 42')."""
+    text = span.get("text", "").strip()
+    font = span.get("font", "")
+    size = span.get("size", 0)
+
+    if not text.startswith("Psalm "):
+        return False
+    if not text.split(" ", 1)[1].isdigit():
+        return False
+    if size < 9.0 or size > 11.0:
+        return False
+    if "Cambria-Bold" not in font:
+        return False
+    return True
+
+
 def is_heading(span):
     """Detect section headings (Cambria-Bold/Italic, ~9pt)."""
     text = span.get("text", "").strip()
@@ -187,16 +204,18 @@ def is_chapter_number(span):
 
 
 def is_book_title(span):
-    """Detect book titles (Cambria-Bold, ~24-35pt)."""
+    """Detect book titles (Cambria-Bold, ~28-35pt, known book name)."""
     text = span.get("text", "").strip()
     font = span.get("font", "")
     size = span.get("size", 0)
 
     if not text:
         return False
-    if size < 24.0 or size > 35.0:
+    if size < 28.0 or size > 35.0:
         return False
     if "Cambria-Bold" not in font and "Cambria-Italic" not in font:
+        return False
+    if text not in OSIS_BOOKS:
         return False
     return True
 
@@ -267,6 +286,21 @@ def build_event_list(spans):
                 current_chapter = None
                 current_verse = None
                 chapters_seen.clear()
+
+                # Auto-set chapter 1 for single-chapter books
+                if osis in CHAPTER_VERSE_COUNTS and len(CHAPTER_VERSE_COUNTS[osis]) == 1:
+                    current_chapter = 1
+                    events.append({
+                        "type": "chapter",
+                        "page": page_num,
+                        "bbox": span["bbox"],
+                        "text": "1",
+                        "osis": current_osis,
+                        "chapter": 1,
+                        "verse": None,
+                        "column": span["column"],
+                    })
+
                 events.append({
                     "type": "book",
                     "page": page_num,
@@ -277,6 +311,42 @@ def build_event_list(spans):
                     "verse": None,
                     "column": span["column"],
                 })
+
+        elif is_psalm_chapter(span):
+            chapter = int(text.split(" ", 1)[1])
+            current_chapter = chapter
+            current_verse = None
+            events.append({
+                "type": "chapter",
+                "page": page_num,
+                "bbox": span["bbox"],
+                "text": text,
+                "osis": current_osis,
+                "chapter": current_chapter,
+                "verse": None,
+                "column": span["column"],
+            })
+            
+            # Look backward for headings on the same page that are in the
+            # same column or a column that is read before this column.
+            for j in range(len(events) - 2, -1, -1):
+                prev_event = events[j]
+                if prev_event["type"] != "heading":
+                    continue
+                if prev_event["page"] != page_num:
+                    break
+                if prev_event["bbox"][1] >= span["bbox"][1]:
+                    continue
+                if prev_event.get("column") < span["column"]:
+                    # Heading is in a column that is read before this column
+                    prev_event["chapter"] = chapter
+                    prev_event["osis"] = current_osis
+                    break
+                elif prev_event.get("column") == span["column"]:
+                    # Heading is in the same column and before the chapter
+                    prev_event["chapter"] = chapter
+                    prev_event["osis"] = current_osis
+                    break
 
         elif is_chapter_number(span):
             chapter = int(text)
