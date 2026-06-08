@@ -17,6 +17,22 @@ python extract_bsb.py --input bsb-book-9.pdf --output bsb-book-9.json
 # Generate a custom PDF
 python customize_bsb.py --input bsb-book-9.pdf --output my-bsb.pdf \
     --font-size 11 --margin 36 --no-footnotes
+
+# Add route.bible links to all chapter headings
+python add_route_links.py --input bsb-book-9.pdf --output bsb-linked.pdf
+```
+
+## Add route.bible Links
+
+`add_route_links.py` detects every BSB section heading (e.g., "The Creation", "Elkanah and His Wives") by font heuristics and inserts a clickable link to `https://route.bible/skill.md`.
+
+```bash
+# Add links to every chapter heading in a BSB PDF
+python add_route_links.py --input bsb-book-9.pdf --output bsb-linked.pdf
+
+# Works on any BSB PDF, including combined or customized ones
+python customize_bsb.py --input bsb-book-9.pdf --output temp.pdf --no-footnotes
+python add_route_links.py --input temp.pdf --output final.pdf
 ```
 
 ## What You Can Customize
