@@ -130,7 +130,7 @@ jobs:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
           ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
         run: |
-          butler push "$DIST_DIR/primary-fixed-layout" "$ITCH_PROJECT:primary-fixed-layout-pdf" \
+          butler push "$DIST_DIR/primary-fixed-layout/$PRIMARY_ASSET_NAME" "$ITCH_PROJECT:primary-fixed-layout-pdf" \
             --userversion "${{ steps.version.outputs.value }}"
 
       - name: Push single-column PDF to itch.io
@@ -139,5 +139,5 @@ jobs:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
           ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
         run: |
-          butler push "$DIST_DIR/single-column" "$ITCH_PROJECT:single-column-pdf" \
+          butler push "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" "$ITCH_PROJECT:single-column-pdf" \
             --userversion "${{ steps.version.outputs.value }}"
