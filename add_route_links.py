@@ -169,14 +169,19 @@ def is_heading(span):
     text = span.get("text", "").strip()
     font = span.get("font", "")
     size = span.get("size", 0)
+    y = span.get("bbox", [0, 0, 0, 0])[1]
+    page_height = span.get("page_height", 0)
 
     if not text:
         return False
     if "|" in text:
         return False
-    if size < 8.5 or size > 10.0:
+    if size < 8.5 or size > 11.0:
         return False
     if "Cambria-Bold" not in font and "Cambria-Italic" not in font:
+        return False
+    # Exclude translation notes and cross-reference material in the footer.
+    if page_height and y > page_height - 70:
         return False
     
     # Exclude cross-references in Cambria-Italic that contain colons
@@ -211,7 +216,7 @@ def is_book_title(span):
 
     if not text:
         return False
-    if size < 28.0 or size > 35.0:
+    if size < 28.0 or size > 40.0:
         return False
     if "Cambria-Bold" not in font and "Cambria-Italic" not in font:
         return False

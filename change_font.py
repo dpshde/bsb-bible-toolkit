@@ -207,7 +207,7 @@ def main():
     parser.add_argument("input", type=Path, help="Input PDF")
     parser.add_argument("output", type=Path, help="Output PDF")
     parser.add_argument("--font-dir", type=Path, default=Path("fonts"), help="Directory containing font files")
-    parser.add_argument("--font-scale", type=float, default=1.0, help="Scale font size by this factor")
+    parser.add_argument("--font-scale", type=float, default=0.85, help="Scale font size by this factor")
     parser.add_argument("--range", type=str, help="Page range, e.g. 1-20")
     args = parser.parse_args()
 

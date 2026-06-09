@@ -254,19 +254,27 @@ def add_links_to_html(html_files: list, work_dir: Path):
         
         # Find headings and add links
         if current_book and current_chapter:
-            # Match <p class="hdg">...</p> or similar heading classes
+            # Match heading paragraphs, including headings with nested cross-reference spans.
             def replace_heading(match):
-                heading_text = match.group(1)
+                attrs = match.group(1)
+                heading_text = match.group(2)
+                if "route.bible" in heading_text:
+                    return match.group(0)
                 # Create a simple chapter-level link
                 osis_ref = f"{current_book}.{current_chapter}"
                 url = f"https://route.bible/{osis_ref}"
-                return f'<p class="hdg"><a href="{url}">{heading_text}</a></p>'
+                title_match = re.match(r"([^<]+)(.*)", heading_text, flags=re.DOTALL)
+                if title_match:
+                    title = title_match.group(1)
+                    rest = title_match.group(2)
+                    return f'<p{attrs}><a href="{url}">{title}</a>{rest}</p>'
+                return f'<p{attrs}><a href="{url}">{heading_text}</a></p>'
             
             text = re.sub(
-                r'<p class="hdg">([^<]+)</p>',
+                r'<p([^>]*\bclass="[^"]*\bhdg\b[^"]*"[^>]*)>(.*?)</p>',
                 replace_heading,
                 text,
-                flags=re.IGNORECASE,
+                flags=re.IGNORECASE | re.DOTALL,
             )
         
         html_file.write_text(text, encoding="utf-8")
