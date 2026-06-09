@@ -67,6 +67,7 @@ def render_pdf(
     weight_profile: str,
     footer_scale: float,
     footer_shift: float,
+    footer_text_threshold: float,
     body_gray: float,
     footer_gray: float,
     structural_gray: float,
@@ -83,6 +84,7 @@ def render_pdf(
         weight_profile=weight_profile,
         footer_scale=footer_scale,
         footer_shift=footer_shift,
+        footer_text_threshold=footer_text_threshold,
         body_gray=body_gray,
         footer_gray=footer_gray,
         structural_gray=structural_gray,
@@ -108,7 +110,7 @@ def verify_drafts(draft_dir: Path) -> None:
         (
             "single-column",
             draft_dir / SINGLE_COLUMN_FILENAME,
-            2263,
+            2261,
             (504.0, 756.0),
             EXPECTED_SINGLE_ROUTE_LINKS,
             EXPECTED_SINGLE_LINKS,
@@ -152,6 +154,7 @@ def main() -> None:
     parser.add_argument("--font-scale", type=float, default=0.86)
     parser.add_argument("--footer-scale", type=float, default=0.80)
     parser.add_argument("--footer-shift", type=float, default=9.0)
+    parser.add_argument("--footer-text-threshold", type=float, default=110.0)
     parser.add_argument("--body-gray", type=float, default=0.08)
     parser.add_argument("--footer-gray", type=float, default=0.34)
     parser.add_argument("--structural-gray", type=float, default=0.03)
@@ -194,6 +197,7 @@ def main() -> None:
             args.weight_profile,
             args.footer_scale,
             args.footer_shift,
+            args.footer_text_threshold,
             args.body_gray,
             args.footer_gray,
             args.structural_gray,

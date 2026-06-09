@@ -12,14 +12,14 @@ import fitz
 
 EXPECTED_PRIMARY_FONTS = {"Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
 EXPECTED_PRIMARY_COLORS = {0, 526344, 1315860, 5723991}
-EXPECTED_PRIMARY_SIZE = 82647223
-EXPECTED_PRIMARY_SHA256 = "b617c92b9957a885c1e00902ae3a8727936462869c8ba4dac9ea05d6dfed67d7"
-EXPECTED_PRIMARY_SEMANTIC_SHA256 = "d0f08e7077118c66a408a915b3e98c25b39f00ac27e86ed699dbd62a19b36d41"
-EXPECTED_SINGLE_FONTS = {"Lexend-Black", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
+EXPECTED_PRIMARY_SIZE = 82649804
+EXPECTED_PRIMARY_SHA256 = "385556dcbe966cbb43fa34d9691d5dbb41a8c9fd986d9b18269c2aaaab218925"
+EXPECTED_PRIMARY_SEMANTIC_SHA256 = "ce68d5c465ec51f9bad1518d504e208809f1a8a0aa2e6fe96c25256fa04df42a"
+EXPECTED_SINGLE_FONTS = {"Lexend-Bold", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
 EXPECTED_SINGLE_COLORS = {0, 1315860, 1710618}
-EXPECTED_SINGLE_SIZE = 28153877
-EXPECTED_SINGLE_SHA256 = "95125a257a21250aeea4175bf1750732dbe22a59105d735a421c47420b52f528"
-EXPECTED_SINGLE_SEMANTIC_SHA256 = "7b127a5d4adb9e2dc0936c23dde38cfa57f0942f99f15b67c5518c512923125d"
+EXPECTED_SINGLE_SIZE = 28153195
+EXPECTED_SINGLE_SHA256 = "b3b317bc0c3bcaa6bdfac47abaaeffa011cb1010c1e87cb66fcc588d4d8ffd2d"
+EXPECTED_SINGLE_SEMANTIC_SHA256 = "51fb7ce1887ea9655840c3aecd163068f085aa7f396da4b7531ff2194ac9fd1d"
 EXPECTED_SINGLE_LINKS = 89283
 EXPECTED_SINGLE_ROUTE_LINKS = 87144
 
@@ -151,7 +151,7 @@ def main():
     parser.add_argument("--primary-rect", type=parse_rect, default=parse_rect("432x648"))
     parser.add_argument("--primary-route-links", type=int, default=4798)
     parser.add_argument("--primary-links", type=int, default=4798)
-    parser.add_argument("--single-pages", type=int, default=2263)
+    parser.add_argument("--single-pages", type=int, default=2261)
     parser.add_argument("--single-rect", type=parse_rect, default=parse_rect("504x756"))
     parser.add_argument("--single-route-links", type=int, default=EXPECTED_SINGLE_ROUTE_LINKS)
     parser.add_argument("--single-links", type=int, default=EXPECTED_SINGLE_LINKS)

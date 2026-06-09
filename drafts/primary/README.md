@@ -44,8 +44,9 @@ tuned without editing code:
 | `--single-margin-x` | `78` |
 | `--single-body-size` | `10.0` |
 | `--single-body-leading` | `14.8` |
-| `--single-book-title-font` | `Lexend-Black` |
+| `--single-book-title-font` | `Lexend-Bold` |
 | `--single-book-title-size` | `34` |
+| `--single-book-title-gap` | `52` |
 | `--single-section-heading-size` | `11.2` |
 | `--single-dropcap-size` | `36` |
 | `--single-dropcap-padding` | `10` |
@@ -92,18 +93,18 @@ The comparison sheets are written to:
 | Artifact | Pages | Page Size | Route Links | Fonts |
 |----------|-------|-----------|-------------|-------|
 | `bsb-primary-draft.pdf` | `1120` | `432x648` | `4798` | Lexend Light/Medium/Regular |
-| `bsb-single-column-draft.pdf` | `2263` | `504x756` | `87144` route / `89283` total | Lexend Black/Light/Medium/Regular |
+| `bsb-single-column-draft.pdf` | `2261` | `504x756` | `87144` route / `89283` total | Lexend Bold/Light/Medium/Regular |
 
 ## Current Artifact Fingerprints
 
 | Artifact | Size | SHA-256 |
 |----------|------|---------|
-| `bsb-primary-draft.pdf` | `82647223` bytes | `b617c92b9957a885c1e00902ae3a8727936462869c8ba4dac9ea05d6dfed67d7` |
-| `bsb-single-column-draft.pdf` | `28153877` bytes | `95125a257a21250aeea4175bf1750732dbe22a59105d735a421c47420b52f528` |
+| `bsb-primary-draft.pdf` | `82649804` bytes | `385556dcbe966cbb43fa34d9691d5dbb41a8c9fd986d9b18269c2aaaab218925` |
+| `bsb-single-column-draft.pdf` | `28153195` bytes | `b3b317bc0c3bcaa6bdfac47abaaeffa011cb1010c1e87cb66fcc588d4d8ffd2d` |
 
 ## Current Semantic Fingerprints
 
 | Artifact | Semantic SHA-256 |
 |----------|------------------|
-| `bsb-primary-draft.pdf` | `d0f08e7077118c66a408a915b3e98c25b39f00ac27e86ed699dbd62a19b36d41` |
-| `bsb-single-column-draft.pdf` | `7b127a5d4adb9e2dc0936c23dde38cfa57f0942f99f15b67c5518c512923125d` |
+| `bsb-primary-draft.pdf` | `ce68d5c465ec51f9bad1518d504e208809f1a8a0aa2e6fe96c25256fa04df42a` |
+| `bsb-single-column-draft.pdf` | `51fb7ce1887ea9655840c3aecd163068f085aa7f396da4b7531ff2194ac9fd1d` |

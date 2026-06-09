@@ -59,9 +59,9 @@ class ReflowSettings:
     single_margin_x: float = 78
     single_margin_top: float = 58
     single_margin_bottom: float = 48
-    single_book_title_font: str = "Lexend-Black"
+    single_book_title_font: str = "Lexend-Bold"
     single_book_title_size: float = 34
-    single_book_title_gap: float = 74
+    single_book_title_gap: float = 52
     single_body_size: float = 10.0
     single_body_leading: float = 14.8
     single_minor_heading_size: float = 10.4
@@ -1215,9 +1215,9 @@ def main():
     parser.add_argument("--single-margin-x", type=float, default=78)
     parser.add_argument("--single-margin-top", type=float, default=58)
     parser.add_argument("--single-margin-bottom", type=float, default=48)
-    parser.add_argument("--single-book-title-font", default="Lexend-Black")
+    parser.add_argument("--single-book-title-font", default="Lexend-Bold")
     parser.add_argument("--single-book-title-size", type=float, default=34)
-    parser.add_argument("--single-book-title-gap", type=float, default=74)
+    parser.add_argument("--single-book-title-gap", type=float, default=52)
     parser.add_argument("--single-body-size", type=float, default=10.0)
     parser.add_argument("--single-body-leading", type=float, default=14.8)
     parser.add_argument("--single-minor-heading-size", type=float, default=10.4)

@@ -269,6 +269,7 @@ def change_font_page(
     footer_scale: float = 1.0,
     footer_shift: float = 0,
     footer_threshold: float = 55,
+    footer_text_threshold: float = None,
     body_gray: float = 0.0,
     footer_gray: float = 0.0,
     structural_gray: float = 0.0,
@@ -281,6 +282,7 @@ def change_font_page(
     link_data = copy_link_data(page)
     link_data = shift_footer_links(link_data, page.rect.height, footer_threshold, footer_shift)
     delete_links(page)
+    footer_text_threshold = footer_text_threshold if footer_text_threshold is not None else footer_threshold
 
     # Collect all text lines to re-insert. Lexend is wider than Cambria in many
     # places, so draw spans cumulatively per line instead of reusing every
@@ -290,7 +292,7 @@ def change_font_page(
         if "lines" not in b:
             continue
         for line in b["lines"]:
-            line_is_footer = is_footer_line(line, page.rect.height, footer_threshold)
+            line_is_footer = is_footer_line(line, page.rect.height, footer_text_threshold)
             spans = []
             for span in line["spans"]:
                 text = span["text"]
@@ -381,6 +383,7 @@ def change_font(
     footer_scale: float = 0.80,
     footer_shift: float = 9.0,
     footer_threshold: float = 55,
+    footer_text_threshold: float = 110,
     body_gray: float = 0.08,
     footer_gray: float = 0.34,
     structural_gray: float = 0.03,
@@ -414,6 +417,7 @@ def change_font(
             footer_scale=footer_scale,
             footer_shift=footer_shift,
             footer_threshold=footer_threshold,
+            footer_text_threshold=footer_text_threshold,
             body_gray=body_gray,
             footer_gray=footer_gray,
             structural_gray=structural_gray,
@@ -437,6 +441,7 @@ def main():
     parser.add_argument("--footer-scale", type=float, default=0.80, help="Additional scale for footer text")
     parser.add_argument("--footer-shift", type=float, default=9.0, help="Move footer text down by this many points")
     parser.add_argument("--footer-threshold", type=float, default=55.0, help="Treat lines this many points from the page bottom as footer text")
+    parser.add_argument("--footer-text-threshold", type=float, default=110.0, help="Treat small text this many points from the page bottom as footer text")
     parser.add_argument("--body-gray", type=float, default=0.08, help="Gray value for regular body text, where 0 is black")
     parser.add_argument("--footer-gray", type=float, default=0.34, help="Gray value for footer text, where 0 is black")
     parser.add_argument("--structural-gray", type=float, default=0.03, help="Gray value for headings and large structural text, where 0 is black")
@@ -456,6 +461,7 @@ def main():
         footer_scale=args.footer_scale,
         footer_shift=args.footer_shift,
         footer_threshold=args.footer_threshold,
+        footer_text_threshold=args.footer_text_threshold,
         body_gray=args.body_gray,
         footer_gray=args.footer_gray,
         structural_gray=args.structural_gray,
