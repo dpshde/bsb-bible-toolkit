@@ -73,6 +73,7 @@ def render_pdf(
     body_gray: float,
     footer_gray: float,
     structural_gray: float,
+    release_stage: str,
 ) -> None:
     pdf_path.parent.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -91,14 +92,14 @@ def render_pdf(
         footer_gray=footer_gray,
         structural_gray=structural_gray,
     )
-    add_primary_title_label(pdf_path, font_dir)
+    add_primary_title_label(pdf_path, font_dir, release_stage)
     print(f"Wrote PDF: {pdf_path}")
 
 
-def add_primary_title_label(pdf_path: Path, font_dir: Path) -> None:
+def add_primary_title_label(pdf_path: Path, font_dir: Path, release_stage: str = "Draft") -> None:
     doc = fitz.open(pdf_path)
     page = doc[0]
-    label = "Primary Fixed-Layout Draft"
+    label = f"Primary Layout {release_stage}"
     font_path = font_dir / "Lexend-Bold.ttf"
     font_name = "LexendBold"
     font_size = 11
@@ -177,6 +178,7 @@ def main() -> None:
     parser.add_argument("--body-gray", type=float, default=0.08)
     parser.add_argument("--footer-gray", type=float, default=0.34)
     parser.add_argument("--structural-gray", type=float, default=0.03)
+    parser.add_argument("--release-stage", default="Draft", help="Title-page status label, such as Draft or Version")
     parser.add_argument("--refresh-source", action="store_true", help="Download source even if it already exists")
     parser.add_argument("--source-only", action="store_true", help="Fetch/copy source without rendering PDF")
     parser.add_argument("--verify", action="store_true", help="Verify generated draft artifacts after rendering")
@@ -220,6 +222,7 @@ def main() -> None:
             args.body_gray,
             args.footer_gray,
             args.structural_gray,
+            args.release_stage,
         )
 
     if args.verify:

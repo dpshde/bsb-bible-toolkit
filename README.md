@@ -77,6 +77,8 @@ Common single-column tuning flags include `--single-margin-x`,
 `--single-dropcap-protected-lines`, `--single-verse-size`, and
 `--single-verse-baseline-shift`.
 The default book title face is `Lexend-Bold`.
+Both PDF generators accept `--release-stage`; local builds default to `Draft`,
+while the delivery workflow uses `Version` for packaged release copies.
 
 To generate visual QA sheets for judging the current typography against the
 official source:
@@ -99,9 +101,9 @@ reports raw PDF hashes.
 
 This repo includes a GitHub Actions workflow at
 `.github/workflows/deliver-assets.yml` that verifies the committed PDF
-artifacts, packages them with SHA-256 checksums, uploads the package as a
-separate GitHub Actions artifact per variant, and publishes the variants to
-itch.io through Butler.
+artifacts, builds release copies labeled `Version`, packages them with SHA-256
+checksums, uploads the package as a separate GitHub Actions artifact per
+variant, and publishes the variants to itch.io through Butler.
 
 Configure these repository secrets before enabling delivery:
 

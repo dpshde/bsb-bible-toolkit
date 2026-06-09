@@ -57,6 +57,7 @@ TOC_BOOKS = [USFM_TO_BOOK[code] for code in USFM_TO_BOOK]
 
 @dataclass
 class ReflowSettings:
+    release_stage: str = "Draft"
     single_margin_x: float = 78
     single_margin_top: float = 58
     single_margin_bottom: float = 48
@@ -588,7 +589,7 @@ class ReflowWriter:
         self.canvas.setFillColor(self.black)
         title = "Berean Standard Bible"
         subtitle = "Holy Bible"
-        variant = "Single-Column Draft"
+        variant = f"Single Column {self.settings.release_stage}"
         self.canvas.setFont("Lexend-Bold", 30)
         title_width = pdfmetrics.stringWidth(title, "Lexend-Bold", 30)
         self.canvas.drawString((self.page_width - title_width) / 2, self.page_height * 0.60, title)
@@ -1387,6 +1388,7 @@ def main():
     parser.add_argument("output_pdf", type=Path)
     parser.add_argument("--font-dir", type=Path, default=Path("fonts"))
     parser.add_argument("--columns", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--release-stage", default="Draft", help="Title-page status label, such as Draft or Version")
     parser.add_argument("--single-margin-x", type=float, default=78)
     parser.add_argument("--single-margin-top", type=float, default=58)
     parser.add_argument("--single-margin-bottom", type=float, default=48)
@@ -1410,6 +1412,7 @@ def main():
     args = parser.parse_args()
 
     settings = ReflowSettings(
+        release_stage=args.release_stage,
         single_margin_x=args.single_margin_x,
         single_margin_top=args.single_margin_top,
         single_margin_bottom=args.single_margin_bottom,
