@@ -31,8 +31,6 @@ permissions:
 env:
   PRIMARY_PDF: drafts/primary/bsb-primary-draft.pdf
   SINGLE_COLUMN_PDF: drafts/primary/bsb-single-column-draft.pdf
-  PRIMARY_SOURCE_PDF: drafts/primary/source/bsb-book-9.pdf
-  USFM_SOURCE_ZIP: drafts/primary/source/engbsb_usfm.zip
   RELEASE_BUILD_DIR: dist/bsb-release-build
   RELEASE_PRIMARY_PDF: dist/bsb-release-build/bsb-primary-draft.pdf
   RELEASE_SINGLE_COLUMN_PDF: dist/bsb-release-build/bsb-single-column-draft.pdf
@@ -79,16 +77,14 @@ jobs:
       - name: Build release PDF copies
         run: |
           rm -rf "$RELEASE_BUILD_DIR"
-          python design_bsb.py \
-            --draft-dir "$RELEASE_BUILD_DIR" \
-            --source "$PRIMARY_SOURCE_PDF" \
-            --release-stage "$PDF_RELEASE_STAGE"
+          mkdir -p "$RELEASE_BUILD_DIR"
+          cp "$PRIMARY_PDF" "$RELEASE_PRIMARY_PDF"
+          cp "$SINGLE_COLUMN_PDF" "$RELEASE_SINGLE_COLUMN_PDF"
 
-          python -m bsb_pdf_toolkit.generate_reflow_pdf \
-            "$USFM_SOURCE_ZIP" \
-            "$RELEASE_SINGLE_COLUMN_PDF" \
+          python -m bsb_pdf_toolkit.stamp_release_stage \
+            --primary "$RELEASE_PRIMARY_PDF" \
+            --single-column "$RELEASE_SINGLE_COLUMN_PDF" \
             --font-dir fonts \
-            --columns 1 \
             --release-stage "$PDF_RELEASE_STAGE"
 
       - name: Package assets and checksums

@@ -101,7 +101,7 @@ reports raw PDF hashes.
 
 This repo includes a GitHub Actions workflow at
 `.github/workflows/deliver-assets.yml` that verifies the committed PDF
-artifacts, builds release copies labeled `Version`, packages them with SHA-256
+artifacts, stamps release copies as `Version`, packages them with SHA-256
 checksums, uploads the package as a separate GitHub Actions artifact per
 variant, and publishes the variants to itch.io through Butler.
 
