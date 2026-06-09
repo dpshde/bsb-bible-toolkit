@@ -114,8 +114,8 @@ The workflow publishes two Butler channels:
 
 | Channel | Contents |
 |---------|----------|
-| `primary-fixed-layout-pdf` | `Berean Standard Bible - Primary Fixed Layout Draft.pdf` |
-| `single-column-pdf` | `Berean Standard Bible - Single Column Draft.pdf` |
+| `primary-fixed-layout-pdf` | `BSB - Primary Layout.pdf` |
+| `single-column-pdf` | `BSB - Single Column.pdf` |
 
 The workflow also uploads each variant as an individually downloadable GitHub
 Actions artifact:

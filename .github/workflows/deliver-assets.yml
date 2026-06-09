@@ -31,8 +31,8 @@ permissions:
 env:
   PRIMARY_PDF: drafts/primary/bsb-primary-draft.pdf
   SINGLE_COLUMN_PDF: drafts/primary/bsb-single-column-draft.pdf
-  PRIMARY_ASSET_NAME: Berean Standard Bible - Primary Fixed Layout Draft.pdf
-  SINGLE_COLUMN_ASSET_NAME: Berean Standard Bible - Single Column Draft.pdf
+  PRIMARY_ASSET_NAME: BSB - Primary Layout.pdf
+  SINGLE_COLUMN_ASSET_NAME: BSB - Single Column.pdf
   DRAFT_MANIFEST: drafts/primary/README.md
   DIST_DIR: dist/bsb-pdf-assets
 
