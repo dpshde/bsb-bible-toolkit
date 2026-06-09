@@ -31,6 +31,8 @@ permissions:
 env:
   PRIMARY_PDF: drafts/primary/bsb-primary-draft.pdf
   SINGLE_COLUMN_PDF: drafts/primary/bsb-single-column-draft.pdf
+  PRIMARY_ASSET_NAME: Berean Standard Bible - Primary Fixed Layout Draft.pdf
+  SINGLE_COLUMN_ASSET_NAME: Berean Standard Bible - Single Column Draft.pdf
   DRAFT_MANIFEST: drafts/primary/README.md
   DIST_DIR: dist/bsb-pdf-assets
 
@@ -73,23 +75,34 @@ jobs:
           rm -rf "$DIST_DIR"
           mkdir -p "$DIST_DIR/primary-fixed-layout" "$DIST_DIR/single-column"
 
-          cp "$PRIMARY_PDF" "$DIST_DIR/primary-fixed-layout/"
+          cp "$PRIMARY_PDF" "$DIST_DIR/primary-fixed-layout/$PRIMARY_ASSET_NAME"
           cp "$DRAFT_MANIFEST" "$DIST_DIR/primary-fixed-layout/README.md"
 
-          cp "$SINGLE_COLUMN_PDF" "$DIST_DIR/single-column/"
+          cp "$SINGLE_COLUMN_PDF" "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME"
           cp "$DRAFT_MANIFEST" "$DIST_DIR/single-column/README.md"
 
           (
-            cd "$DIST_DIR"
-            sha256sum primary-fixed-layout/bsb-primary-draft.pdf \
-              single-column/bsb-single-column-draft.pdf > SHA256SUMS.txt
+            cd "$DIST_DIR/primary-fixed-layout"
+            sha256sum "$PRIMARY_ASSET_NAME" > SHA256SUMS.txt
           )
 
-      - name: Upload packaged assets to GitHub Actions
+          (
+            cd "$DIST_DIR/single-column"
+            sha256sum "$SINGLE_COLUMN_ASSET_NAME" > SHA256SUMS.txt
+          )
+
+      - name: Upload primary fixed-layout PDF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bsb-pdf-assets-${{ steps.version.outputs.value }}
-          path: ${{ env.DIST_DIR }}
+          name: berean-standard-bible-primary-fixed-layout-pdf-${{ steps.version.outputs.value }}
+          path: ${{ env.DIST_DIR }}/primary-fixed-layout
+          if-no-files-found: error
+
+      - name: Upload single-column PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: berean-standard-bible-single-column-pdf-${{ steps.version.outputs.value }}
+          path: ${{ env.DIST_DIR }}/single-column
           if-no-files-found: error
 
       - name: Install Butler

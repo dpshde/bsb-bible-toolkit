@@ -100,7 +100,8 @@ reports raw PDF hashes.
 This repo includes a GitHub Actions workflow at
 `.github/workflows/deliver-assets.yml` that verifies the committed PDF
 artifacts, packages them with SHA-256 checksums, uploads the package as a
-GitHub Actions artifact, and publishes the variants to itch.io through Butler.
+separate GitHub Actions artifact per variant, and publishes the variants to
+itch.io through Butler.
 
 Configure these repository secrets before enabling delivery:
 
@@ -113,8 +114,16 @@ The workflow publishes two Butler channels:
 
 | Channel | Contents |
 |---------|----------|
-| `primary-fixed-layout-pdf` | `drafts/primary/bsb-primary-draft.pdf` and manifest |
-| `single-column-pdf` | `drafts/primary/bsb-single-column-draft.pdf` and manifest |
+| `primary-fixed-layout-pdf` | `Berean Standard Bible - Primary Fixed Layout Draft.pdf`, checksum, and manifest |
+| `single-column-pdf` | `Berean Standard Bible - Single Column Draft.pdf`, checksum, and manifest |
+
+The workflow also uploads each variant as an individually downloadable GitHub
+Actions artifact:
+
+| Artifact prefix | Contents |
+|-----------------|----------|
+| `berean-standard-bible-primary-fixed-layout-pdf-` | Primary fixed-layout PDF package |
+| `berean-standard-bible-single-column-pdf-` | Single-column PDF package |
 
 Run it manually from GitHub Actions with `dry_run: true` to verify/package
 without pushing to itch.io.
