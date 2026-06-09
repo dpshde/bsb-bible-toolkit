@@ -76,8 +76,7 @@ Common single-column tuning flags include `--single-margin-x`,
 `--single-dropcap-size`, `--single-dropcap-padding`,
 `--single-dropcap-protected-lines`, `--single-verse-size`, and
 `--single-verse-baseline-shift`.
-The default book title face is `Lexend-Black`; use
-`--single-book-title-font Lexend-ExtraBold` for a softer heavy title.
+The default book title face is `Lexend-Bold`.
 
 To generate visual QA sheets for judging the current typography against the
 official source:
@@ -95,6 +94,30 @@ PYTHONPATH=src python -m bsb_pdf_toolkit.verify_artifacts
 Add `--strict-fingerprints` when you need the current SHA-256 fingerprints to
 match exactly. The default verifier enforces stable semantic fingerprints and
 reports raw PDF hashes.
+
+## CI/CD Asset Delivery
+
+This repo includes a GitHub Actions workflow at
+`.github/workflows/deliver-assets.yml` that verifies the committed PDF
+artifacts, packages them with SHA-256 checksums, uploads the package as a
+GitHub Actions artifact, and publishes the variants to itch.io through Butler.
+
+Configure these repository secrets before enabling delivery:
+
+| Secret | Value |
+|--------|-------|
+| `BUTLER_API_KEY` | itch.io Butler API key |
+| `ITCH_PROJECT` | itch project target in `user/project` format |
+
+The workflow publishes two Butler channels:
+
+| Channel | Contents |
+|---------|----------|
+| `primary-fixed-layout-pdf` | `drafts/primary/bsb-primary-draft.pdf` and manifest |
+| `single-column-pdf` | `drafts/primary/bsb-single-column-draft.pdf` and manifest |
+
+Run it manually from GitHub Actions with `dry_run: true` to verify/package
+without pushing to itch.io.
 
 ## Legacy/Utility Commands
 

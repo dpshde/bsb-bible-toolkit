@@ -52,6 +52,7 @@ USFM_TO_BOOK = {
 BOOK_TO_USFM = {book: code for code, book in USFM_TO_BOOK.items()}
 REFERENCE_BOOK_NAMES = sorted(OSIS_BOOKS, key=len, reverse=True)
 REFERENCE_BOOK_PATTERN = "|".join(re.escape(book) for book in REFERENCE_BOOK_NAMES)
+TOC_BOOKS = [USFM_TO_BOOK[code] for code in USFM_TO_BOOK]
 
 
 @dataclass
@@ -573,6 +574,179 @@ class ReflowWriter:
         self.canvas.drawString((self.page_width - width) / 2, self.y - 8, book)
         self.y -= self.settings.single_book_title_gap if self.columns == 1 else 64
         self.column_top_y = self.y
+
+    def draw_front_matter(self):
+        if self.columns != 1:
+            return
+        self.draw_title_page()
+        self.draw_publication_page()
+        self.draw_toc_page()
+        self.draw_preface_page()
+
+    def draw_title_page(self):
+        self.new_page()
+        self.canvas.setFillColor(self.black)
+        title = "Berean Standard Bible"
+        subtitle = "Holy Bible"
+        variant = "Single-Column Draft"
+        self.canvas.setFont("Lexend-Bold", 30)
+        title_width = pdfmetrics.stringWidth(title, "Lexend-Bold", 30)
+        self.canvas.drawString((self.page_width - title_width) / 2, self.page_height * 0.60, title)
+        self.canvas.setFont("Lexend-Light", 18)
+        subtitle_width = pdfmetrics.stringWidth(subtitle, "Lexend-Light", 18)
+        self.canvas.drawString((self.page_width - subtitle_width) / 2, self.page_height * 0.52, subtitle)
+        self.canvas.setFont("Lexend-Bold", 12)
+        variant_width = pdfmetrics.stringWidth(variant, "Lexend-Bold", 12)
+        self.canvas.drawString((self.page_width - variant_width) / 2, self.page_height * 0.46, variant)
+
+    def draw_publication_page(self):
+        self.new_page()
+        self.y -= 20
+        self.draw_front_heading("The Holy Bible, Berean Standard Bible, BSB")
+        paragraphs = [
+            "Printed 2016, 2020, 2022, 2025 by Bible Hub",
+            "Published by Bible Hub, Pittsburgh, PA USA",
+            "Library of Congress Control Number: 2022932943",
+            "The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with Bible Hub, Discovery Bible, unfoldingWord, Bible Aquifer, OpenBible.com, and the Berean Bible Translation Committee.",
+            "This text of God's Word has been dedicated to the public domain. Free resources and databases are available at BereanBible.com.",
+            "Licensing of the text is not necessary, but it is available if you wish to receive updates as new materials are released.",
+        ]
+        for paragraph in paragraphs:
+            self.draw_front_paragraph(paragraph, after=9)
+
+        self.y -= 8
+        resources = [
+            ("www.Berean.Bible", "Berean Bible Homepage"),
+            ("www.InterlinearBible.com", "Berean Interlinear Bible (BIB)"),
+            ("www.LiteralBible.com", "Berean Literal Bible (BLB)"),
+            ("www.BereanBible.com", "Berean Standard Bible (BSB)"),
+            ("www.MajorityBible.com", "Majority Standard Bible (MSB)"),
+            ("www.ReadersBible.com", "Reader's Bible"),
+            ("www.EmphasizedBible.com", "Emphasized Bible"),
+            ("www.AnnotatedBible.com", "Annotated Bible"),
+            ("www.AudioBible.org", "Audio Bible"),
+        ]
+        for site, label in resources:
+            self.draw_toc_line(site, label, f"https://{site}", external=True, font_size=8.8, leading=13)
+
+        self.y = max(self.margin_bottom + 18, self.y - 12)
+        self.draw_front_paragraph("Printed in USA", after=0)
+
+    def draw_toc_page(self):
+        self.new_page()
+        self.draw_front_heading("Table of Contents", size=18, after=22)
+        columns = 2
+        gap = 28
+        col_width = (self.column_width - gap) / columns
+        col_x = [self.x(), self.x() + col_width + gap]
+        top_y = self.y
+        rows_per_column = (len(TOC_BOOKS) + columns - 1) // columns
+        row_leading = 14.2
+        for idx, book in enumerate(TOC_BOOKS):
+            col = idx // rows_per_column
+            row = idx % rows_per_column
+            x = col_x[col]
+            y = top_y - row * row_leading
+            code = BOOK_TO_USFM[book]
+            self.draw_toc_entry(x, y, col_width, book, f"file:{code}.1")
+        self.y = top_y - rows_per_column * row_leading - 8
+
+    def draw_preface_page(self):
+        self.new_page()
+        self.draw_front_heading("Preface", size=18, after=18)
+        quote_lines = [
+            "Now the Bereans were more noble-minded than the Thessalonians,",
+            "for they received the message with great eagerness",
+            "and examined the Scriptures every day",
+            "to see if these teachings were true.",
+        ]
+        self.draw_centered_lines(quote_lines, "Lexend-Light", 9.2, 13)
+        self.draw_centered_link("- Acts 17:11", "file:ACT.17#11", "Lexend-Medium", 8.8, 13)
+        self.y -= 12
+        paragraphs = [
+            "The Berean Standard Bible (BSB) is a modern English translation of the Holy Bible, effective for public reading, study, memorization, and evangelism. Based on the best available manuscripts and sources, each word is connected back to the Greek or Hebrew text to produce a transparent text that can be studied for its root meanings.",
+            "The BSB represents a single tier of the Berean Bible. This printing contains the full BSB text, footnotes, section headings, and cross references. Additional components, including translation tables, lexicons, outlines, and summaries, are free online and in a variety of apps.",
+            "The Berean Bible Translation Committee has employed an open process where translation tables are freely available and all comments are welcomed and considered. These sources may also be downloaded and shared freely. Please see the Berean Bible website for a full description of the translation committee and process.",
+            "We pray that this text will enable readers to connect with God's Word to study it, memorize it, share it, and proclaim it. We are inspired by the model of the early Christian church:",
+        ]
+        for paragraph in paragraphs:
+            self.draw_front_paragraph(paragraph, after=8)
+
+        quote_lines = [
+            "After this letter has been read among you,",
+            "make sure that it is also read in the church of the Laodiceans,",
+            "and that you in turn read the letter from Laodicea.",
+        ]
+        self.draw_centered_lines(quote_lines, "Lexend-Light", 9.2, 13)
+        self.draw_centered_link("- Colossians 4:16", "file:COL.4#16", "Lexend-Medium", 8.8, 13)
+        self.y -= 12
+        self.draw_front_paragraph(
+            "The Scriptures belonged to the churches and were meant to be examined, copied, and distributed. The committee hopes to follow this example by sharing all the resources with which we have been entrusted.",
+            after=0,
+        )
+
+    def draw_front_heading(self, text, size=13, after=16):
+        self.canvas.setFillColor(self.black)
+        self.canvas.setFont("Lexend-Medium", size)
+        self.canvas.drawString(self.x(), self.y, text)
+        self.y -= after
+
+    def draw_front_paragraph(self, text, font="Lexend-Light", size=8.8, leading=12.5, after=6):
+        lines = self.wrap(text, font, size, self.column_width)
+        self.ensure_space(leading * len(lines) + after)
+        self.canvas.setFillColor(self.body_color)
+        self.canvas.setFont(font, size)
+        for line in lines:
+            self.canvas.drawString(self.x(), self.y, line)
+            self.y -= leading
+        self.y -= after
+
+    def draw_centered_lines(self, lines, font, size, leading):
+        self.canvas.setFillColor(self.body_color)
+        self.canvas.setFont(font, size)
+        for line in lines:
+            width = pdfmetrics.stringWidth(line, font, size)
+            self.canvas.drawString((self.page_width - width) / 2, self.y, line)
+            self.y -= leading
+
+    def draw_centered_link(self, text, target, font, size, leading):
+        self.canvas.setFillColor(self.black)
+        self.canvas.setFont(font, size)
+        width = pdfmetrics.stringWidth(text, font, size)
+        x = (self.page_width - width) / 2
+        self.canvas.drawString(x, self.y, text)
+        self.canvas.linkRect("", target, (x, self.y - 2, x + width, self.y + size), relative=0)
+        self.y -= leading
+
+    def draw_toc_line(self, left, right, target, external=False, font_size=9.2, leading=14):
+        self.ensure_space(leading)
+        x = self.x()
+        y = self.y
+        self.canvas.setFont("Lexend", font_size)
+        self.canvas.setFillColor(self.body_color)
+        self.canvas.drawString(x, y, left)
+        self.canvas.drawString(x + 166, y, right)
+        rect = (x, y - 2, x + self.column_width, y + font_size)
+        if external:
+            self.canvas.linkURL(target, rect, relative=0)
+        else:
+            self.canvas.linkRect("", target, rect, relative=0)
+        self.y -= leading
+
+    def draw_toc_entry(self, x, y, width, book, target):
+        font = "Lexend"
+        size = 9.2
+        self.canvas.setFillColor(self.body_color)
+        self.canvas.setFont(font, size)
+        self.canvas.drawString(x, y, book)
+        text_width = pdfmetrics.stringWidth(book, font, size)
+        dot_width = pdfmetrics.stringWidth(".", font, size)
+        cursor = x + text_width + 4
+        end = x + width
+        while cursor + dot_width < end:
+            self.canvas.drawString(cursor, y, ".")
+            cursor += dot_width + 2.3
+        self.canvas.linkRect("", target, (x, y - 2, end, y + size), relative=0)
 
     def draw_chapter_title(self, book, chapter, osis):
         gap = 18 if self.y < self.column_top_y - 1 else 0
@@ -1178,6 +1352,7 @@ def generate(input_path: Path, output_pdf: Path, font_dir: Path, columns: int = 
         raise RuntimeError(f"No chapters found in {input_path}")
 
     writer = ReflowWriter(output_pdf, columns=columns, settings=settings)
+    writer.draw_front_matter()
     last_book = None
     for chapter_index, chapter in enumerate(chapters):
         if chapter["book"] != last_book:

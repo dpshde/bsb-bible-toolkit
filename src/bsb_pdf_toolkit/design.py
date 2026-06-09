@@ -12,6 +12,8 @@ import sys
 import urllib.request
 from pathlib import Path
 
+import fitz
+
 from .add_route_links import add_route_links
 from .change_font import FONT_PROFILES, change_font
 from .compare_renders import DEFAULT_PAGES, build_primary_sheet, build_single_sheet, parse_pages
@@ -89,7 +91,24 @@ def render_pdf(
         footer_gray=footer_gray,
         structural_gray=structural_gray,
     )
+    add_primary_title_label(pdf_path, font_dir)
     print(f"Wrote PDF: {pdf_path}")
+
+
+def add_primary_title_label(pdf_path: Path, font_dir: Path) -> None:
+    doc = fitz.open(pdf_path)
+    page = doc[0]
+    label = "Primary Fixed-Layout Draft"
+    font_path = font_dir / "Lexend-Bold.ttf"
+    font_name = "LexendBold"
+    font_size = 11
+    page.insert_font(fontname=font_name, fontfile=str(font_path))
+    font = fitz.Font(fontfile=str(font_path))
+    text_width = font.text_length(label, fontsize=font_size)
+    x = (page.rect.width - text_width) / 2
+    page.insert_text((x, 388), label, fontsize=font_size, fontname=font_name, color=(0.08, 0.08, 0.08))
+    doc.saveIncr()
+    doc.close()
 
 
 def verify_drafts(draft_dir: Path) -> None:
@@ -110,7 +129,7 @@ def verify_drafts(draft_dir: Path) -> None:
         (
             "single-column",
             draft_dir / SINGLE_COLUMN_FILENAME,
-            2261,
+            2265,
             (504.0, 756.0),
             EXPECTED_SINGLE_ROUTE_LINKS,
             EXPECTED_SINGLE_LINKS,

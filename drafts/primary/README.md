@@ -22,7 +22,8 @@ ignored by git; this manifest records the current reproducible state.
 
 The primary draft preserves the official fixed layout, adds route.bible links,
 and redraws text with Lexend Light/Regular/Medium at a slightly airier scale,
-with extra separation above the footer.
+with extra separation above the footer. Its title page is labeled
+`Primary Fixed-Layout Draft`.
 
 ## Single-Column Variant
 
@@ -32,9 +33,12 @@ with extra separation above the footer.
 | Command | `PYTHONPATH=src python -m bsb_pdf_toolkit.generate_reflow_pdf drafts/primary/source/engbsb_usfm.zip drafts/primary/bsb-single-column-draft.pdf --font-dir fonts --columns 1` |
 | Output | `bsb-single-column-draft.pdf` |
 | Page size | `504x756` |
-| Typography | Lexend Light body, Medium verse/section structure, Black book titles |
+| Typography | Lexend Light body, Medium verse/section structure, Bold book titles |
 
-This is an exploratory reflowed artifact, not an official-layout match.
+This is an exploratory reflowed artifact, not an official-layout match. It
+includes generated title, publication, table-of-contents, and preface pages.
+The title page is labeled `Single-Column Draft`. The table of contents and
+preface scripture citations use internal PDF links.
 
 Current single-column layout knobs are exposed as CLI flags so typography can be
 tuned without editing code:
@@ -92,19 +96,19 @@ The comparison sheets are written to:
 
 | Artifact | Pages | Page Size | Route Links | Fonts |
 |----------|-------|-----------|-------------|-------|
-| `bsb-primary-draft.pdf` | `1120` | `432x648` | `4798` | Lexend Light/Medium/Regular |
-| `bsb-single-column-draft.pdf` | `2261` | `504x756` | `87144` route / `89283` total | Lexend Bold/Light/Medium/Regular |
+| `bsb-primary-draft.pdf` | `1120` | `432x648` | `4798` | Lexend Bold/Light/Medium/Regular |
+| `bsb-single-column-draft.pdf` | `2265` | `504x756` | `87144` route / `89360` total | Lexend Bold/Light/Medium/Regular |
 
 ## Current Artifact Fingerprints
 
 | Artifact | Size | SHA-256 |
 |----------|------|---------|
-| `bsb-primary-draft.pdf` | `82649804` bytes | `385556dcbe966cbb43fa34d9691d5dbb41a8c9fd986d9b18269c2aaaab218925` |
-| `bsb-single-column-draft.pdf` | `28153195` bytes | `b3b317bc0c3bcaa6bdfac47abaaeffa011cb1010c1e87cb66fcc588d4d8ffd2d` |
+| `bsb-primary-draft.pdf` | `82768562` bytes | `355ce252702d9be98fea587d52487502f8424b24556e57f41c0b99f8a325c1b2` |
+| `bsb-single-column-draft.pdf` | `28184613` bytes | `e1374deee63b352e8452e9e09be0bf65a87e03aa1ce350606bfe7c9cb6c71442` |
 
 ## Current Semantic Fingerprints
 
 | Artifact | Semantic SHA-256 |
 |----------|------------------|
-| `bsb-primary-draft.pdf` | `ce68d5c465ec51f9bad1518d504e208809f1a8a0aa2e6fe96c25256fa04df42a` |
-| `bsb-single-column-draft.pdf` | `51fb7ce1887ea9655840c3aecd163068f085aa7f396da4b7531ff2194ac9fd1d` |
+| `bsb-primary-draft.pdf` | `db33a516822ddfa9a4ac07024379b724396e1ccc5974bc86414d244ebc11b7ea` |
+| `bsb-single-column-draft.pdf` | `088c4f186474cd372182977d4a220f676c2fc46dd5e178971058df3ba5c2b264` |

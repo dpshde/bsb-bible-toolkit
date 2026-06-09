@@ -1,0 +1,135 @@
+name: Deliver PDF assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Version label passed to Butler. Defaults to the short commit SHA."
+        required: false
+        type: string
+      dry_run:
+        description: "Verify and package assets without pushing to itch.io."
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - ".github/workflows/deliver-assets.yml"
+      - "design_bsb.py"
+      - "drafts/primary/**"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - "setup.py"
+      - "src/**"
+
+permissions:
+  contents: read
+
+env:
+  PRIMARY_PDF: drafts/primary/bsb-primary-draft.pdf
+  SINGLE_COLUMN_PDF: drafts/primary/bsb-single-column-draft.pdf
+  DRAFT_MANIFEST: drafts/primary/README.md
+  DIST_DIR: dist/bsb-pdf-assets
+
+jobs:
+  package-and-deliver:
+    name: Package and deliver PDF assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install verifier dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Verify committed PDF artifacts
+        run: python design_bsb.py --qa-only --verify
+
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ -n "${{ inputs.release_version }}" ]; then
+            version="${{ inputs.release_version }}"
+          else
+            version="${GITHUB_SHA::12}"
+          fi
+          echo "value=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Package assets and checksums
+        run: |
+          rm -rf "$DIST_DIR"
+          mkdir -p "$DIST_DIR/primary-fixed-layout" "$DIST_DIR/single-column"
+
+          cp "$PRIMARY_PDF" "$DIST_DIR/primary-fixed-layout/"
+          cp "$DRAFT_MANIFEST" "$DIST_DIR/primary-fixed-layout/README.md"
+
+          cp "$SINGLE_COLUMN_PDF" "$DIST_DIR/single-column/"
+          cp "$DRAFT_MANIFEST" "$DIST_DIR/single-column/README.md"
+
+          (
+            cd "$DIST_DIR"
+            sha256sum primary-fixed-layout/bsb-primary-draft.pdf \
+              single-column/bsb-single-column-draft.pdf > SHA256SUMS.txt
+          )
+
+      - name: Upload packaged assets to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: bsb-pdf-assets-${{ steps.version.outputs.value }}
+          path: ${{ env.DIST_DIR }}
+          if-no-files-found: error
+
+      - name: Install Butler
+        if: ${{ !inputs.dry_run }}
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d "$RUNNER_TEMP/butler"
+          chmod +x "$RUNNER_TEMP/butler/butler"
+          echo "$RUNNER_TEMP/butler" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/butler/butler" -V
+
+      - name: Validate Butler configuration
+        if: ${{ !inputs.dry_run }}
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then
+            echo "Missing required repository secret: BUTLER_API_KEY" >&2
+            exit 1
+          fi
+          if [ -z "$ITCH_PROJECT" ]; then
+            echo "Missing required repository secret: ITCH_PROJECT, expected format user/project" >&2
+            exit 1
+          fi
+
+      - name: Push primary fixed-layout PDF to itch.io
+        if: ${{ !inputs.dry_run }}
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
+        run: |
+          butler push "$DIST_DIR/primary-fixed-layout" "$ITCH_PROJECT:primary-fixed-layout-pdf" \
+            --userversion "${{ steps.version.outputs.value }}"
+
+      - name: Push single-column PDF to itch.io
+        if: ${{ !inputs.dry_run }}
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
+        run: |
+          butler push "$DIST_DIR/single-column" "$ITCH_PROJECT:single-column-pdf" \
+            --userversion "${{ steps.version.outputs.value }}"

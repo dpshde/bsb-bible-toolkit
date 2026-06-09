@@ -10,17 +10,17 @@ from pathlib import Path
 import fitz
 
 
-EXPECTED_PRIMARY_FONTS = {"Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
+EXPECTED_PRIMARY_FONTS = {"Lexend-Bold", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
 EXPECTED_PRIMARY_COLORS = {0, 526344, 1315860, 5723991}
-EXPECTED_PRIMARY_SIZE = 82649804
-EXPECTED_PRIMARY_SHA256 = "385556dcbe966cbb43fa34d9691d5dbb41a8c9fd986d9b18269c2aaaab218925"
-EXPECTED_PRIMARY_SEMANTIC_SHA256 = "ce68d5c465ec51f9bad1518d504e208809f1a8a0aa2e6fe96c25256fa04df42a"
+EXPECTED_PRIMARY_SIZE = 82768562
+EXPECTED_PRIMARY_SHA256 = "355ce252702d9be98fea587d52487502f8424b24556e57f41c0b99f8a325c1b2"
+EXPECTED_PRIMARY_SEMANTIC_SHA256 = "db33a516822ddfa9a4ac07024379b724396e1ccc5974bc86414d244ebc11b7ea"
 EXPECTED_SINGLE_FONTS = {"Lexend-Bold", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
 EXPECTED_SINGLE_COLORS = {0, 1315860, 1710618}
-EXPECTED_SINGLE_SIZE = 28153195
-EXPECTED_SINGLE_SHA256 = "b3b317bc0c3bcaa6bdfac47abaaeffa011cb1010c1e87cb66fcc588d4d8ffd2d"
-EXPECTED_SINGLE_SEMANTIC_SHA256 = "51fb7ce1887ea9655840c3aecd163068f085aa7f396da4b7531ff2194ac9fd1d"
-EXPECTED_SINGLE_LINKS = 89283
+EXPECTED_SINGLE_SIZE = 28184613
+EXPECTED_SINGLE_SHA256 = "e1374deee63b352e8452e9e09be0bf65a87e03aa1ce350606bfe7c9cb6c71442"
+EXPECTED_SINGLE_SEMANTIC_SHA256 = "088c4f186474cd372182977d4a220f676c2fc46dd5e178971058df3ba5c2b264"
+EXPECTED_SINGLE_LINKS = 89360
 EXPECTED_SINGLE_ROUTE_LINKS = 87144
 
 
@@ -151,7 +151,7 @@ def main():
     parser.add_argument("--primary-rect", type=parse_rect, default=parse_rect("432x648"))
     parser.add_argument("--primary-route-links", type=int, default=4798)
     parser.add_argument("--primary-links", type=int, default=4798)
-    parser.add_argument("--single-pages", type=int, default=2261)
+    parser.add_argument("--single-pages", type=int, default=2265)
     parser.add_argument("--single-rect", type=parse_rect, default=parse_rect("504x756"))
     parser.add_argument("--single-route-links", type=int, default=EXPECTED_SINGLE_ROUTE_LINKS)
     parser.add_argument("--single-links", type=int, default=EXPECTED_SINGLE_LINKS)
