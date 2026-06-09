@@ -78,7 +78,8 @@ Common single-column tuning flags include `--single-margin-x`,
 `--single-verse-baseline-shift`.
 The default book title face is `Lexend-Bold`.
 Both PDF generators accept `--release-stage`; local builds default to `Draft`,
-while the delivery workflow uses `Version` for packaged release copies.
+while the delivery workflow stamps packaged release copies with a semantic
+version label such as `Version 0.0.1`.
 
 To generate visual QA sheets for judging the current typography against the
 official source:
@@ -128,7 +129,8 @@ Actions artifact:
 | `berean-standard-bible-single-column-pdf-` | Single-column PDF package |
 
 Run it manually from GitHub Actions with `dry_run: true` to verify/package
-without pushing to itch.io.
+without pushing to itch.io. The workflow defaults to version `0.0.1`; provide
+`release_version` when dispatching manually to publish another semantic version.
 
 ## Legacy/Utility Commands
 

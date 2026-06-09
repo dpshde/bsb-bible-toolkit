@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: "Version label passed to Butler. Defaults to the short commit SHA."
+        description: "Semantic version label passed to Butler. Defaults to 0.0.1."
         required: false
         type: string
       dry_run:
@@ -34,7 +34,7 @@ env:
   RELEASE_BUILD_DIR: dist/bsb-release-build
   RELEASE_PRIMARY_PDF: dist/bsb-release-build/bsb-primary-draft.pdf
   RELEASE_SINGLE_COLUMN_PDF: dist/bsb-release-build/bsb-single-column-draft.pdf
-  PDF_RELEASE_STAGE: Version
+  DEFAULT_RELEASE_VERSION: 0.0.1
   PRIMARY_ASSET_NAME: BSB - Primary Layout.pdf
   SINGLE_COLUMN_ASSET_NAME: BSB - Single Column.pdf
   DRAFT_MANIFEST: drafts/primary/README.md
@@ -70,9 +70,16 @@ jobs:
           if [ -n "${{ inputs.release_version }}" ]; then
             version="${{ inputs.release_version }}"
           else
-            version="${GITHUB_SHA::12}"
+            version="$DEFAULT_RELEASE_VERSION"
           fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "release_version must be semantic versioning, such as 0.0.1, 0.0.1-beta.1, or 0.0.1+build.1" >&2
+            exit 1
+          fi
+
           echo "value=${version}" >> "$GITHUB_OUTPUT"
+          echo "pdf_label=Version ${version}" >> "$GITHUB_OUTPUT"
 
       - name: Build release PDF copies
         run: |
@@ -85,7 +92,7 @@ jobs:
             --primary "$RELEASE_PRIMARY_PDF" \
             --single-column "$RELEASE_SINGLE_COLUMN_PDF" \
             --font-dir fonts \
-            --release-stage "$PDF_RELEASE_STAGE"
+            --release-stage "${{ steps.version.outputs.pdf_label }}"
 
       - name: Package assets and checksums
         run: |

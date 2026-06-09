@@ -1,6 +1,7 @@
 """Stamp draft or release status labels onto generated BSB PDFs."""
 
 import argparse
+import re
 from pathlib import Path
 
 import fitz
@@ -10,6 +11,7 @@ def stamp_label(
     pdf_path: Path,
     font_dir: Path,
     old_labels: list[str],
+    old_patterns: list[str],
     new_label: str,
     font_size: float,
     fallback_baseline: float,
@@ -21,6 +23,15 @@ def stamp_label(
         rects = page.search_for(old_label)
         if rects:
             break
+    if not rects:
+        page_text = page.get_text()
+        for old_pattern in old_patterns:
+            match = re.search(old_pattern, page_text)
+            if match:
+                matched_text = match.group(0)
+                rects = page.search_for(matched_text)
+                if rects:
+                    break
 
     if rects:
         rect = rects[0] + (-3, -2, 3, 3)
@@ -50,6 +61,7 @@ def stamp_primary(pdf_path: Path, font_dir: Path, release_stage: str) -> None:
         pdf_path,
         font_dir,
         ["Primary Fixed-Layout Draft", "Primary Layout Draft", "Primary Layout Version"],
+        [r"Primary Layout Version [0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?"],
         f"Primary Layout {release_stage}",
         11,
         388,
@@ -61,6 +73,7 @@ def stamp_single_column(pdf_path: Path, font_dir: Path, release_stage: str) -> N
         pdf_path,
         font_dir,
         ["Single-Column Draft", "Single Column Draft", "Single Column Version"],
+        [r"Single Column Version [0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?"],
         f"Single Column {release_stage}",
         12,
         349,
