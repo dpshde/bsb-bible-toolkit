@@ -94,12 +94,7 @@ jobs:
 
       - name: Install Butler
         if: ${{ !inputs.dry_run }}
-        run: |
-          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip -q butler.zip -d "$RUNNER_TEMP/butler"
-          chmod +x "$RUNNER_TEMP/butler/butler"
-          echo "$RUNNER_TEMP/butler" >> "$GITHUB_PATH"
-          "$RUNNER_TEMP/butler/butler" -V
+        uses: remarkablegames/setup-butler@v3
 
       - name: Validate Butler configuration
         if: ${{ !inputs.dry_run }}
