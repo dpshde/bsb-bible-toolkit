@@ -26,7 +26,7 @@ on:
       - "src/**"
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   ITCH_TARGET: dpshde/crafted-bsb-editions
@@ -116,6 +116,9 @@ jobs:
             sha256sum "$SINGLE_COLUMN_ASSET_NAME" > SHA256SUMS.txt
           )
 
+          cp "$DIST_DIR/primary-fixed-layout/SHA256SUMS.txt" "$DIST_DIR/primary-fixed-layout-SHA256SUMS.txt"
+          cp "$DIST_DIR/single-column/SHA256SUMS.txt" "$DIST_DIR/single-column-SHA256SUMS.txt"
+
       - name: Upload primary fixed-layout PDF artifact
         uses: actions/upload-artifact@v4
         with:
@@ -129,6 +132,30 @@ jobs:
           name: berean-standard-bible-single-column-pdf-${{ steps.version.outputs.value }}
           path: ${{ env.DIST_DIR }}/single-column
           if-no-files-found: error
+
+      - name: Upload packaged assets to GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          tag="v${RELEASE_VERSION}"
+          title="BSB PDF assets ${RELEASE_VERSION}"
+          notes="Generated BSB PDF assets for version ${RELEASE_VERSION}."
+
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --target "$GITHUB_SHA" \
+              --title "$title" \
+              --notes "$notes"
+          fi
+
+          gh release upload "$tag" \
+            "$DIST_DIR/primary-fixed-layout/$PRIMARY_ASSET_NAME" \
+            "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" \
+            "$DIST_DIR/primary-fixed-layout-SHA256SUMS.txt" \
+            "$DIST_DIR/single-column-SHA256SUMS.txt" \
+            --clobber
 
       - name: Install Butler
         if: ${{ !inputs.dry_run }}

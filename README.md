@@ -104,7 +104,9 @@ This repo includes a GitHub Actions workflow at
 `.github/workflows/deliver-assets.yml` that verifies the committed PDF
 artifacts, stamps release copies as `Version`, packages them with SHA-256
 checksums, uploads the package as a separate GitHub Actions artifact per
-variant, and publishes the variants to itch.io through Butler.
+variant, uploads the generated PDFs and checksums to a GitHub Release tagged
+with the requested version, and publishes the variants to itch.io through
+Butler.
 
 Configure these repository secrets before enabling delivery:
 
@@ -127,6 +129,16 @@ Actions artifact:
 |-----------------|----------|
 | `berean-standard-bible-primary-fixed-layout-pdf-` | Primary fixed-layout PDF package |
 | `berean-standard-bible-single-column-pdf-` | Single-column PDF package |
+
+When `dry_run` is false, the workflow creates or updates the GitHub Release
+tagged `v<release_version>` and uploads:
+
+| Release asset | Contents |
+|---------------|----------|
+| `BSB - Primary Layout.pdf` | Primary fixed-layout PDF |
+| `BSB - Single Column.pdf` | Single-column PDF |
+| `primary-fixed-layout-SHA256SUMS.txt` | Primary fixed-layout checksum |
+| `single-column-SHA256SUMS.txt` | Single-column checksum |
 
 Run it manually from GitHub Actions with `dry_run: true` to verify/package
 without pushing to itch.io. The workflow defaults to version `0.0.1`; provide
