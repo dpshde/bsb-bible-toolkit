@@ -1,0 +1,3 @@
+- [USFM verse-1 destinations](usfm-verse1-destinations.md) — Psalms \d marker swallows verse 1; fix by pre-registering chapter#1 destination at chapter start.
+- [Single-column source download](single-column-source.md) — USFM zip lives at bereanbible.com/bsb_usfm.zip (not engbsb_usfm.zip); save to drafts/primary/source/engbsb_usfm.zip.
+- [Smoke test preference](smoke-test-preference.md) — Always run smoke test after any single-column layout change, present the PDF.

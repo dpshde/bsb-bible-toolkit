@@ -1362,6 +1362,7 @@ def generate(input_path: Path, output_pdf: Path, font_dir: Path, columns: int = 
             writer.draw_book_title(chapter["book"])
             last_book = chapter["book"]
         writer.add_destination(f"file:{chapter['source']}")
+        writer.add_destination(f"file:{chapter['source']}#1")
         if chapter["chapter"] != 1 and writer.y < writer.column_top_y - 1:
             writer.ensure_space(50)
             writer.y -= 18

@@ -58,4 +58,4 @@ python design_bsb.py --qa-only --verify --compare
 
 ## User Preferences
 
-_None recorded yet._
+- After any single-column layout change, always regenerate the single-column draft and run `python smoke_test.py`, then present the resulting PDF — without being asked.

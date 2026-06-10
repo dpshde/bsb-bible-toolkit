@@ -29,11 +29,11 @@ with extra separation above the footer. Its title page is labeled
 
 | Item | Value |
 |------|-------|
-| Source | `source/engbsb_usfm.zip` |
+| Source | `source/engbsb_usfm.zip` (download: `https://bereanbible.com/bsb_usfm.zip`) |
 | Command | `PYTHONPATH=src python -m bsb_pdf_toolkit.generate_reflow_pdf drafts/primary/source/engbsb_usfm.zip drafts/primary/bsb-single-column-draft.pdf --font-dir fonts --columns 1` |
 | Output | `bsb-single-column-draft.pdf` |
 | Page size | `504x756` |
-| Typography | Lexend Light body, Medium verse/section structure, Bold book titles |
+| Typography | Lexend Regular body, Medium verse/section structure, Bold book titles |
 
 This is an exploratory reflowed artifact, not an official-layout match. It
 includes generated title, publication, table-of-contents, and preface pages.
@@ -45,12 +45,13 @@ tuned without editing code:
 
 | Option | Current |
 |--------|---------|
-| `--single-margin-x` | `78` |
-| `--single-body-size` | `10.0` |
-| `--single-body-leading` | `14.8` |
+| `--single-margin-x` | `50` |
+| `--single-body-size` | `10.5` |
+| `--single-body-leading` | `15.6` |
 | `--single-book-title-font` | `Lexend-Bold` |
 | `--single-book-title-size` | `34` |
-| `--single-book-title-gap` | `52` |
+| `--single-book-title-space-above` | `72` |
+| `--single-book-title-gap` | `110` |
 | `--single-section-heading-size` | `11.2` |
 | `--single-dropcap-size` | `36` |
 | `--single-dropcap-padding` | `10` |
