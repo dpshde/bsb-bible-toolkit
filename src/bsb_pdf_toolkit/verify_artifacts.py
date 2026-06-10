@@ -17,11 +17,11 @@ EXPECTED_PRIMARY_SHA256 = "355ce252702d9be98fea587d52487502f8424b24556e57f41c0b9
 EXPECTED_PRIMARY_SEMANTIC_SHA256 = "db33a516822ddfa9a4ac07024379b724396e1ccc5974bc86414d244ebc11b7ea"
 EXPECTED_SINGLE_FONTS = {"Lexend-Bold", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
 EXPECTED_SINGLE_COLORS = {0, 1315860, 1710618}
-EXPECTED_SINGLE_SIZE = 28184613
-EXPECTED_SINGLE_SHA256 = "e1374deee63b352e8452e9e09be0bf65a87e03aa1ce350606bfe7c9cb6c71442"
-EXPECTED_SINGLE_SEMANTIC_SHA256 = "088c4f186474cd372182977d4a220f676c2fc46dd5e178971058df3ba5c2b264"
-EXPECTED_SINGLE_LINKS = 89360
-EXPECTED_SINGLE_ROUTE_LINKS = 87144
+EXPECTED_SINGLE_SIZE = 28040111
+EXPECTED_SINGLE_SHA256 = "92528d4e52530deb285bec2aea201afcb3a5abdd3b242eedd8628cd075dbd81a"
+EXPECTED_SINGLE_SEMANTIC_SHA256 = "57df7ff96aaee98b1ffddaa2b2c2dab993578854de108257e702f9b965fd6790"
+EXPECTED_SINGLE_LINKS = 84750
+EXPECTED_SINGLE_ROUTE_LINKS = 82629
 
 
 def parse_rect(value: str):
@@ -151,7 +151,7 @@ def main():
     parser.add_argument("--primary-rect", type=parse_rect, default=parse_rect("432x648"))
     parser.add_argument("--primary-route-links", type=int, default=4798)
     parser.add_argument("--primary-links", type=int, default=4798)
-    parser.add_argument("--single-pages", type=int, default=2265)
+    parser.add_argument("--single-pages", type=int, default=2251)
     parser.add_argument("--single-rect", type=parse_rect, default=parse_rect("504x756"))
     parser.add_argument("--single-route-links", type=int, default=EXPECTED_SINGLE_ROUTE_LINKS)
     parser.add_argument("--single-links", type=int, default=EXPECTED_SINGLE_LINKS)
