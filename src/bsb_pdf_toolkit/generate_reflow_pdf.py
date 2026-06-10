@@ -63,7 +63,8 @@ class ReflowSettings:
     single_margin_bottom: float = 48
     single_book_title_font: str = "Lexend-Bold"
     single_book_title_size: float = 34
-    single_book_title_gap: float = 52
+    single_book_title_space_above: float = 36
+    single_book_title_gap: float = 76
     single_body_size: float = 10.0
     single_body_leading: float = 14.8
     single_minor_heading_size: float = 10.4
@@ -572,7 +573,8 @@ class ReflowWriter:
         self.canvas.setFillColor(self.black)
         self.canvas.setFont(font, size)
         width = pdfmetrics.stringWidth(book, font, size)
-        self.canvas.drawString((self.page_width - width) / 2, self.y - 8, book)
+        space_above = self.settings.single_book_title_space_above if self.columns == 1 else 8
+        self.canvas.drawString((self.page_width - width) / 2, self.y - space_above, book)
         self.y -= self.settings.single_book_title_gap if self.columns == 1 else 64
         self.column_top_y = self.y
 
@@ -1394,7 +1396,8 @@ def main():
     parser.add_argument("--single-margin-bottom", type=float, default=48)
     parser.add_argument("--single-book-title-font", default="Lexend-Bold")
     parser.add_argument("--single-book-title-size", type=float, default=34)
-    parser.add_argument("--single-book-title-gap", type=float, default=52)
+    parser.add_argument("--single-book-title-space-above", type=float, default=36)
+    parser.add_argument("--single-book-title-gap", type=float, default=76)
     parser.add_argument("--single-body-size", type=float, default=10.0)
     parser.add_argument("--single-body-leading", type=float, default=14.8)
     parser.add_argument("--single-minor-heading-size", type=float, default=10.4)
@@ -1418,6 +1421,7 @@ def main():
         single_margin_bottom=args.single_margin_bottom,
         single_book_title_font=args.single_book_title_font,
         single_book_title_size=args.single_book_title_size,
+        single_book_title_space_above=args.single_book_title_space_above,
         single_book_title_gap=args.single_book_title_gap,
         single_body_size=args.single_body_size,
         single_body_leading=args.single_body_leading,
