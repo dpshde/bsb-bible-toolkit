@@ -65,6 +65,7 @@ class ReflowSettings:
     single_book_title_size: float = 34
     single_book_title_space_above: float = 72
     single_book_title_gap: float = 110
+    single_book_title_pad_below: float = 24
     single_body_size: float = 10.5
     single_body_leading: float = 15.6
     single_minor_heading_size: float = 10.4
@@ -576,6 +577,8 @@ class ReflowWriter:
         space_above = self.settings.single_book_title_space_above if self.columns == 1 else 8
         self.canvas.drawString((self.page_width - width) / 2, self.y - space_above, book)
         self.y -= self.settings.single_book_title_gap if self.columns == 1 else 64
+        if self.columns == 1:
+            self.y -= self.settings.single_book_title_pad_below
         self.column_top_y = self.y
 
     def draw_front_matter(self):
@@ -827,7 +830,7 @@ class ReflowWriter:
             keep_after = keep_after_override if keep_after_override is not None else 50
             url = url or f"https://route.bible/{osis}.{chapter}"
         elif kind in {"body", "poetry"}:
-            font = "Lexend"
+            font = "Lexend-Light"
             size = self.settings.single_body_size if self.columns == 1 else 8.9
             leading = self.settings.single_body_leading if self.columns == 1 else 11.4
             before = 1.5 if kind == "body" else 1
@@ -1399,6 +1402,7 @@ def main():
     parser.add_argument("--single-book-title-size", type=float, default=34)
     parser.add_argument("--single-book-title-space-above", type=float, default=72)
     parser.add_argument("--single-book-title-gap", type=float, default=110)
+    parser.add_argument("--single-book-title-pad-below", type=float, default=24)
     parser.add_argument("--single-body-size", type=float, default=10.5)
     parser.add_argument("--single-body-leading", type=float, default=15.6)
     parser.add_argument("--single-minor-heading-size", type=float, default=10.4)
@@ -1424,6 +1428,7 @@ def main():
         single_book_title_size=args.single_book_title_size,
         single_book_title_space_above=args.single_book_title_space_above,
         single_book_title_gap=args.single_book_title_gap,
+        single_book_title_pad_below=args.single_book_title_pad_below,
         single_body_size=args.single_body_size,
         single_body_leading=args.single_body_leading,
         single_minor_heading_size=args.single_minor_heading_size,
