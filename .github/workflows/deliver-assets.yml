@@ -29,6 +29,7 @@ permissions:
   contents: read
 
 env:
+  ITCH_TARGET: dpshde/crafted-bsb-editions
   PRIMARY_PDF: drafts/primary/bsb-primary-draft.pdf
   SINGLE_COLUMN_PDF: drafts/primary/bsb-single-column-draft.pdf
   RELEASE_BUILD_DIR: dist/bsb-release-build
@@ -137,14 +138,9 @@ jobs:
         if: ${{ !inputs.dry_run }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-          ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
         run: |
           if [ -z "$BUTLER_API_KEY" ]; then
             echo "Missing required repository secret: BUTLER_API_KEY" >&2
-            exit 1
-          fi
-          if [ -z "$ITCH_PROJECT" ]; then
-            echo "Missing required repository secret: ITCH_PROJECT, expected format user/project" >&2
             exit 1
           fi
 
@@ -152,16 +148,14 @@ jobs:
         if: ${{ !inputs.dry_run }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-          ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
         run: |
-          butler push "$DIST_DIR/primary-fixed-layout/$PRIMARY_ASSET_NAME" "$ITCH_PROJECT:primary-fixed-layout-pdf" \
+          butler push "$DIST_DIR/primary-fixed-layout/$PRIMARY_ASSET_NAME" "$ITCH_TARGET:primary-fixed-layout-pdf" \
             --userversion "${{ steps.version.outputs.value }}"
 
       - name: Push single-column PDF to itch.io
         if: ${{ !inputs.dry_run }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-          ITCH_PROJECT: ${{ secrets.ITCH_PROJECT }}
         run: |
-          butler push "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" "$ITCH_PROJECT:single-column-pdf" \
+          butler push "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" "$ITCH_TARGET:single-column-pdf" \
             --userversion "${{ steps.version.outputs.value }}"
