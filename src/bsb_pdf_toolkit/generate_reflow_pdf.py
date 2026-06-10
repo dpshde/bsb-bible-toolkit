@@ -58,15 +58,15 @@ TOC_BOOKS = [USFM_TO_BOOK[code] for code in USFM_TO_BOOK]
 @dataclass
 class ReflowSettings:
     release_stage: str = "Draft"
-    single_margin_x: float = 78
+    single_margin_x: float = 50
     single_margin_top: float = 58
     single_margin_bottom: float = 48
     single_book_title_font: str = "Lexend-Bold"
     single_book_title_size: float = 34
-    single_book_title_space_above: float = 36
-    single_book_title_gap: float = 76
-    single_body_size: float = 10.0
-    single_body_leading: float = 14.8
+    single_book_title_space_above: float = 72
+    single_book_title_gap: float = 110
+    single_body_size: float = 10.5
+    single_body_leading: float = 15.6
     single_minor_heading_size: float = 10.4
     single_minor_heading_leading: float = 14.8
     single_section_heading_size: float = 11.2
@@ -824,10 +824,10 @@ class ReflowWriter:
             leading = self.settings.single_minor_heading_leading if self.columns == 1 else 11.8
             before = 7 if self.columns == 1 else 5
             after = 2 if self.columns == 1 else 1
-            keep_after = keep_after_override if keep_after_override is not None else 32
+            keep_after = keep_after_override if keep_after_override is not None else 50
             url = url or f"https://route.bible/{osis}.{chapter}"
         elif kind in {"body", "poetry"}:
-            font = "Lexend-Light"
+            font = "Lexend"
             size = self.settings.single_body_size if self.columns == 1 else 8.9
             leading = self.settings.single_body_leading if self.columns == 1 else 11.4
             before = 1.5 if kind == "body" else 1
@@ -1108,7 +1108,7 @@ class ReflowWriter:
             runs = self.body_runs(text, para.get("verses", []), body_font, body_size, osis, chapter, initial_verse)
             lines = self.wrap_styled_runs(runs, self.column_width)
 
-        intro_lines = min(len(lines), 2)
+        intro_lines = min(len(lines), 3)
         return before + leading * intro_lines + after
 
     def draw_section_heading(self, text, crossrefs, url, keep_after=None):
@@ -1391,15 +1391,15 @@ def main():
     parser.add_argument("--font-dir", type=Path, default=Path("fonts"))
     parser.add_argument("--columns", type=int, choices=(1, 2), default=2)
     parser.add_argument("--release-stage", default="Draft", help="Title-page status label, such as Draft or Version")
-    parser.add_argument("--single-margin-x", type=float, default=78)
+    parser.add_argument("--single-margin-x", type=float, default=50)
     parser.add_argument("--single-margin-top", type=float, default=58)
     parser.add_argument("--single-margin-bottom", type=float, default=48)
     parser.add_argument("--single-book-title-font", default="Lexend-Bold")
     parser.add_argument("--single-book-title-size", type=float, default=34)
-    parser.add_argument("--single-book-title-space-above", type=float, default=36)
-    parser.add_argument("--single-book-title-gap", type=float, default=76)
-    parser.add_argument("--single-body-size", type=float, default=10.0)
-    parser.add_argument("--single-body-leading", type=float, default=14.8)
+    parser.add_argument("--single-book-title-space-above", type=float, default=72)
+    parser.add_argument("--single-book-title-gap", type=float, default=110)
+    parser.add_argument("--single-body-size", type=float, default=10.5)
+    parser.add_argument("--single-body-leading", type=float, default=15.6)
     parser.add_argument("--single-minor-heading-size", type=float, default=10.4)
     parser.add_argument("--single-minor-heading-leading", type=float, default=14.8)
     parser.add_argument("--single-section-heading-size", type=float, default=11.2)
