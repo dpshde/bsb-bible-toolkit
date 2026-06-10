@@ -532,6 +532,8 @@ class ReflowWriter:
         self.black = BLACK
         self.dropcap_lines_remaining = 0
         self.dropcap_indent = 0
+        self.dropcap_line_height = 0
+        self.dropcap_after = 0
         self.destinations = set()
 
     def save(self):
@@ -546,16 +548,14 @@ class ReflowWriter:
         self.column = 0
         self.column_top_y = self.page_height - self.margin_top
         self.y = self.column_top_y
-        self.dropcap_lines_remaining = 0
-        self.dropcap_indent = 0
+        self.reset_dropcap_state()
         self.canvas.setFillColor(self.black)
 
     def next_column(self):
         if self.column < self.columns - 1:
             self.column += 1
             self.y = self.column_top_y
-            self.dropcap_lines_remaining = 0
-            self.dropcap_indent = 0
+            self.reset_dropcap_state()
         else:
             self.new_page()
 
@@ -565,6 +565,24 @@ class ReflowWriter:
 
     def x(self):
         return self.margin_x + self.column * (self.column_width + self.gutter)
+
+    def reset_dropcap_state(self):
+        self.dropcap_lines_remaining = 0
+        self.dropcap_indent = 0
+        self.dropcap_line_height = 0
+        self.dropcap_after = 0
+
+    def clear_dropcap_exclusion(self):
+        if self.dropcap_lines_remaining:
+            self.y -= self.dropcap_line_height * max(0, self.dropcap_lines_remaining - 1)
+            self.y -= self.dropcap_after
+        self.reset_dropcap_state()
+
+    def consume_dropcap_line(self):
+        if self.dropcap_lines_remaining:
+            self.dropcap_lines_remaining -= 1
+            if not self.dropcap_lines_remaining:
+                self.reset_dropcap_state()
 
     def draw_book_title(self, book):
         self.new_page()
@@ -804,8 +822,7 @@ class ReflowWriter:
         kind = para["kind"]
         url = para["url"]
         if kind == "heading":
-            self.dropcap_lines_remaining = 0
-            self.dropcap_indent = 0
+            self.clear_dropcap_exclusion()
             self.draw_section_heading(
                 text,
                 para.get("crossrefs", []),
@@ -814,14 +831,12 @@ class ReflowWriter:
             )
             return
         elif kind == "blank":
-            self.dropcap_lines_remaining = 0
-            self.dropcap_indent = 0
+            self.clear_dropcap_exclusion()
             self.ensure_space(8)
             self.y -= 8
             return
         elif kind == "minor_heading":
-            self.dropcap_lines_remaining = 0
-            self.dropcap_indent = 0
+            self.clear_dropcap_exclusion()
             font = "Lexend-Medium"
             size = self.settings.single_minor_heading_size if self.columns == 1 else 9.2
             leading = self.settings.single_minor_heading_leading if self.columns == 1 else 11.8
@@ -886,10 +901,7 @@ class ReflowWriter:
                     cursor_x += width
                 self.flush_line_link(link_start, link_end, link_url, self.y, size)
                 self.y -= leading
-                if self.dropcap_lines_remaining:
-                    self.dropcap_lines_remaining -= 1
-                    if not self.dropcap_lines_remaining:
-                        self.dropcap_indent = 0
+                self.consume_dropcap_line()
 
             self.y -= after
             return
@@ -979,9 +991,10 @@ class ReflowWriter:
         if remaining > 0:
             self.dropcap_lines_remaining = remaining
             self.dropcap_indent = indent
+            self.dropcap_line_height = leading
+            self.dropcap_after = after
         else:
-            self.dropcap_lines_remaining = 0
-            self.dropcap_indent = 0
+            self.reset_dropcap_state()
             self.y -= after
 
     def draw_poetry_paragraph(self, para, body_font, body_size, leading, before, after, osis, chapter, initial_verse):
@@ -1038,10 +1051,7 @@ class ReflowWriter:
                 cursor_x += width
             self.flush_line_link(link_start, link_end, link_url, self.y, body_size)
             self.y -= leading
-            if self.dropcap_lines_remaining:
-                self.dropcap_lines_remaining -= 1
-                if not self.dropcap_lines_remaining:
-                    self.dropcap_indent = 0
+            self.consume_dropcap_line()
 
         self.y -= after
 
