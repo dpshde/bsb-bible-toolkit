@@ -50,15 +50,28 @@ USFM_TO_BOOK = {
     "JUD": "Jude", "REV": "Revelation",
 }
 BOOK_TO_USFM = {book: code for code, book in USFM_TO_BOOK.items()}
+USFM_TO_OSIS = {code: OSIS_BOOKS.get(book) for code, book in USFM_TO_BOOK.items()}
 REFERENCE_BOOK_NAMES = sorted(OSIS_BOOKS, key=len, reverse=True)
 REFERENCE_BOOK_PATTERN = "|".join(re.escape(book) for book in REFERENCE_BOOK_NAMES)
 TOC_BOOKS = [USFM_TO_BOOK[code] for code in USFM_TO_BOOK]
+FOOTNOTE_MARKER = "\u207a"
+USFM_FOOTNOTE_PATTERN = re.compile(r"\\f\s+(.*?)\\f\*", re.S)
+
+
+def footnote_label(page_index):
+    """Return a, b, c, ... for footnote markers on a page."""
+    n = page_index + 1
+    label = ""
+    while n:
+        n, rem = divmod(n - 1, 26)
+        label = chr(ord("a") + rem) + label
+    return label
 
 
 @dataclass
 class ReflowSettings:
     release_stage: str = "Draft"
-    single_margin_x: float = 50
+    single_margin_x: float = 80
     single_margin_top: float = 58
     single_margin_bottom: float = 48
     single_book_title_font: str = "Lexend-Bold"
@@ -80,6 +93,8 @@ class ReflowSettings:
     single_dropcap_baseline_shift: float = 24
     single_verse_size: float = 6.2
     single_verse_baseline_shift: float = 2.7
+    single_footnote_marker_size: float = 5.5
+    single_footnote_marker_shift: float = 2.0
 
 
 def usfm_code_from_name(name):
@@ -152,21 +167,30 @@ def normalize_run_text(text):
     return re.sub(r"\s+", " ", text)
 
 
-def usfm_ref_to_internal(target):
+def usfm_ref_to_url(target):
+    """Convert USFM crossref target like 'GEN 5:1-32' to a route.bible URL."""
     match = re.match(r"^([1-3]?[A-Z]{2,3})\s+(\d+):(\d+)(?:-(\d+))?$", target.strip())
     if not match:
         return None
-    code, chapter, start, _end = match.groups()
-    if code not in USFM_TO_BOOK:
+    code, chapter, start, end = match.groups()
+    osis = USFM_TO_OSIS.get(code)
+    if not osis:
         return None
-    return f"file:{code}.{int(chapter)}#{int(start)}"
+    ch = int(chapter)
+    sv = int(start)
+    ev = int(end) if end else sv
+    return build_url(osis, ch, sv, ev)
 
 
-def plain_ref_to_internal(book: str, chapter: str, start: str, end: str = None):
-    code = BOOK_TO_USFM.get(book)
-    if not code:
+def plain_ref_to_url(book: str, chapter: str, start: str, end: str = None):
+    """Convert plain crossref ref like book='Genesis', chapter='5', ... to route.bible URL."""
+    osis = OSIS_BOOKS.get(book)
+    if not osis:
         return None
-    return f"file:{code}.{int(chapter)}#{int(start)}"
+    ch = int(chapter)
+    sv = int(start)
+    ev = int(end) if end else sv
+    return build_url(osis, ch, sv, ev)
 
 
 def parse_plain_ref_runs(text):
@@ -181,7 +205,7 @@ def parse_plain_ref_runs(text):
         book, chapter, start, end = match.groups()
         runs.append({
             "text": normalize_run_text(match.group(0)),
-            "target": plain_ref_to_internal(book, chapter, start, end),
+            "target": plain_ref_to_url(book, chapter, start, end),
         })
         pos = match.end()
     if pos < len(text):
@@ -197,17 +221,58 @@ def parse_usfm_ref_runs(text):
         if match.start() > pos:
             runs.extend(parse_plain_ref_runs(text[pos:match.start()]))
         display, target = match.groups()
-        runs.append({"text": normalize_run_text(display), "target": usfm_ref_to_internal(target) or None})
+        runs.append({"text": normalize_run_text(display), "target": usfm_ref_to_url(target) or None})
         pos = match.end()
     if pos < len(text):
         runs.extend(parse_plain_ref_runs(text[pos:]))
     return [run for run in runs if run["text"]]
 
 
+def ensure_crossref_route_target(run):
+    """If a crossref run has a file: (wiki) target or none, try to derive a route.bible target from its display text."""
+    target = run.get("target")
+    if target and not str(target).startswith("file:"):
+        return run
+    text = run.get("text", "")
+    parsed = parse_plain_ref_runs(text)
+    for p in parsed:
+        if p.get("target") and str(p["target"]).startswith("https://route.bible/"):
+            new_run = dict(run)
+            new_run["target"] = p["target"]
+            return new_run
+    return run
+
+
 def strip_usfm_notes(text):
-    text = re.sub(r"\\f\s.*?\\f\*", "", text)
+    text = USFM_FOOTNOTE_PATTERN.sub("", text)
     text = re.sub(r"\\x\s.*?\\x\*", "", text)
     return text
+
+
+def parse_footnote_content(raw):
+    ref_match = re.search(r"\\fr\s+(\S+)", raw)
+    ref = ref_match.group(1) if ref_match else None
+    text = raw.strip()
+    text = re.sub(r"^\+\s*", "", text)
+    text = re.sub(r"\\fr\s+\S+\s*", "", text)
+    text = re.sub(r"\\ft\s*", "", text)
+    text = re.sub(r"\\fqa\s*", "", text)
+    text = re.sub(r"\\fq\s*", "", text)
+    text = re.sub(r"\\fk\s*", "", text)
+    text = re.sub(r"\\ref\s+([^|\\]+)\|([^\\]+)\\ref\*", r"\1", text)
+    text = re.sub(r"\\[a-z0-9]+\*?", "", text)
+    return {"ref": ref, "text": normalize_text(text)}
+
+
+def extract_usfm_footnotes(text):
+    footnotes = []
+
+    def replace(match):
+        footnotes.append(parse_footnote_content(match.group(1)))
+        return f" {FOOTNOTE_MARKER} "
+
+    text = USFM_FOOTNOTE_PATTERN.sub(replace, text)
+    return text, footnotes
 
 
 def strip_usfm_word_markers(text):
@@ -229,8 +294,9 @@ def usfm_verse_numbers(text):
 
 
 def usfm_text_with_verses(text):
+    text, footnotes = extract_usfm_footnotes(text)
     text = re.sub(r"\\v\s+(\d+)\s*", r"\1 ", text)
-    return clean_usfm_text(text)
+    return clean_usfm_text(text), footnotes
 
 
 def append_usfm_para(chapter_info, kind, text, marker=None):
@@ -241,12 +307,23 @@ def append_usfm_para(chapter_info, kind, text, marker=None):
             "kind": "heading",
             "text": clean_usfm_text(text),
             "verses": [],
+            "footnotes": [],
+            "url": None,
+            "crossrefs": [],
+            "source": chapter_info["source"],
+        }
+    elif kind == "minor_heading":
+        para = {
+            "kind": "minor_heading",
+            "text": clean_usfm_text(text),
+            "verses": [],
+            "footnotes": [],
             "url": None,
             "crossrefs": [],
             "source": chapter_info["source"],
         }
     elif kind == "reference":
-        refs = parse_usfm_ref_runs(text)
+        refs = [ensure_crossref_route_target(r) for r in parse_usfm_ref_runs(text)]
         if not refs:
             return None
         headings = [p for p in chapter_info["paras"] if p["kind"] == "heading"]
@@ -255,13 +332,15 @@ def append_usfm_para(chapter_info, kind, text, marker=None):
             return headings[-1]
         return None
     elif kind == "blank":
-        para = {"kind": "blank", "text": "", "verses": [], "url": None, "crossrefs": [], "source": chapter_info["source"]}
+        para = {"kind": "blank", "text": "", "verses": [], "footnotes": [], "url": None, "crossrefs": [], "source": chapter_info["source"]}
     else:
+        body_text, footnotes = usfm_text_with_verses(text)
         para = {
             "kind": "poetry" if marker and marker.startswith("q") else "body",
             "marker": marker,
-            "text": usfm_text_with_verses(text),
+            "text": body_text,
             "verses": usfm_verse_numbers(text),
+            "footnotes": footnotes,
             "url": None,
             "crossrefs": [],
             "source": chapter_info["source"],
@@ -329,6 +408,14 @@ def extract_usfm_chapters(usfm_zip_path: Path):
                 elif marker == "r":
                     flush()
                     append_usfm_para(current, "reference", rest, marker)
+                elif marker in {"ms", "d"}:
+                    flush()
+                    if re.search(r"\\v\s+\d+", rest):
+                        pending_kind = "body"
+                        pending_marker = marker
+                        pending_text = [rest]
+                    else:
+                        append_usfm_para(current, "minor_heading", rest, marker)
                 elif marker in {"p", "m", "pmo", "pm", "pi", "q1", "q2", "q3", "qc", "li1", "li2"}:
                     flush()
                     pending_kind = "body"
@@ -449,7 +536,7 @@ def extract_chapters(epub_path: Path):
                     continue
                 kind = "heading" if "hdg" in klass.split() else "body"
                 verses = verse_numbers(p)
-                crossrefs = crossref_runs(p, name) if kind == "heading" else []
+                crossrefs = [ensure_crossref_route_target(r) for r in crossref_runs(p, name)] if kind == "heading" else []
                 if kind == "heading":
                     value = heading_title(p)
                 if kind == "body" and not verses and is_minor_heading_text(value):
@@ -529,25 +616,30 @@ class ReflowWriter:
         self.started = False
         self.body_color = BODY_COLOR
         self.crossref_color = CROSSREF_COLOR
+        self.footnote_color = colors.Color(0.18, 0.18, 0.18)
         self.black = BLACK
         self.dropcap_lines_remaining = 0
         self.dropcap_indent = 0
         self.dropcap_line_height = 0
         self.dropcap_after = 0
         self.destinations = set()
+        self.page_footnotes = []
 
     def save(self):
         if self.started:
+            self.flush_page_footnotes()
             self.canvas.save()
 
     def new_page(self):
         if self.started:
+            self.flush_page_footnotes()
             self.canvas.showPage()
         self.started = True
         self.page_num += 1
         self.column = 0
         self.column_top_y = self.page_height - self.margin_top
         self.y = self.column_top_y
+        self.page_footnotes = []
         self.reset_dropcap_state()
         self.canvas.setFillColor(self.black)
 
@@ -559,9 +651,95 @@ class ReflowWriter:
         else:
             self.new_page()
 
+    def footnote_metrics(self):
+        return {
+            "font": "Lexend-Light",
+            "size": 8.0 if self.columns == 1 else 7.2,
+            "leading": 11.5 if self.columns == 1 else 10.0,
+            "gap": 2.5,
+            "pad_above": 6.0,
+            "width": self.page_width - 2 * self.margin_x,
+        }
+
+    def footnote_lines_for_entry(self, entry):
+        metrics = self.footnote_metrics()
+        note = entry["note"]
+        if not note.get("text"):
+            return []
+        prefix_parts = []
+        if entry.get("label"):
+            prefix_parts.append(entry["label"])
+        if note.get("ref"):
+            prefix_parts.append(note["ref"])
+        prefix = (" ".join(prefix_parts) + " ") if prefix_parts else ""
+        return self.wrap(prefix + note["text"], metrics["font"], metrics["size"], metrics["width"])
+
+    def footnote_block_height(self, footnotes):
+        if not footnotes:
+            return 0
+        metrics = self.footnote_metrics()
+        total = 0
+        blocks = 0
+        for note in footnotes:
+            lines = self.footnote_lines_for_entry({"note": note})
+            if not lines:
+                continue
+            total += len(lines) * metrics["leading"] + metrics["gap"]
+            blocks += 1
+        if blocks:
+            total += metrics["pad_above"]
+        return total
+
+    def page_footnote_zone_height(self):
+        return self.footnote_block_height(entry["note"] for entry in self.page_footnotes)
+
+    def content_bottom_limit(self):
+        return self.margin_bottom + self.page_footnote_zone_height()
+
     def ensure_space(self, needed):
-        if self.y - needed < self.margin_bottom:
+        if self.y - needed < self.content_bottom_limit():
             self.next_column()
+
+    def reserve_paragraph_footnotes(self, footnotes, body_needed):
+        pending = self.footnote_block_height(footnotes)
+        while self.y - body_needed < self.content_bottom_limit() + pending:
+            self.next_column()
+        labels = []
+        for note in footnotes:
+            if note.get("text"):
+                label = footnote_label(len(self.page_footnotes))
+                labels.append(label)
+                self.page_footnotes.append({"note": note, "label": label})
+        return labels
+
+    def flush_page_footnotes(self):
+        if not self.page_footnotes:
+            return
+        metrics = self.footnote_metrics()
+        blocks = [self.footnote_lines_for_entry(entry) for entry in self.page_footnotes]
+        blocks = [lines for lines in blocks if lines]
+        if not blocks:
+            self.page_footnotes = []
+            return
+
+        total = sum(len(lines) * metrics["leading"] + metrics["gap"] for lines in blocks)
+        total += metrics["pad_above"]
+        rule_y = self.margin_bottom + total
+        self.canvas.setStrokeColor(self.footnote_color)
+        self.canvas.setLineWidth(0.5)
+        self.canvas.line(self.margin_x, rule_y, self.margin_x + metrics["width"], rule_y)
+
+        y = self.margin_bottom + total - metrics["pad_above"]
+        self.canvas.setFillColor(self.footnote_color)
+        for lines in blocks:
+            for line in lines:
+                y -= metrics["leading"]
+                self.canvas.setFont(metrics["font"], metrics["size"])
+                self.canvas.drawString(self.margin_x, y, line)
+            y -= metrics["gap"]
+        self.canvas.setFillColor(self.black)
+        self.canvas.setStrokeColor(self.black)
+        self.page_footnotes = []
 
     def x(self):
         return self.margin_x + self.column * (self.column_width + self.gutter)
@@ -598,6 +776,7 @@ class ReflowWriter:
         if self.columns == 1:
             self.y -= self.settings.single_book_title_pad_below
         self.column_top_y = self.y
+        self.add_book_outline(book)
 
     def draw_front_matter(self):
         if self.columns != 1:
@@ -685,7 +864,7 @@ class ReflowWriter:
             "to see if these teachings were true.",
         ]
         self.draw_centered_lines(quote_lines, "Lexend-Light", 9.2, 13)
-        self.draw_centered_link("- Acts 17:11", "file:ACT.17#11", "Lexend-Medium", 8.8, 13)
+        self.draw_centered_link("- Acts 17:11", "https://route.bible/Acts.17.11", "Lexend-Medium", 8.8, 13)
         self.y -= 12
         paragraphs = [
             "The Berean Standard Bible (BSB) is a modern English translation of the Holy Bible, effective for public reading, study, memorization, and evangelism. Based on the best available manuscripts and sources, each word is connected back to the Greek or Hebrew text to produce a transparent text that can be studied for its root meanings.",
@@ -702,7 +881,7 @@ class ReflowWriter:
             "and that you in turn read the letter from Laodicea.",
         ]
         self.draw_centered_lines(quote_lines, "Lexend-Light", 9.2, 13)
-        self.draw_centered_link("- Colossians 4:16", "file:COL.4#16", "Lexend-Medium", 8.8, 13)
+        self.draw_centered_link("- Colossians 4:16", "https://route.bible/Col.4.16", "Lexend-Medium", 8.8, 13)
         self.y -= 12
         self.draw_front_paragraph(
             "The Scriptures belonged to the churches and were meant to be examined, copied, and distributed. The committee hopes to follow this example by sharing all the resources with which we have been entrusted.",
@@ -739,7 +918,11 @@ class ReflowWriter:
         width = pdfmetrics.stringWidth(text, font, size)
         x = (self.page_width - width) / 2
         self.canvas.drawString(x, self.y, text)
-        self.canvas.linkRect("", target, (x, self.y - 2, x + width, self.y + size), relative=0)
+        rect = (x, self.y - 2, x + width, self.y + size)
+        if target and not target.startswith("file:"):
+            self.canvas.linkURL(target, rect, relative=0)
+        else:
+            self.canvas.linkRect("", target, rect, relative=0)
         self.y -= leading
 
     def draw_toc_line(self, left, right, target, external=False, font_size=9.2, leading=14):
@@ -795,6 +978,18 @@ class ReflowWriter:
             else:
                 self.canvas.bookmarkPage(name, fit="FitH", top=top)
             self.destinations.add(name)
+
+    def add_book_outline(self, book):
+        code = BOOK_TO_USFM.get(book)
+        if not code:
+            return
+        dest = f"file:{code}"
+        self.add_destination(dest)
+        self.canvas.addOutlineEntry(book, dest, level=0, closed=1)
+
+    def add_chapter_outline(self, chapter, source):
+        dest = f"file:{source}"
+        self.canvas.addOutlineEntry(str(chapter), dest, level=1)
 
     def add_verse_destination(self, source, verse, y, size):
         name = f"file:{source}#{verse}"
@@ -857,7 +1052,7 @@ class ReflowWriter:
             if kind == "poetry":
                 self.draw_poetry_paragraph(para, font, size, leading, before, after, osis, chapter, initial_verse)
                 return
-            runs = self.body_runs(text, para.get("verses", []), font, size, osis, chapter, initial_verse)
+            preview_runs = self.body_runs(text, para.get("verses", []), font, size, osis, chapter, initial_verse)
             if self.dropcap_lines_remaining:
                 protected_lines = min(self.dropcap_lines_remaining, self.settings.single_dropcap_protected_lines)
                 line_specs = [
@@ -869,13 +1064,27 @@ class ReflowWriter:
                     for _ in range(max(0, self.dropcap_lines_remaining - protected_lines))
                 )
                 line_specs.append({"width": self.column_width, "indent": 0})
-                lines = self.wrap_styled_runs_variable(runs, line_specs)
+                lines = self.wrap_styled_runs_variable(preview_runs, line_specs)
                 effective_before = 0
             else:
-                lines = [(line_runs, 0) for line_runs in self.wrap_styled_runs(runs, self.column_width)]
+                lines = [(line_runs, 0) for line_runs in self.wrap_styled_runs(preview_runs, self.column_width)]
                 effective_before = before
             needed = effective_before + leading * len(lines) + after
-            self.ensure_space(needed)
+            footnote_labels = self.reserve_paragraph_footnotes(para.get("footnotes", []), needed)
+            runs = self.body_runs(
+                text,
+                para.get("verses", []),
+                font,
+                size,
+                osis,
+                chapter,
+                initial_verse,
+                footnote_labels=footnote_labels,
+            )
+            if self.dropcap_lines_remaining:
+                lines = self.wrap_styled_runs_variable(runs, line_specs)
+            else:
+                lines = [(line_runs, 0) for line_runs in self.wrap_styled_runs(runs, self.column_width)]
             self.y -= effective_before
 
             for line_runs, indent_x in lines:
@@ -903,7 +1112,6 @@ class ReflowWriter:
                 self.y -= leading
                 self.consume_dropcap_line()
 
-            self.y -= after
             return
         else:
             return
@@ -930,6 +1138,10 @@ class ReflowWriter:
 
         self.y -= after
 
+    @staticmethod
+    def dropcap_body_verses(para):
+        return [verse for verse in para.get("verses", []) if verse != 1]
+
     def draw_dropcap_paragraph(self, para, body_font, body_size, leading, before, after, osis, chapter):
         text = para["text"][2:].strip()
         chapter_text = str(chapter)
@@ -944,14 +1156,23 @@ class ReflowWriter:
             {"width": self.column_width - indent, "indent": indent},
             {"width": self.column_width, "indent": 0},
         ]
-        lines = self.wrap_styled_runs_variable(
-            self.body_runs(text, [], body_font, body_size, osis, chapter, 1, superscript_verses=False),
-            line_specs,
-        )
+        preview_runs = self.body_runs(text, self.dropcap_body_verses(para), body_font, body_size, osis, chapter, 1)
+        lines = self.wrap_styled_runs_variable(preview_runs, line_specs)
         min_drop_lines = self.settings.single_dropcap_min_lines if self.columns == 1 else 3
         drop_line_count = max(len(lines), min_drop_lines)
         needed = before + max(drop_size, leading * drop_line_count) + after
-        self.ensure_space(needed)
+        footnote_labels = self.reserve_paragraph_footnotes(para.get("footnotes", []), needed)
+        runs = self.body_runs(
+            text,
+            self.dropcap_body_verses(para),
+            body_font,
+            body_size,
+            osis,
+            chapter,
+            1,
+            footnote_labels=footnote_labels,
+        )
+        lines = self.wrap_styled_runs_variable(runs, line_specs)
         self.y -= before
 
         self.canvas.setFont(drop_font, drop_size)
@@ -971,6 +1192,8 @@ class ReflowWriter:
             link_end = None
             link_url = None
             for run in line_runs:
+                if run.get("verse_num") is not None:
+                    self.add_verse_destination(para["source"], run["verse_num"], self.y + run.get("baseline_shift", 0), run["size"])
                 self.draw_run(cursor_x, self.y, run)
                 width = pdfmetrics.stringWidth(run["text"], run["font"], run["size"])
                 link_start, link_end, link_url = self.update_line_link(
@@ -1000,7 +1223,7 @@ class ReflowWriter:
     def draw_poetry_paragraph(self, para, body_font, body_size, leading, before, after, osis, chapter, initial_verse):
         marker = para.get("marker") or "q1"
         base_indent = {"q1": 14, "q2": 28, "q3": 42, "qc": 20}.get(marker, 14)
-        runs = self.body_runs(para["text"], para.get("verses", []), body_font, body_size, osis, chapter, initial_verse)
+        preview_runs = self.body_runs(para["text"], para.get("verses", []), body_font, body_size, osis, chapter, initial_verse)
         if self.dropcap_lines_remaining:
             protected_lines = min(self.dropcap_lines_remaining, self.settings.single_dropcap_protected_lines)
             line_specs = [
@@ -1015,17 +1238,34 @@ class ReflowWriter:
                 for _ in range(max(0, self.dropcap_lines_remaining - protected_lines))
             )
             line_specs.append({"width": self.column_width - base_indent, "indent": base_indent})
-            lines = self.wrap_styled_runs_variable(runs, line_specs)
+            lines = self.wrap_styled_runs_variable(preview_runs, line_specs)
             effective_before = 0
+        else:
+            lines = [
+                (line_runs, base_indent)
+                for line_runs in self.wrap_styled_runs(preview_runs, self.column_width - base_indent)
+            ]
+            effective_before = before
+
+        needed = effective_before + leading * len(lines) + after
+        footnote_labels = self.reserve_paragraph_footnotes(para.get("footnotes", []), needed)
+        runs = self.body_runs(
+            para["text"],
+            para.get("verses", []),
+            body_font,
+            body_size,
+            osis,
+            chapter,
+            initial_verse,
+            footnote_labels=footnote_labels,
+        )
+        if self.dropcap_lines_remaining:
+            lines = self.wrap_styled_runs_variable(runs, line_specs)
         else:
             lines = [
                 (line_runs, base_indent)
                 for line_runs in self.wrap_styled_runs(runs, self.column_width - base_indent)
             ]
-            effective_before = before
-
-        needed = effective_before + leading * len(lines) + after
-        self.ensure_space(needed)
         self.y -= effective_before
 
         for line_runs, indent_x in lines:
@@ -1105,7 +1345,7 @@ class ReflowWriter:
                 {"width": self.column_width, "indent": 0},
             ]
             lines = self.wrap_styled_runs_variable(
-                self.body_runs(text[2:].strip(), [], body_font, body_size, osis, chapter, 1, superscript_verses=False),
+                self.body_runs(text[2:].strip(), self.dropcap_body_verses(para), body_font, body_size, osis, chapter, 1),
                 line_specs,
             )
             min_drop_lines = self.settings.single_dropcap_min_lines if self.columns == 1 else 3
@@ -1276,11 +1516,44 @@ class ReflowWriter:
             lines.append((current, indent))
         return lines
 
-    def body_runs(self, text, verses, body_font, body_size, osis, chapter, initial_verse=None, superscript_verses=True):
+    def body_runs(self, text, verses, body_font, body_size, osis, chapter, initial_verse=None, superscript_verses=True, footnote_labels=None):
         verse_set = {str(verse) for verse in verses}
         runs = []
         current_url = build_url(osis, chapter, initial_verse, initial_verse) if initial_verse else None
+        footnote_labels = list(footnote_labels or [])
+        footnote_index = 0
         for token in self.run_tokens({"text": text, "target": None}):
+            if token["text"].strip() == FOOTNOTE_MARKER:
+                if footnote_index >= len(footnote_labels):
+                    footnote_index += 1
+                    continue
+                label = footnote_labels[footnote_index]
+                footnote_index += 1
+                marker_size = self.settings.single_footnote_marker_size if self.columns == 1 else 6.0
+                marker_shift = self.settings.single_footnote_marker_shift if self.columns == 1 else 1.5
+                runs.append({
+                    "text": label,
+                    "font": "Lexend-Light",
+                    "size": marker_size,
+                    "baseline_shift": marker_shift,
+                    "verse_num": None,
+                    "keep_with_next": True,
+                    "link_url": None,
+                    "color": self.footnote_color,
+                })
+                trailing = token["text"][len(token["text"].strip()) :]
+                if trailing:
+                    runs.append({
+                        "text": trailing,
+                        "font": body_font,
+                        "size": body_size,
+                        "baseline_shift": 0,
+                        "verse_num": None,
+                        "keep_with_next": False,
+                        "link_url": current_url,
+                        "color": self.body_color,
+                    })
+                continue
             parts = self.split_verse_token(token["text"], verse_set)
             for part_text, verse_num in parts:
                 is_verse = verse_num is not None
@@ -1376,6 +1649,7 @@ def generate(input_path: Path, output_pdf: Path, font_dir: Path, columns: int = 
             last_book = chapter["book"]
         writer.add_destination(f"file:{chapter['source']}")
         writer.add_destination(f"file:{chapter['source']}#1")
+        writer.add_chapter_outline(chapter["chapter"], chapter["source"])
         if chapter["chapter"] != 1 and writer.y < writer.column_top_y - 1:
             writer.ensure_space(50)
             writer.y -= 18
@@ -1405,7 +1679,7 @@ def main():
     parser.add_argument("--font-dir", type=Path, default=Path("fonts"))
     parser.add_argument("--columns", type=int, choices=(1, 2), default=2)
     parser.add_argument("--release-stage", default="Draft", help="Title-page status label, such as Draft or Version")
-    parser.add_argument("--single-margin-x", type=float, default=50)
+    parser.add_argument("--single-margin-x", type=float, default=80)
     parser.add_argument("--single-margin-top", type=float, default=58)
     parser.add_argument("--single-margin-bottom", type=float, default=48)
     parser.add_argument("--single-book-title-font", default="Lexend-Bold")

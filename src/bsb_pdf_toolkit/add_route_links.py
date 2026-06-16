@@ -586,6 +586,90 @@ def add_links(doc, events, heading_ranges):
     return heading_links + chapter_links
 
 
+def adapt_span_for_lexend(span):
+    """Map Lexend span metrics onto the Cambria heuristics used by build_event_list."""
+    adapted = dict(span)
+    font = adapted.get("font", "")
+    if "Lexend" not in font:
+        return adapted
+
+    text = adapted.get("text", "").strip()
+    size = adapted.get("size", 0)
+    if text in OSIS_BOOKS and size >= 24:
+        adapted["font"] = "Cambria-Bold"
+        adapted["size"] = max(size, 31)
+    elif text.isdigit() and size >= 15:
+        adapted["font"] = "Cambria-Bold"
+    elif text.isdigit() and size < 8.5:
+        adapted["font"] = "Cambria-Bold"
+    elif 8.5 <= size <= 11.0 and not text.startswith("("):
+        adapted["font"] = "Cambria-Bold"
+    return adapted
+
+
+def adapt_spans_for_lexend(spans):
+    return [adapt_span_for_lexend(span) for span in spans]
+
+
+def link_exists_at(page, bbox):
+    rect = fitz.Rect(bbox) + (-1, -1, 1, 1)
+    for link in page.get_links():
+        if not str(link.get("uri", "")).startswith("https://route.bible/"):
+            continue
+        if fitz.Rect(link["from"]).intersects(rect):
+            return True
+    return False
+
+
+def add_verse_links(doc, events):
+    """Add route.bible links to inline verse numbers."""
+    link_count = 0
+    for event in events:
+        if event["type"] != "verse":
+            continue
+        osis = event["osis"]
+        chapter = event["chapter"]
+        verse = event["verse"]
+        if not osis or chapter is None or verse is None:
+            continue
+        page = doc[event["page"]]
+        bbox = event["bbox"]
+        if link_exists_at(page, bbox):
+            continue
+        url = build_url(osis, chapter, verse, verse)
+        page.insert_link({
+            "kind": fitz.LINK_URI,
+            "from": fitz.Rect(bbox),
+            "uri": url,
+        })
+        link_count += 1
+    return link_count
+
+
+def add_lexend_verse_links(input_path, output_path=None):
+    """Add verse-number route.bible links to a Lexend primary draft."""
+    global fitz
+    import fitz as pymupdf
+
+    fitz = pymupdf
+
+    target = output_path or input_path
+    doc = fitz.open(input_path)
+    spans = adapt_spans_for_lexend(extract_spans(doc))
+    events = build_event_list(spans)
+    verse_events = sum(1 for event in events if event["type"] == "verse")
+    print(f"Lexend verse events detected: {verse_events}")
+    link_count = add_verse_links(doc, events)
+    print(f"Verse links added: {link_count}")
+    if str(target) == str(input_path):
+        doc.saveIncr()
+    else:
+        doc.save(target)
+    doc.close()
+    print(f"Done: {target}")
+    return link_count
+
+
 def add_route_links(input_path, output_path):
     global fitz
     import fitz as pymupdf
@@ -626,7 +710,14 @@ def add_route_links(input_path, output_path):
 def main():
     if len(sys.argv) < 3:
         print("Usage: python -m bsb_pdf_toolkit.add_route_links <input.pdf> <output.pdf>")
+        print("       python -m bsb_pdf_toolkit.add_route_links --lexend-verses <input.pdf> [output.pdf]")
         sys.exit(1)
+
+    if sys.argv[1] == "--lexend-verses":
+        input_path = sys.argv[2]
+        output_path = sys.argv[3] if len(sys.argv) > 3 else None
+        add_lexend_verse_links(input_path, output_path)
+        return
 
     input_path = sys.argv[1]
     output_path = sys.argv[2]

@@ -45,7 +45,7 @@ tuned without editing code:
 
 | Option | Current |
 |--------|---------|
-| `--single-margin-x` | `50` |
+| `--single-margin-x` | `80` |
 | `--single-body-size` | `10.5` |
 | `--single-body-leading` | `15.6` |
 | `--single-book-title-font` | `Lexend-Bold` |
@@ -97,19 +97,19 @@ The comparison sheets are written to:
 
 | Artifact | Pages | Page Size | Route Links | Fonts |
 |----------|-------|-----------|-------------|-------|
-| `bsb-primary-draft.pdf` | `1120` | `432x648` | `4798` | Lexend Bold/Light/Medium/Regular |
-| `bsb-single-column-draft.pdf` | `2251` | `504x756` | `82629` route / `84750` total | Lexend Bold/Light/Medium/Regular |
+| `bsb-primary-draft.pdf` | `1120` | `432x648` | `33098` | Lexend Bold/Light/Medium/Regular |
+| `bsb-single-column-draft.pdf` | `2509` | `504x756` | `94420` route / `96630` total | Lexend Bold/Light/Medium/Regular |
 
 ## Current Artifact Fingerprints
 
 | Artifact | Size | SHA-256 |
 |----------|------|---------|
-| `bsb-primary-draft.pdf` | `82768562` bytes | `355ce252702d9be98fea587d52487502f8424b24556e57f41c0b99f8a325c1b2` |
-| `bsb-single-column-draft.pdf` | `28040111` bytes | `92528d4e52530deb285bec2aea201afcb3a5abdd3b242eedd8628cd075dbd81a` |
+| `bsb-primary-draft.pdf` | `90335360` bytes | `b720739d52b8798a51ac4e98a9a4eb9a0194465a6690b0dfe84abbcea4ed6aca` |
+| `bsb-single-column-draft.pdf` | `31402411` bytes | `66073e15f925a6089e4845d77d833321af2d76b0046af8c9fd64f3bf448665db` |
 
 ## Current Semantic Fingerprints
 
 | Artifact | Semantic SHA-256 |
 |----------|------------------|
-| `bsb-primary-draft.pdf` | `db33a516822ddfa9a4ac07024379b724396e1ccc5974bc86414d244ebc11b7ea` |
-| `bsb-single-column-draft.pdf` | `57df7ff96aaee98b1ffddaa2b2c2dab993578854de108257e702f9b965fd6790` |
+| `bsb-primary-draft.pdf` | `a4089c3d8697cc3e4ec1e9f18c5acc24075e2f7b20b9d416dbeb412c5b0ecbad` |
+| `bsb-single-column-draft.pdf` | `6f71d72896628f177cbf80a913f8b367aa9a7ca3f047276f502c0278df835622` |

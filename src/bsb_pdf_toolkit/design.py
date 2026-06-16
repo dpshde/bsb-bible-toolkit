@@ -14,7 +14,7 @@ from pathlib import Path
 
 import fitz
 
-from .add_route_links import add_route_links
+from .add_route_links import add_lexend_verse_links, add_route_links
 from .change_font import FONT_PROFILES, change_font
 from .compare_renders import DEFAULT_PAGES, build_primary_sheet, build_single_sheet, parse_pages
 from .verify_artifacts import (
@@ -92,6 +92,7 @@ def render_pdf(
         footer_gray=footer_gray,
         structural_gray=structural_gray,
     )
+    add_lexend_verse_links(pdf_path)
     add_primary_title_label(pdf_path, font_dir, release_stage)
     print(f"Wrote PDF: {pdf_path}")
 
@@ -119,8 +120,8 @@ def verify_drafts(draft_dir: Path) -> None:
             draft_dir / PDF_FILENAME,
             1120,
             (432.0, 648.0),
-            4798,
-            4798,
+            33098,
+            33098,
             EXPECTED_PRIMARY_FONTS,
             EXPECTED_PRIMARY_COLORS,
             EXPECTED_PRIMARY_SIZE,
@@ -130,7 +131,7 @@ def verify_drafts(draft_dir: Path) -> None:
         (
             "single-column",
             draft_dir / SINGLE_COLUMN_FILENAME,
-            2251,
+            2509,
             (504.0, 756.0),
             EXPECTED_SINGLE_ROUTE_LINKS,
             EXPECTED_SINGLE_LINKS,

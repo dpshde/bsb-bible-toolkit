@@ -12,16 +12,18 @@ import fitz
 
 EXPECTED_PRIMARY_FONTS = {"Lexend-Bold", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
 EXPECTED_PRIMARY_COLORS = {0, 526344, 1315860, 5723991}
-EXPECTED_PRIMARY_SIZE = 82768562
-EXPECTED_PRIMARY_SHA256 = "355ce252702d9be98fea587d52487502f8424b24556e57f41c0b99f8a325c1b2"
-EXPECTED_PRIMARY_SEMANTIC_SHA256 = "db33a516822ddfa9a4ac07024379b724396e1ccc5974bc86414d244ebc11b7ea"
+EXPECTED_PRIMARY_SIZE = 90335360
+EXPECTED_PRIMARY_SHA256 = "b720739d52b8798a51ac4e98a9a4eb9a0194465a6690b0dfe84abbcea4ed6aca"
+EXPECTED_PRIMARY_SEMANTIC_SHA256 = "a4089c3d8697cc3e4ec1e9f18c5acc24075e2f7b20b9d416dbeb412c5b0ecbad"
 EXPECTED_SINGLE_FONTS = {"Lexend-Bold", "Lexend-Light", "Lexend-Medium", "Lexend-Regular"}
-EXPECTED_SINGLE_COLORS = {0, 1315860, 1710618}
-EXPECTED_SINGLE_SIZE = 28040115
-EXPECTED_SINGLE_SHA256 = "449060adedf4a55be72ebdd2b290301ff4a25931e4efb4976af0ab43defaa9f3"
-EXPECTED_SINGLE_SEMANTIC_SHA256 = "955de20677f83db66c92e65e8c7a443aad9e05e30338081163a9f73a76e99121"
-EXPECTED_SINGLE_LINKS = 84750
-EXPECTED_SINGLE_ROUTE_LINKS = 82629
+EXPECTED_SINGLE_COLORS = {0, 1315860, 1710618, 3026478}
+EXPECTED_SINGLE_SIZE = 31402411
+EXPECTED_SINGLE_SHA256 = "66073e15f925a6089e4845d77d833321af2d76b0046af8c9fd64f3bf448665db"
+EXPECTED_SINGLE_SEMANTIC_SHA256 = "6f71d72896628f177cbf80a913f8b367aa9a7ca3f047276f502c0278df835622"
+EXPECTED_SINGLE_LINKS = 96630
+# Note: crossref links in headings (from USFM \r / ref) are now route.bible URLs (previously internal file: targets).
+# Rebuild single-column artifact and refresh this + fingerprints after generator changes that affect link URIs.
+EXPECTED_SINGLE_ROUTE_LINKS = 94420
 
 
 def parse_rect(value: str):
@@ -149,9 +151,9 @@ def main():
     parser.add_argument("--single", type=Path, default=Path("drafts/primary/bsb-single-column-draft.pdf"))
     parser.add_argument("--primary-pages", type=int, default=1120)
     parser.add_argument("--primary-rect", type=parse_rect, default=parse_rect("432x648"))
-    parser.add_argument("--primary-route-links", type=int, default=4798)
-    parser.add_argument("--primary-links", type=int, default=4798)
-    parser.add_argument("--single-pages", type=int, default=2251)
+    parser.add_argument("--primary-route-links", type=int, default=33098)
+    parser.add_argument("--primary-links", type=int, default=33098)
+    parser.add_argument("--single-pages", type=int, default=2509)
     parser.add_argument("--single-rect", type=parse_rect, default=parse_rect("504x756"))
     parser.add_argument("--single-route-links", type=int, default=EXPECTED_SINGLE_ROUTE_LINKS)
     parser.add_argument("--single-links", type=int, default=EXPECTED_SINGLE_LINKS)
