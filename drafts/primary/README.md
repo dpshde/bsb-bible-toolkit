@@ -97,14 +97,14 @@ The comparison sheets are written to:
 
 | Artifact | Pages | Page Size | Route Links | Fonts |
 |----------|-------|-----------|-------------|-------|
-| `bsb-primary-draft.pdf` | `1120` | `432x648` | `33098` | Lexend Bold/Light/Medium/Regular |
+| `bsb-primary-draft.pdf` | `1120` | `432x648` | `4798` | Lexend Bold/Light/Medium/Regular |
 | `bsb-single-column-draft.pdf` | `2358` | `504x756` | `93131` route / `93206` total | Lexend Bold/Light/Medium/Regular |
 
 ## Current Artifact Fingerprints
 
 | Artifact | Size | SHA-256 |
 |----------|------|---------|
-| `bsb-primary-draft.pdf` | `90335360` bytes | `b720739d52b8798a51ac4e98a9a4eb9a0194465a6690b0dfe84abbcea4ed6aca` |
+| `bsb-primary-draft.pdf` | `82768562` bytes | `355ce252702d9be98fea587d52487502f8424b24556e57f41c0b99f8a325c1b2` |
 | `bsb-single-column-draft.pdf` | `30226815` bytes | `982528cdb5b3126eafb375b1adb6f7ab2055844bf3f0f727db3371b8ee4a7117` |
 
 ## Current Semantic Fingerprints
