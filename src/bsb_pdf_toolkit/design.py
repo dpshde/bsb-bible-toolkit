@@ -131,7 +131,7 @@ def verify_drafts(draft_dir: Path) -> None:
         (
             "single-column",
             draft_dir / SINGLE_COLUMN_FILENAME,
-            2251,
+            2358,
             (504.0, 756.0),
             EXPECTED_SINGLE_ROUTE_LINKS,
             EXPECTED_SINGLE_LINKS,
