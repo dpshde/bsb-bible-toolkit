@@ -37,7 +37,9 @@ on:
       - "requirements.txt"
       - "pyproject.toml"
       - "setup.py"
+      - "scripts/**"
       - "src/**"
+      - "reader/**"
 
 permissions:
   contents: write
@@ -54,6 +56,7 @@ env:
   SINGLE_COLUMN_ASSET_NAME: BSB - Single Column.pdf
   DRAFT_MANIFEST: drafts/primary/README.md
   DIST_DIR: dist/bsb-pdf-assets
+  PERMAWEB_SINGLE_COLUMN_DIR: dist/permaweb-single-column
   ARNS_NAME: scripture
   ARNS_UNDERNAME: crafted_bsb
   PERMAWEB_ON_DEMAND_MAX_ARIO: "10.0"
@@ -136,6 +139,49 @@ jobs:
           cp "$DIST_DIR/primary-fixed-layout/SHA256SUMS.txt" "$DIST_DIR/primary-fixed-layout-SHA256SUMS.txt"
           cp "$DIST_DIR/single-column/SHA256SUMS.txt" "$DIST_DIR/single-column-SHA256SUMS.txt"
 
+      - name: Build web reader assets
+        run: |
+          python scripts/build_osis_page_index.py \
+            "$RELEASE_SINGLE_COLUMN_PDF" \
+            --edition single-column \
+            -o "$DIST_DIR/single-column/osis-page-index.json"
+
+          mkdir -p "$DIST_DIR/reader"
+          cp reader/index.html "$DIST_DIR/reader/index.html"
+          cp reader/editions.json "$DIST_DIR/reader/editions.json"
+
+          rm -rf "$PERMAWEB_SINGLE_COLUMN_DIR"
+          mkdir -p "$PERMAWEB_SINGLE_COLUMN_DIR/reader" \
+                   "$PERMAWEB_SINGLE_COLUMN_DIR/single-column"
+          cp "$DIST_DIR/reader/index.html" "$PERMAWEB_SINGLE_COLUMN_DIR/reader/index.html"
+          cp "$DIST_DIR/reader/editions.json" "$PERMAWEB_SINGLE_COLUMN_DIR/reader/editions.json"
+          cp "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" \
+             "$PERMAWEB_SINGLE_COLUMN_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME"
+          cp "$DIST_DIR/single-column/osis-page-index.json" \
+             "$PERMAWEB_SINGLE_COLUMN_DIR/single-column/osis-page-index.json"
+          cp "$DIST_DIR/single-column/README.md" \
+             "$PERMAWEB_SINGLE_COLUMN_DIR/single-column/README.md"
+          cp "$DIST_DIR/single-column/SHA256SUMS.txt" \
+             "$PERMAWEB_SINGLE_COLUMN_DIR/single-column/SHA256SUMS.txt"
+
+          python - <<PY
+          import json
+          import os
+          from pathlib import Path
+
+          index_path = Path(os.environ["DIST_DIR"]) / "single-column" / "osis-page-index.json"
+          index = json.loads(index_path.read_text(encoding="utf-8"))
+          assert index["asset"] == "single-column"
+          assert index["pdf"] == "BSB - Single Column.pdf"
+          assert index["pageCount"] > 0
+          assert len(index["chapters"]) > 0
+          assert len(index["verses"]) > 0
+          print(
+              f"Web reader index ready: {index['pageCount']} pages, "
+              f"{len(index['chapters'])} chapters, {len(index['verses'])} verses"
+          )
+          PY
+
       - name: Upload primary fixed-layout PDF artifact
         uses: actions/upload-artifact@v4
         with:
@@ -210,7 +256,7 @@ jobs:
         run: |
           deploy_folder="$DIST_DIR"
           if [ "${{ inputs.permaweb_deploy_scope }}" = "single-column" ]; then
-            deploy_folder="$DIST_DIR/single-column"
+            deploy_folder="$PERMAWEB_SINGLE_COLUMN_DIR"
           fi
           echo "path=${deploy_folder}" >> "$GITHUB_OUTPUT"
           echo "Permaweb deploy folder: ${deploy_folder}"

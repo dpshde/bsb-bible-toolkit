@@ -1,0 +1,14 @@
+{
+  "single-column": {
+    "id": "crafted-bsb-single-column",
+    "label": "BSB Single Column",
+    "pdf": "BSB - Single Column.pdf",
+    "index": "osis-page-index.json"
+  },
+  "primary-fixed-layout": {
+    "id": "crafted-bsb-primary-fixed-layout",
+    "label": "BSB Primary Layout",
+    "pdf": "BSB - Primary Layout.pdf",
+    "index": "osis-page-index.json"
+  }
+}

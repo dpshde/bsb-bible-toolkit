@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BSB Web Reader</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --scale-factor: 1;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #3a3a3a;
+      }
+      #toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 14px;
+        background: #111;
+        color: #f5f5f5;
+        border-bottom: 1px solid #333;
+        font-size: 14px;
+      }
+      #toolbar strong {
+        font-weight: 600;
+      }
+      #viewport {
+        padding: 16px 12px 48px;
+      }
+      .page {
+        position: relative;
+        margin: 0 auto 18px;
+        background: #fff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      }
+      .page canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .textLayer {
+        position: absolute;
+        inset: 0;
+        overflow: clip;
+        line-height: 1;
+        text-size-adjust: none;
+        transform-origin: 0 0;
+        z-index: 1;
+      }
+      .textLayer span,
+      .textLayer br {
+        color: transparent;
+        position: absolute;
+        white-space: pre;
+        cursor: text;
+        transform-origin: 0 0;
+      }
+      .textLayer ::selection {
+        background: color-mix(in srgb, AccentColor, transparent 75%);
+      }
+      .textLayer .endOfContent {
+        display: block;
+        position: absolute;
+        inset: 100% 0 0;
+        cursor: default;
+        user-select: none;
+      }
+      .textLayer.selecting .endOfContent {
+        top: 0;
+      }
+      .annotationLayer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        transform-origin: 0 0;
+        z-index: 2;
+      }
+      .annotationLayer section {
+        position: absolute;
+        pointer-events: auto;
+      }
+      .annotationLayer .linkAnnotation > a,
+      .annotationLayer .buttonWidgetAnnotation.pushButton > a {
+        position: absolute;
+        inset: 0;
+        font-size: 1em;
+      }
+      .annotationLayer .linkAnnotation:not(.hasBorder) > a:hover {
+        opacity: 0.2;
+        background: rgb(255 255 0);
+      }
+      .textLayer.selecting ~ .annotationLayer section {
+        pointer-events: none;
+      }
+      .error {
+        max-width: 40rem;
+        margin: 2rem auto;
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        background: #2b1212;
+        color: #ffb4b4;
+      }
+      .hint {
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toolbar">Loading…</div>
+    <div id="viewport"></div>
+    <script type="module">
+      import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+      const { TextLayer, AnnotationLayer, setLayerDimensions } = pdfjsLib;
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+      const DEFAULT_ASSET = "single-column";
+      const params = new URLSearchParams(location.search);
+      const rawRef = (params.get("ref") || "").trim();
+      const rawPage = Number(params.get("page"));
+      const rawAsset = (params.get("asset") || DEFAULT_ASSET).trim();
+
+      const toolbar = document.getElementById("toolbar");
+      const viewportEl = document.getElementById("viewport");
+
+      function redirectLegacyAssetPath() {
+        const segments = location.pathname.split("/").filter(Boolean);
+        const readerIdx = segments.indexOf("reader");
+        if (readerIdx < 0) return false;
+
+        const candidate = segments[readerIdx + 1];
+        if (!candidate || candidate === "index.html") return false;
+
+        const url = new URL(location.href);
+        url.pathname = `/${segments.slice(0, readerIdx + 1).join("/")}/`;
+        url.searchParams.set("asset", decodeURIComponent(candidate));
+        location.replace(url);
+        return true;
+      }
+
+      async function loadEditions() {
+        const response = await fetch(new URL("editions.json", location.href));
+        if (!response.ok) {
+          throw new Error(`Edition catalog fetch failed (${response.status})`);
+        }
+        return response.json();
+      }
+
+      function resolveAssetUrls(editions, asset) {
+        const edition = editions[asset];
+        if (!edition) {
+          const known = Object.keys(editions).sort().join(", ");
+          throw new Error(`Unknown asset "${asset}". Known assets: ${known}`);
+        }
+        const assetRoot = new URL(`../${asset}/`, location.href);
+        return {
+          edition,
+          pdfUrl: params.get("pdf") || new URL(edition.pdf, assetRoot).href,
+          indexUrl: params.get("index") || new URL(edition.index, assetRoot).href,
+        };
+      }
+
+      function canonicalRef(ref) {
+        const start = ref.split("-")[0].trim();
+        const parts = start.split(".");
+        if (!parts.length) return start;
+        const book = parts[0];
+        const normalizedBook =
+          /^\d/.test(book) && book.length > 1
+            ? book[0] + book.slice(1, 2).toUpperCase() + book.slice(2).toLowerCase()
+            : book.charAt(0).toUpperCase() + book.slice(1).toLowerCase();
+        return [normalizedBook, ...parts.slice(1)].join(".");
+      }
+
+      function lookup(index, ref) {
+        const key = canonicalRef(ref);
+        const verseEntry = index.verses?.[key];
+        if (verseEntry) return { key, ...verseEntry };
+        const chapterEntry = index.chapters?.[key];
+        if (chapterEntry) return { key, page: chapterEntry.page, y: chapterEntry.y ?? null };
+        const ci = Object.create(null);
+        for (const [candidate, value] of Object.entries(index.verses || {})) {
+          ci[candidate.toLowerCase()] = { key: candidate, ...value };
+        }
+        for (const [candidate, value] of Object.entries(index.chapters || {})) {
+          ci[candidate.toLowerCase()] = { key: candidate, page: value.page, y: value.y ?? null };
+        }
+        const fallback = ci[key.toLowerCase()];
+        return fallback || null;
+      }
+
+      function outputScale() {
+        return Math.min(window.devicePixelRatio || 1, 3);
+      }
+
+      function logicalScaleForPage(page) {
+        const base = page.getViewport({ scale: 1 });
+        const maxCssWidth = Math.min(window.innerWidth - 24, 900);
+        const requested = Number(params.get("scale"));
+        if (Number.isFinite(requested) && requested > 0) return requested;
+        return maxCssWidth / base.width;
+      }
+
+      function readerUrl({ ref, page, asset = rawAsset } = {}) {
+        const url = new URL(location.href);
+        url.search = "";
+        url.searchParams.set("asset", asset);
+        if (ref) {
+          url.searchParams.set("ref", ref);
+        } else if (page) {
+          url.searchParams.set("page", String(page));
+        }
+        return url.toString();
+      }
+
+      function navigateToPage(pageNumber, { smooth = true } = {}) {
+        const existing = document.querySelector(`.page[data-page="${pageNumber}"]`);
+        if (existing) {
+          existing.scrollIntoView({
+            behavior: smooth ? "smooth" : "auto",
+            block: "start",
+          });
+          return;
+        }
+        location.href = readerUrl({ page: pageNumber });
+      }
+
+      function createLinkService(pdf) {
+        return {
+          externalLinkEnabled: true,
+          externalLinkTarget: 0,
+          externalLinkRel: "noopener noreferrer",
+          isInPresentationMode: false,
+          pdfDocument: pdf,
+          addLinkAttributes(link, url, newWindow = false) {
+            if (url) {
+              link.href = link.title = url;
+            } else {
+              link.href = "#";
+              link.removeAttribute("title");
+            }
+            link.target = newWindow ? "_blank" : "";
+            link.rel = "noopener noreferrer nofollow";
+          },
+          getDestinationHash() {
+            return "#";
+          },
+          getAnchorUrl(hash) {
+            return hash;
+          },
+          async goToDestination(dest) {
+            let explicitDest = dest;
+            if (typeof dest === "string") {
+              explicitDest = await pdf.getDestination(dest);
+            }
+            if (!Array.isArray(explicitDest)) return;
+
+            const pageRef = explicitDest[0];
+            let pageNumber;
+            if (pageRef && typeof pageRef === "object") {
+              pageNumber = pdf.cachedPageNumber(pageRef);
+              if (!pageNumber) {
+                pageNumber = (await pdf.getPageIndex(pageRef)) + 1;
+              }
+            } else if (Number.isInteger(pageRef)) {
+              pageNumber = pageRef + 1;
+            }
+            if (pageNumber > 0) navigateToPage(pageNumber);
+          },
+          goToPage(pageNumber) {
+            navigateToPage(pageNumber);
+          },
+          executeNamedAction() {},
+          async executeSetOCGState() {},
+        };
+      }
+
+      async function renderTextLayer(page, textLayerDiv, pageViewport) {
+        const textLayer = new TextLayer({
+          textContentSource: page.streamTextContent({
+            includeMarkedContent: true,
+            disableNormalization: true,
+          }),
+          container: textLayerDiv,
+          viewport: pageViewport,
+        });
+        await textLayer.render();
+        const endOfContent = document.createElement("div");
+        endOfContent.className = "endOfContent";
+        textLayerDiv.append(endOfContent);
+      }
+
+      async function renderAnnotationLayer(page, annotationDiv, pageViewport, linkService) {
+        const annotations = await page.getAnnotations({ intent: "display" });
+        if (!annotations.length) return;
+
+        const annotationLayer = new AnnotationLayer({
+          div: annotationDiv,
+          page,
+          viewport: pageViewport.clone({ dontFlip: true }),
+        });
+
+        await annotationLayer.render({
+          annotations,
+          linkService,
+          renderForms: false,
+        });
+      }
+
+      async function renderPage(page, pageNumber, scale, linkService) {
+        const pageViewport = page.getViewport({ scale });
+        const ratio = outputScale();
+
+        const wrap = document.createElement("div");
+        wrap.className = "page";
+        wrap.dataset.page = String(pageNumber);
+        wrap.style.setProperty("--scale-factor", String(scale));
+        wrap.style.width = `${Math.floor(pageViewport.width)}px`;
+        wrap.style.height = `${Math.floor(pageViewport.height)}px`;
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d", { alpha: false });
+        canvas.width = Math.floor(pageViewport.width * ratio);
+        canvas.height = Math.floor(pageViewport.height * ratio);
+
+        const transform = ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : null;
+        await page.render({
+          canvasContext: context,
+          viewport: pageViewport,
+          transform,
+        }).promise;
+        wrap.appendChild(canvas);
+
+        const textLayerDiv = document.createElement("div");
+        textLayerDiv.className = "textLayer";
+        setLayerDimensions(textLayerDiv, pageViewport);
+        wrap.appendChild(textLayerDiv);
+        await renderTextLayer(page, textLayerDiv, pageViewport);
+
+        const annotationDiv = document.createElement("div");
+        annotationDiv.className = "annotationLayer";
+        setLayerDimensions(annotationDiv, pageViewport);
+        wrap.appendChild(annotationDiv);
+        await renderAnnotationLayer(page, annotationDiv, pageViewport, linkService);
+
+        return { wrap, pageNumber, viewport: pageViewport };
+      }
+
+      function scrollToTarget(focusEntry, y) {
+        requestAnimationFrame(() => {
+          let top = focusEntry.wrap.offsetTop;
+          if (typeof y === "number") {
+            top += y * focusEntry.wrap.offsetHeight;
+          }
+          window.scrollTo({ top: Math.max(0, top - 72), behavior: "smooth" });
+        });
+      }
+
+      async function main() {
+        const label = rawRef || (rawPage > 0 ? `page ${rawPage}` : "Phil.4");
+        toolbar.textContent = `Loading ${label}…`;
+
+        const editions = await loadEditions();
+        const { edition, pdfUrl, indexUrl } = resolveAssetUrls(editions, rawAsset);
+
+        const indexPromise = fetch(indexUrl)
+          .then((response) => {
+            if (!response.ok) throw new Error(`Index fetch failed (${response.status})`);
+            return response.json();
+          })
+          .catch(() => null);
+
+        const [index, pdf] = await Promise.all([
+          indexPromise,
+          pdfjsLib.getDocument(pdfUrl).promise,
+        ]);
+
+        let target = null;
+        if (rawRef && index) {
+          target = lookup(index, rawRef);
+          if (!target) {
+            viewportEl.innerHTML = `<p class="error">Unknown reference: <strong>${rawRef}</strong></p>`;
+            toolbar.textContent = "Reference not found";
+            return;
+          }
+        } else if (rawPage > 0 && rawPage <= pdf.numPages) {
+          target = { key: `page ${rawPage}`, page: rawPage, y: null };
+        } else if (index) {
+          target = lookup(index, "Phil.4");
+        }
+
+        if (!target) {
+          viewportEl.innerHTML = `<p class="error">Could not resolve a starting location.</p>`;
+          toolbar.textContent = "Error";
+          return;
+        }
+
+        const pageNum = target.page;
+        const pages = [pageNum];
+        if (pageNum > 1) pages.unshift(pageNum - 1);
+        if (pageNum < pdf.numPages) pages.push(pageNum + 1);
+
+        toolbar.innerHTML = `
+          <strong>${target.key}</strong>
+          <span>page ${pageNum} / ${pdf.numPages}</span>
+          <span class="hint">${edition.label} · select text · click links</span>
+        `;
+
+        const linkService = createLinkService(pdf);
+        const anchorPage = await pdf.getPage(pageNum);
+        const scale = logicalScaleForPage(anchorPage);
+        const rendered = [];
+
+        for (const number of pages) {
+          const page = number === pageNum ? anchorPage : await pdf.getPage(number);
+          const entry = await renderPage(page, number, scale, linkService);
+          viewportEl.appendChild(entry.wrap);
+          rendered.push(entry);
+        }
+
+        const focus = rendered.find((entry) => entry.pageNumber === pageNum);
+        if (focus) scrollToTarget(focus, target.y);
+      }
+
+      if (!redirectLegacyAssetPath()) {
+        main().catch((error) => {
+          viewportEl.innerHTML = `<p class="error">${error.message}</p>`;
+          toolbar.textContent = "Error";
+        });
+      }
+    </script>
+  </body>
+</html>
