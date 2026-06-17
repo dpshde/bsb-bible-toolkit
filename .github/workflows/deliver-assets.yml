@@ -56,7 +56,8 @@ env:
   DIST_DIR: dist/bsb-pdf-assets
   ARNS_NAME: scripture
   ARNS_UNDERNAME: crafted_bsb
-  ARIO_PROCESS: mainnet
+  # Same ARIO process used by dpshde/argo Permaweb deploys.
+  ARIO_PROCESS: qNvAoz0TgcH7DMg8BCVn8jF32QH5L6T29VjHxhHqqGE
   PERMAWEB_BUNDLER: https://up.arweave.net
   PERMAWEB_ON_DEMAND_MAX_ARIO: "10.0"
 
