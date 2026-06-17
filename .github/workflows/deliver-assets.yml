@@ -18,9 +18,9 @@ on:
         default: false
         type: boolean
       permaweb_deploy_scope:
-        description: "Permaweb upload scope when dry_run is false."
+        description: "Permaweb upload scope when dry_run is false (workflow_dispatch only)."
         required: false
-        default: all
+        default: none
         type: choice
         options:
           - none
@@ -56,9 +56,6 @@ env:
   DIST_DIR: dist/bsb-pdf-assets
   ARNS_NAME: scripture
   ARNS_UNDERNAME: crafted_bsb
-  # Same ARIO process used by dpshde/argo Permaweb deploys.
-  ARIO_PROCESS: qNvAoz0TgcH7DMg8BCVn8jF32QH5L6T29VjHxhHqqGE
-  PERMAWEB_BUNDLER: https://up.arweave.net
   PERMAWEB_ON_DEMAND_MAX_ARIO: "10.0"
 
 jobs:
@@ -207,58 +204,43 @@ jobs:
           butler push "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" "$ITCH_TARGET:single-column-pdf" \
             --userversion "${{ steps.version.outputs.value }}"
 
-      - name: Set up Node.js for Permaweb deploy
-        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Restore Permaweb dedupe cache
-        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
-        uses: actions/cache@v4
-        with:
-          path: .permaweb-deploy/transaction-cache.json
-          key: permaweb-deploy-cache-${{ github.repository }}
-          restore-keys: |
-            permaweb-deploy-cache-
-
-      - name: Validate Permaweb configuration
-        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        run: |
-          if [ -z "$DEPLOY_KEY" ]; then
-            echo "Missing required repository secret: DEPLOY_KEY" >&2
-            exit 1
-          fi
-          if [ -z "$ARNS_NAME" ] || [ -z "$ARNS_UNDERNAME" ]; then
-            echo "Missing required workflow env: ARNS_NAME and ARNS_UNDERNAME" >&2
-            exit 1
-          fi
-
-      - name: Upload packaged assets to Permaweb
-        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
-        id: permaweb_upload
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      - name: Resolve Permaweb deploy folder
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' && github.event_name == 'workflow_dispatch' }}
+        id: permaweb_folder
         run: |
           deploy_folder="$DIST_DIR"
           if [ "${{ inputs.permaweb_deploy_scope }}" = "single-column" ]; then
             deploy_folder="$DIST_DIR/single-column"
           fi
+          echo "path=${deploy_folder}" >> "$GITHUB_OUTPUT"
+          echo "Permaweb deploy folder: ${deploy_folder}"
 
-          echo "Uploading Permaweb folder: $deploy_folder"
-          npx --yes permaweb-deploy@4.0.0 upload \
-            --deploy-folder="$deploy_folder" \
-            --ario-process="$ARIO_PROCESS" \
-            --uploader="$PERMAWEB_BUNDLER" \
-            --on-demand ario \
-            --max-token-amount "$PERMAWEB_ON_DEMAND_MAX_ARIO" | tee permaweb-upload.log
-
-          manifest_tx="$(grep -Eo 'https://arweave\.net/[A-Za-z0-9_-]+' permaweb-upload.log | tail -1 | sed 's#https://arweave.net/##')"
-          if [ -n "$manifest_tx" ]; then
-            echo "manifest_tx=$manifest_tx" >> "$GITHUB_OUTPUT"
-            echo "Permaweb manifest: https://arweave.net/$manifest_tx"
+      - name: Validate Permaweb configuration
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' && github.event_name == 'workflow_dispatch' }}
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          ARNS_KEY: ${{ secrets.ARNS_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "Missing required repository secret: DEPLOY_KEY (Arweave upload wallet, base64 JWK)" >&2
+            exit 1
           fi
+          if [ -z "$ARNS_KEY" ]; then
+            echo "Missing required repository secret: ARNS_KEY (Solana key that controls scripture)" >&2
+            exit 1
+          fi
+
+      - name: Deploy packaged assets to Permaweb
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' && github.event_name == 'workflow_dispatch' }}
+        uses: ar-io/ar-io-deploy@v1.0.0
+        with:
+          deploy-key: ${{ secrets.DEPLOY_KEY }}
+          arns-key: ${{ secrets.ARNS_KEY }}
+          arns-name: ${{ env.ARNS_NAME }}
+          undername: ${{ env.ARNS_UNDERNAME }}
+          deploy-folder: ${{ steps.permaweb_folder.outputs.path }}
+          cluster: mainnet
+          on-demand: ario
+          max-token-amount: ${{ env.PERMAWEB_ON_DEMAND_MAX_ARIO }}
 
 
