@@ -8,10 +8,24 @@ on:
         required: false
         type: string
       dry_run:
-        description: "Verify and package assets without pushing to itch.io."
+        description: "Verify and package assets without pushing to itch.io or Permaweb."
         required: false
         default: false
         type: boolean
+      skip_itch_and_release:
+        description: "Skip GitHub release and itch.io pushes."
+        required: false
+        default: false
+        type: boolean
+      permaweb_deploy_scope:
+        description: "Permaweb upload scope when dry_run is false."
+        required: false
+        default: all
+        type: choice
+        options:
+          - none
+          - single-column
+          - all
   push:
     branches:
       - main
@@ -40,12 +54,17 @@ env:
   SINGLE_COLUMN_ASSET_NAME: BSB - Single Column.pdf
   DRAFT_MANIFEST: drafts/primary/README.md
   DIST_DIR: dist/bsb-pdf-assets
+  ARNS_NAME: scripture
+  ARNS_UNDERNAME: crafted_bsb
+  ARIO_PROCESS: mainnet
+  PERMAWEB_BUNDLER: https://up.arweave.net
+  PERMAWEB_ON_DEMAND_MAX_ARIO: "10.0"
 
 jobs:
   package-and-deliver:
     name: Package and deliver PDF assets
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Check out repository
@@ -134,7 +153,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload packaged assets to GitHub release
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.version.outputs.value }}
@@ -158,11 +177,11 @@ jobs:
             --clobber
 
       - name: Install Butler
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
         uses: remarkablegames/setup-butler@v3
 
       - name: Validate Butler configuration
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -172,7 +191,7 @@ jobs:
           fi
 
       - name: Push primary fixed-layout PDF to itch.io
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -180,9 +199,59 @@ jobs:
             --userversion "${{ steps.version.outputs.value }}"
 
       - name: Push single-column PDF to itch.io
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push "$DIST_DIR/single-column/$SINGLE_COLUMN_ASSET_NAME" "$ITCH_TARGET:single-column-pdf" \
             --userversion "${{ steps.version.outputs.value }}"
+
+      - name: Set up Node.js for Permaweb deploy
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Restore Permaweb dedupe cache
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
+        uses: actions/cache@v4
+        with:
+          path: .permaweb-deploy/transaction-cache.json
+          key: permaweb-deploy-cache-${{ github.repository }}
+          restore-keys: |
+            permaweb-deploy-cache-
+
+      - name: Validate Permaweb configuration
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "Missing required repository secret: DEPLOY_KEY" >&2
+            exit 1
+          fi
+          if [ -z "$ARNS_NAME" ] || [ -z "$ARNS_UNDERNAME" ]; then
+            echo "Missing required workflow env: ARNS_NAME and ARNS_UNDERNAME" >&2
+            exit 1
+          fi
+
+      - name: Deploy packaged assets to Permaweb
+        if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          deploy_folder="$DIST_DIR"
+          if [ "${{ inputs.permaweb_deploy_scope }}" = "single-column" ]; then
+            deploy_folder="$DIST_DIR/single-column"
+          fi
+
+          echo "Deploying Permaweb folder: $deploy_folder"
+          npx --yes permaweb-deploy@4.0.0 deploy \
+            --use-arns \
+            --arns-name="$ARNS_NAME" \
+            --deploy-folder="$deploy_folder" \
+            --ario-process="$ARIO_PROCESS" \
+            --undername="$ARNS_UNDERNAME" \
+            --uploader="$PERMAWEB_BUNDLER" \
+            --on-demand ario \
+            --max-token-amount "$PERMAWEB_ON_DEMAND_MAX_ARIO"
