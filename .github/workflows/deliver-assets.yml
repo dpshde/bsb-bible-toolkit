@@ -236,8 +236,9 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy packaged assets to Permaweb
+      - name: Upload packaged assets to Permaweb
         if: ${{ !inputs.dry_run && inputs.permaweb_deploy_scope != 'none' }}
+        id: permaweb_upload
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         run: |
@@ -246,13 +247,18 @@ jobs:
             deploy_folder="$DIST_DIR/single-column"
           fi
 
-          echo "Deploying Permaweb folder: $deploy_folder"
-          npx --yes permaweb-deploy@4.0.0 deploy \
-            --use-arns \
-            --arns-name="$ARNS_NAME" \
+          echo "Uploading Permaweb folder: $deploy_folder"
+          npx --yes permaweb-deploy@4.0.0 upload \
             --deploy-folder="$deploy_folder" \
             --ario-process="$ARIO_PROCESS" \
-            --undername="$ARNS_UNDERNAME" \
             --uploader="$PERMAWEB_BUNDLER" \
             --on-demand ario \
-            --max-token-amount "$PERMAWEB_ON_DEMAND_MAX_ARIO"
+            --max-token-amount "$PERMAWEB_ON_DEMAND_MAX_ARIO" | tee permaweb-upload.log
+
+          manifest_tx="$(grep -Eo 'https://arweave\.net/[A-Za-z0-9_-]+' permaweb-upload.log | tail -1 | sed 's#https://arweave.net/##')"
+          if [ -n "$manifest_tx" ]; then
+            echo "manifest_tx=$manifest_tx" >> "$GITHUB_OUTPUT"
+            echo "Permaweb manifest: https://arweave.net/$manifest_tx"
+          fi
+
+
