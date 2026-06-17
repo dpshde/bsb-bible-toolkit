@@ -79,6 +79,9 @@ class ReflowSettings:
     single_book_title_space_above: float = 72
     single_book_title_gap: float = 110
     single_book_title_pad_below: float = 24
+    single_running_header_font: str = "Lexend-Medium"
+    single_running_header_size: float = 9
+    single_running_header_top: float = 20
     single_body_size: float = 10.5
     single_body_leading: float = 15.6
     single_minor_heading_size: float = 10.4
@@ -95,6 +98,7 @@ class ReflowSettings:
     single_verse_baseline_shift: float = 2.7
     single_footnote_marker_size: float = 5.5
     single_footnote_marker_shift: float = 2.0
+    show_footnotes: bool = True
 
 
 def usfm_code_from_name(name):
@@ -599,7 +603,10 @@ class ReflowWriter:
     def __init__(self, output_path: Path, columns: int = 2, settings: ReflowSettings = None):
         if columns not in {1, 2}:
             raise ValueError("columns must be 1 or 2")
-        self.settings = settings or ReflowSettings()
+        if settings is None:
+            settings = ReflowSettings(show_footnotes=(columns != 1))
+        self.settings = settings
+        self.show_footnotes = self.settings.show_footnotes
         self.canvas = canvas.Canvas(str(output_path), pagesize=PAGE_SIZE)
         self.page_width, self.page_height = PAGE_SIZE
         self.columns = columns
@@ -613,6 +620,7 @@ class ReflowWriter:
         self.y = self.column_top_y
         self.page_num = 0
         self.current_book = None
+        self.current_chapter = None
         self.started = False
         self.body_color = BODY_COLOR
         self.crossref_color = CROSSREF_COLOR
@@ -630,7 +638,7 @@ class ReflowWriter:
             self.flush_page_footnotes()
             self.canvas.save()
 
-    def new_page(self):
+    def new_page(self, *, suppress_running_header=False):
         if self.started:
             self.flush_page_footnotes()
             self.canvas.showPage()
@@ -641,6 +649,27 @@ class ReflowWriter:
         self.y = self.column_top_y
         self.page_footnotes = []
         self.reset_dropcap_state()
+        self.canvas.setFillColor(self.black)
+        if not suppress_running_header:
+            self.draw_running_header()
+
+    def draw_running_header(self):
+        if self.columns != 1 or not self.current_book:
+            return
+        font = self.settings.single_running_header_font
+        size = self.settings.single_running_header_size
+        top = self.settings.single_running_header_top
+        self.canvas.setFillColor(colors.Color(0.33, 0.33, 0.33))
+        self.canvas.setFont(font, size)
+        text = self.current_book.upper()
+        if self.current_chapter is not None:
+            text = f"{text} {self.current_chapter}"
+        width = pdfmetrics.stringWidth(text, font, size)
+        self.canvas.drawString(
+            (self.page_width - width) / 2,
+            self.page_height - top,
+            text,
+        )
         self.canvas.setFillColor(self.black)
 
     def next_column(self):
@@ -675,7 +704,7 @@ class ReflowWriter:
         return self.wrap(prefix + note["text"], metrics["font"], metrics["size"], metrics["width"])
 
     def footnote_block_height(self, footnotes):
-        if not footnotes:
+        if not self.show_footnotes or not footnotes:
             return 0
         metrics = self.footnote_metrics()
         total = 0
@@ -691,6 +720,8 @@ class ReflowWriter:
         return total
 
     def page_footnote_zone_height(self):
+        if not self.show_footnotes:
+            return 0
         return self.footnote_block_height(entry["note"] for entry in self.page_footnotes)
 
     def content_bottom_limit(self):
@@ -701,9 +732,11 @@ class ReflowWriter:
             self.next_column()
 
     def reserve_paragraph_footnotes(self, footnotes, body_needed):
-        pending = self.footnote_block_height(footnotes)
+        pending = self.footnote_block_height(footnotes) if self.show_footnotes else 0
         while self.y - body_needed < self.content_bottom_limit() + pending:
             self.next_column()
+        if not self.show_footnotes:
+            return []
         labels = []
         for note in footnotes:
             if note.get("text"):
@@ -713,6 +746,9 @@ class ReflowWriter:
         return labels
 
     def flush_page_footnotes(self):
+        if not self.show_footnotes:
+            self.page_footnotes = []
+            return
         if not self.page_footnotes:
             return
         metrics = self.footnote_metrics()
@@ -763,7 +799,7 @@ class ReflowWriter:
                 self.reset_dropcap_state()
 
     def draw_book_title(self, book):
-        self.new_page()
+        self.new_page(suppress_running_header=True)
         self.current_book = book
         font = self.settings.single_book_title_font if self.columns == 1 else "Lexend"
         size = self.settings.single_book_title_size if self.columns == 1 else 31
@@ -866,9 +902,10 @@ class ReflowWriter:
         self.draw_centered_lines(quote_lines, "Lexend-Light", 9.2, 13)
         self.draw_centered_link("- Acts 17:11", "https://route.bible/Acts.17.11", "Lexend-Medium", 8.8, 13)
         self.y -= 12
+        footnote_sentence = "footnotes, " if self.show_footnotes else ""
         paragraphs = [
             "The Berean Standard Bible (BSB) is a modern English translation of the Holy Bible, effective for public reading, study, memorization, and evangelism. Based on the best available manuscripts and sources, each word is connected back to the Greek or Hebrew text to produce a transparent text that can be studied for its root meanings.",
-            "The BSB represents a single tier of the Berean Bible. This printing contains the full BSB text, footnotes, section headings, and cross references. Additional components, including translation tables, lexicons, outlines, and summaries, are free online and in a variety of apps.",
+            f"The BSB represents a single tier of the Berean Bible. This printing contains the full BSB text, {footnote_sentence}section headings, and cross references. Additional components, including translation tables, lexicons, outlines, and summaries, are free online and in a variety of apps.",
             "The Berean Bible Translation Committee has employed an open process where translation tables are freely available and all comments are welcomed and considered. These sources may also be downloaded and shared freely. Please see the Berean Bible website for a full description of the translation committee and process.",
             "We pray that this text will enable readers to connect with God's Word to study it, memorize it, share it, and proclaim it. We are inspired by the model of the early Christian church:",
         ]
@@ -1038,6 +1075,8 @@ class ReflowWriter:
             before = 7 if self.columns == 1 else 5
             after = 2 if self.columns == 1 else 1
             keep_after = keep_after_override if keep_after_override is not None else 50
+            if self.columns == 1:
+                keep_after = max(keep_after, 60)
             url = url or f"https://route.bible/{osis}.{chapter}"
         elif kind in {"body", "poetry"}:
             font = "Lexend-Light"
@@ -1376,6 +1415,9 @@ class ReflowWriter:
         after = 5 if self.columns == 1 else 4
         if keep_after is None:
             keep_after = 32
+        # Ensure headers are never stranded at the end of a page without following content.
+        if self.columns == 1:
+            keep_after = max(keep_after, 70)
         needed = before + title_leading * len(heading_lines) + after + keep_after
         self.ensure_space(needed)
         self.y -= before
@@ -1647,11 +1689,15 @@ def generate(input_path: Path, output_pdf: Path, font_dir: Path, columns: int = 
         if chapter["book"] != last_book:
             writer.draw_book_title(chapter["book"])
             last_book = chapter["book"]
+        writer.current_chapter = chapter["chapter"]
         writer.add_destination(f"file:{chapter['source']}")
         writer.add_destination(f"file:{chapter['source']}#1")
         writer.add_chapter_outline(chapter["chapter"], chapter["source"])
         if chapter["chapter"] != 1 and writer.y < writer.column_top_y - 1:
-            writer.ensure_space(50)
+            # Leave enough room to start a new chapter with its first heading + some content
+            # (prevents section headers being stranded at the end of a page)
+            min_space = 90 if writer.columns == 1 else 50
+            writer.ensure_space(min_space)
             writer.y -= 18
         current_verse = None
         for para_index, para in enumerate(chapter["paras"]):
@@ -1678,6 +1724,9 @@ def main():
     parser.add_argument("output_pdf", type=Path)
     parser.add_argument("--font-dir", type=Path, default=Path("fonts"))
     parser.add_argument("--columns", type=int, choices=(1, 2), default=2)
+    footnotes_group = parser.add_mutually_exclusive_group()
+    footnotes_group.add_argument("--footnotes", dest="show_footnotes", action="store_true", default=None)
+    footnotes_group.add_argument("--no-footnotes", dest="show_footnotes", action="store_false")
     parser.add_argument("--release-stage", default="Draft", help="Title-page status label, such as Draft or Version")
     parser.add_argument("--single-margin-x", type=float, default=80)
     parser.add_argument("--single-margin-top", type=float, default=58)
@@ -1687,6 +1736,9 @@ def main():
     parser.add_argument("--single-book-title-space-above", type=float, default=72)
     parser.add_argument("--single-book-title-gap", type=float, default=110)
     parser.add_argument("--single-book-title-pad-below", type=float, default=24)
+    parser.add_argument("--single-running-header-font", default="Lexend-Medium")
+    parser.add_argument("--single-running-header-size", type=float, default=9)
+    parser.add_argument("--single-running-header-top", type=float, default=20)
     parser.add_argument("--single-body-size", type=float, default=10.5)
     parser.add_argument("--single-body-leading", type=float, default=15.6)
     parser.add_argument("--single-minor-heading-size", type=float, default=10.4)
@@ -1703,6 +1755,11 @@ def main():
     parser.add_argument("--single-verse-baseline-shift", type=float, default=2.7)
     args = parser.parse_args()
 
+    if args.show_footnotes is None:
+        show_footnotes = args.columns != 1
+    else:
+        show_footnotes = args.show_footnotes
+
     settings = ReflowSettings(
         release_stage=args.release_stage,
         single_margin_x=args.single_margin_x,
@@ -1713,6 +1770,9 @@ def main():
         single_book_title_space_above=args.single_book_title_space_above,
         single_book_title_gap=args.single_book_title_gap,
         single_book_title_pad_below=args.single_book_title_pad_below,
+        single_running_header_font=args.single_running_header_font,
+        single_running_header_size=args.single_running_header_size,
+        single_running_header_top=args.single_running_header_top,
         single_body_size=args.single_body_size,
         single_body_leading=args.single_body_leading,
         single_minor_heading_size=args.single_minor_heading_size,
@@ -1727,6 +1787,7 @@ def main():
         single_dropcap_baseline_shift=args.single_dropcap_baseline_shift,
         single_verse_size=args.single_verse_size,
         single_verse_baseline_shift=args.single_verse_baseline_shift,
+        show_footnotes=show_footnotes,
     )
 
     try:

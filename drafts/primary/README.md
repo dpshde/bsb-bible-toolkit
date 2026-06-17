@@ -98,18 +98,18 @@ The comparison sheets are written to:
 | Artifact | Pages | Page Size | Route Links | Fonts |
 |----------|-------|-----------|-------------|-------|
 | `bsb-primary-draft.pdf` | `1120` | `432x648` | `33098` | Lexend Bold/Light/Medium/Regular |
-| `bsb-single-column-draft.pdf` | `2509` | `504x756` | `94420` route / `96630` total | Lexend Bold/Light/Medium/Regular |
+| `bsb-single-column-draft.pdf` | `2358` | `504x756` | `93131` route / `93206` total | Lexend Bold/Light/Medium/Regular |
 
 ## Current Artifact Fingerprints
 
 | Artifact | Size | SHA-256 |
 |----------|------|---------|
 | `bsb-primary-draft.pdf` | `90335360` bytes | `b720739d52b8798a51ac4e98a9a4eb9a0194465a6690b0dfe84abbcea4ed6aca` |
-| `bsb-single-column-draft.pdf` | `31402411` bytes | `66073e15f925a6089e4845d77d833321af2d76b0046af8c9fd64f3bf448665db` |
+| `bsb-single-column-draft.pdf` | `30226815` bytes | `982528cdb5b3126eafb375b1adb6f7ab2055844bf3f0f727db3371b8ee4a7117` |
 
 ## Current Semantic Fingerprints
 
 | Artifact | Semantic SHA-256 |
 |----------|------------------|
 | `bsb-primary-draft.pdf` | `a4089c3d8697cc3e4ec1e9f18c5acc24075e2f7b20b9d416dbeb412c5b0ecbad` |
-| `bsb-single-column-draft.pdf` | `6f71d72896628f177cbf80a913f8b367aa9a7ca3f047276f502c0278df835622` |
+| `bsb-single-column-draft.pdf` | `248ccd6baa96f3cacd122855407a1f4aeff8e4efd6220182205147d0081502a4` |
