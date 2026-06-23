@@ -3,13 +3,35 @@ __pycache__/
 *.pyo
 *.egg-info/
 .venv/
+.venv-*/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.agents/
+replit.md
 build/
 dist/
 .env
+.env.*
+!.env.example
 *.pdf
+!drafts/primary/bsb-primary-draft.pdf
+!drafts/primary/bsb-single-column-draft.pdf
 !examples/*.pdf
 *.epub
 *.zip
 *.png
 bsb-*.typ
 .DS_Store
+
+# TTS generated audio and venvs
+examples/tts/output/
+examples/tts/.venv/
+examples/tts/.venv-chatterbox/
+*.wav
+*.aiff
+
+# Go compiled binary
+scripts/tui/bsb-tts-tui
