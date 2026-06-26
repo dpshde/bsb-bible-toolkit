@@ -1,217 +1,293 @@
-# BSB Bible Audiobook - Podcast Distribution Plan
+# BSB Bible Audio - Distribution Plan
 
 ## Goal
 
-Generate a full Bible audiobook (BSB translation) using ElevenLabs TTS (Bill voice)
-and distribute as a single podcast with seasons-per-book via RSS to
-YouTube Music, Spotify, Apple Podcasts, and more.
+Generate a full Bible audiobook (BSB translation) using ElevenLabs TTS and
+distribute freely. No paywalls, no licensing fees. "Freely you received,
+freely give." (Matthew 10:8)
 
-## Architecture
+## Why
+
+The Berean Standard Bible is a modern, public-domain (CC0) translation that
+proves world-class Bible translation doesn't need to be commercialized.
+This project makes it available as audio, chapter by chapter, at no cost.
+
+Learn more about the case for freely-given ministry: sellingjesus.org
+
+## Pipeline
 
 ```
 BSB JSONL
   |
   v
-[1. TTS Generation] -- per-verse MP3 --> ffmpeg concat --> per-chapter MP3
+[1. TTS Generation] -- per-chapter MP3 via ElevenLabs Flash v2.5
+  |                    scripts/generate_elevenlabs_audio.py
+  v
+output/elevenlabs_audio/<book>/<book>_chapter_01.mp3
   |
   v
-output/elevenlabs_audio/
-  <book_slug>/
-    chapter_01/
-      <book>_chapter_01.mp3       (final chapter audio)
-      <book>_chapter_01.mp4       (YouTube video with cover art)
-      verse_0000.mp3              (individual verse fragments)
-      .checkpoint.json            (resume state)
-    chapter_02/
-      ...
+[2. YouTube Upload] -- static image + audio = MP4, uploaded via Data API
+  |                     scripts/upload_youtube.py
+  v
+YouTube channel: per-book playlists, each marked as a podcast in YT Studio
   |
   v
-[2. Static Hosting] -- upload MP3s --> Arweave / S3 / R2
-  |
-  v
-[3. RSS Feed Generation] -- single feed, seasons = books --> podcast.xml
-  |
-  v
-[4. Submit RSS once] --> YouTube Music, Spotify, Apple Podcasts
+[3. RSS Feed] (optional, for Spotify/Apple) -- scripts/generate_podcast_rss.py
+                MP3s hosted on GitHub Releases, RSS XML uploaded as release asset
 ```
 
-## Podcast Structure: Single Show, Seasons Per Book
+## Distribution Channels
 
-One podcast ("The BSB Bible Audiobook") with 66 seasons.
-Each season is a book; each episode is a chapter.
+| Platform  | Method                          | Status       |
+|-----------|---------------------------------|--------------|
+| YouTube   | Direct MP4 upload + playlist    | Working      |
+| YT Music  | Mark playlist as podcast in Studio | Working   |
+| Spotify   | RSS feed submission             | Ready (RSS)  |
+| Apple     | RSS feed submission             | Ready (RSS)  |
 
-```
-The BSB Bible Audiobook
-  Season 1: Genesis        (50 episodes)
-  Season 2: Exodus         (40 episodes)
-  ...
-  Season 20: Proverbs      (31 episodes)
-  ...
-  Season 66: Revelation    (22 episodes)
-```
+### YouTube (primary)
 
-- One RSS feed, one submission per platform
-- Apple Podcasts and Spotify display seasons natively
-- YouTube Music shows it as one show with seasonal grouping
-- Episodes are sequential within each season (chapter order)
-- Uses `<itunes:season>` and `<itunes:episode>` tags
+- Each book = one playlist, titled "<Book> - BSB Bible Audio"
+- Each chapter = one video, titled "<Book> <N> - BSB Bible Audio"
+- Static image (brand emblem) + audio, encoded as 1080p MP4 via ffmpeg
+- Mark each playlist as a podcast in YouTube Studio for YT Music playback
+- Playlists serve as podcast seasons; videos as episodes
 
-## Phase 1: TTS Generation (scripts/generate_elevenlabs_audio.py)
+### RSS Feed (for Spotify/Apple)
 
-**Status:** Script written, needs ffmpeg + test run
+- Single feed: "The BSB Bible Audio"
+- 66 seasons (canonical Bible order), chapters as episodes
+- MP3s hosted as GitHub Release assets (per-book releases)
+- RSS XML uploaded as a release asset for a public URL
+- Submit once to Spotify and Apple; they auto-ingest new episodes
 
-- API: ElevenLabs TTS (`xi-api-key` auth)
-- Voice: Bill (`pqHfZKP75CvOlQylNhV4`)
-- Model: `eleven_v3`
-- Output: per-chapter MP3, per-book folders
-- Features:
-  - Per-verse generation (resumable via checkpoint)
-  - ffmpeg concat with 400ms silence between verses
-  - Optional MP4 creation with cover art for YouTube
-  - ID3 metadata embedding
-  - Dry-run mode for cost estimation
+## Scripts
 
-**Commands:**
+### scripts/generate_elevenlabs_audio.py
+Per-chapter TTS via ElevenLabs Flash v2.5. Checkpointed, resumable.
+
 ```bash
-# Single book
-python scripts/generate_elevenlabs_audio.py \
-  --api-key sk_... --book Jonah --cover assets/cover.png
-
-# Dry run (cost estimate)
-python scripts/generate_elevenlabs_audio.py \
-  --api-key sk_... --book Proverbs --dry-run
-
-# Entire Bible
-python scripts/generate_elevenlabs_audio.py \
-  --api-key sk_... --all --cover assets/cover.png
+python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Philippians
+python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Philippians --dry-run
 ```
 
-**Output structure:**
-```
-output/elevenlabs_audio/
-  jonah/
-    chapter_01/
-      jonah_chapter_01.mp3
-      jonah_chapter_01.mp4
-      verse_0000.mp3
-      .checkpoint.json
-    chapter_02/ ...
-  proverbs/
-    chapter_01/ ...
-```
+### scripts/upload_youtube.py
+Builds MP4 (static image + audio) and uploads to YouTube. Creates per-book
+playlists. Descriptions emphasize the BSB's public-domain, freely-given nature.
 
-**Credit budget:**
-- Full Bible: ~3.1M characters
-- Current balance: ~113K credits
-- Estimated cost: ~3.1M credits (need to top up or use Creator monthly allotment)
-
-## Phase 2: Static Hosting
-
-**Options (in priority order):**
-
-1. **Arweave** (permanent, already used in repo)
-   - Upload via `arweave upload <file>` or SDK
-   - URLs: `https://arweave.net/<tx-id>`
-   - Cost: ~$2-5 for ~2GB total
-   - Pro: permanent, no recurring fees
-
-2. **Cloudflare R2** (cheap, fast CDN)
-   - `rclone copy output/ r2:bsb-audio/`
-   - URLs: `https://pub-xxx.r2.dev/<book>/<chapter>.mp3`
-
-3. **GitHub Releases** (free, up to 2GB per file)
-   - Attach MP3s as release assets
-
-**Decision needed:** Which host? Arweave is simplest given existing tooling.
-
-## Phase 3: RSS Feed Generation (scripts/generate_podcast_rss.py)
-
-**Status:** Not yet built
-
-Generates a single podcast RSS 2.0 feed with iTunes season/episode tags:
-
-```xml
-<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
-  <channel>
-    <title>The BSB Bible Audiobook</title>
-    <description>The complete Berean Standard Bible, narrated by AI.
-    Organized by book as seasons, chapters as episodes.</description>
-    <itunes:author>Crafted BSB Bible</itunes:author>
-    <itunes:image href="https://host/cover.png" />
-    <itunes:category text="Religion &amp; Spirituality" />
-    <item>
-      <title>Genesis - Chapter 1</title>
-      <itunes:season>1</itunes:season>
-      <itunes:episode>1</itunes:episode>
-      <enclosure url="https://host/genesis/chapter_01.mp3" length="1234567" type="audio/mpeg" />
-      <itunes:duration>180</itunes:duration>
-      <guid>bsb-genesis-001</guid>
-      <pubDate>Wed, 25 Jun 2025 00:00:00 GMT</pubDate>
-    </item>
-    ...
-    <item>
-      <title>Proverbs - Chapter 1</title>
-      <itunes:season>20</itunes:season>
-      <itunes:episode>1</itunes:episode>
-      ...
-    </item>
-  </channel>
-</rss>
-```
-
-**Season mapping (canonical Bible book order):**
-```
-Season  1: Genesis         Season 24: Obadiah
-Season  2: Exodus          Season 25: Jonah
-Season  3: Leviticus       Season 26: Micah
-...
-Season 20: Proverbs        Season 40: Matthew
-Season 21: Ecclesiastes    Season 41: Mark
-...
-```
-
-**Commands:**
 ```bash
-# Generate the single podcast feed
+python scripts/upload_youtube.py --book Philippians --chapter 1
+python scripts/upload_youtube.py --book Philippians --all
+python scripts/upload_youtube.py --book Philippians --all --dry-run
+```
+
+### scripts/generate_podcast_rss.py
+Generates a podcast RSS feed with iTunes season/episode tags. Supports
+GitHub Releases hosting via `--github-releases` or custom hosting via
+`--base-url`.
+
+```bash
+# GitHub Releases hosting (per-book releases)
 python scripts/generate_podcast_rss.py \
-  --audio-dir output/elevenlabs_audio \
-  --base-url https://arweave.net/bsb-audio \
-  --output output/rss/podcast.xml
+    --github-releases dpshde/bsb-bible-toolkit \
+    --books Philippians \
+    --output output/rss/podcast.xml
+
+# Custom hosting
+python scripts/generate_podcast_rss.py \
+    --base-url https://arweave.net/bsb-audio \
+    --output output/rss/podcast.xml
+
+# Dry run
+python scripts/generate_podcast_rss.py --github-releases dpshde/bsb-bible-toolkit --dry-run
 ```
 
-## Phase 4: Distribution Submission
+## Current Progress
 
-**One-time setup, one RSS URL:**
+- Philippians (4 chapters): audio generated, uploaded to YouTube, RSS feed live
+- Hebrews (13 chapters): audio generated, 6/13 uploaded (hit daily limit)
+- Mark (16 chapters): audio generated
+- Remaining 63 books: not yet generated
 
-| Platform | Method | Requirement |
-|----------|--------|-------------|
-| YouTube Music | YT Studio > Podcasts > New > RSS URL | Google account |
-| Spotify | podcasters.spotify.com > Submit RSS | Spotify account |
-| Apple Podcasts | podcastsconnect.apple.com > Add Show | Apple ID |
+## YouTube Daily Upload Limit
 
-All platforms auto-ingest new episodes when the RSS feed updates.
+YouTube enforces a daily video upload quota. For unverified/unlisted OAuth apps
+in testing mode, the limit is approximately **10 videos per 24 hours** (we hit
+this after uploading 4 Philippians + 6 Hebrews chapters in one session).
 
-## Phase 5: Automation (optional, later)
+Verifying the YouTube account (phone verification in YouTube Studio) raises the
+limit, but the exact threshold depends on account age, history, and channel
+standing.
 
-- GitHub Action to auto-generate new books as credits allow
-- Auto-upload to Arweave on generation
-- Auto-update RSS feed
-- Scheduled releases (drip chapters weekly)
+**Impact on the full Bible:** 1,189 chapters at 10/day = ~119 days of uploads.
+Even at a verified 50/day, that's ~24 days. This is the primary bottleneck.
 
-## Cover Art
+## Tradeoffs: Current Approach (One Video Per Chapter)
 
-- Need 3000x3000px PNG (one main cover, optionally per-season variants)
-- Could use `scripts/imagegen` skill or source externally
-- Must include: "The BSB Bible Audiobook", narrator credit
+**Current architecture:** Each chapter becomes its own YouTube video with a
+static image + audio, organized into per-book playlists.
 
-## TODO
+### Pros
+- Each chapter individually searchable on YouTube
+- Per-book playlists work as podcast seasons; markable as podcasts in YT Studio
+- Clean per-chapter analytics (views, watch time per chapter)
+- Simple pipeline: TTS -> ffmpeg MP4 -> API upload
+- Existing RSS feed maps 1:1 to videos
 
-- [ ] Install ffmpeg (`brew install ffmpeg`)
-- [ ] Test TTS pipeline on Jonah (4 chapters)
-- [ ] Verify audio quality and pacing
-- [ ] Decide on hosting (Arweave vs R2)
-- [ ] Build `scripts/generate_podcast_rss.py` (single feed, seasons)
-- [ ] Generate cover art
-- [ ] Test RSS feed validity (castfeedvalidator.com)
-- [ ] Submit RSS to YouTube, Spotify, Apple
-- [ ] Estimate full Bible credit cost and top up balance
+### Cons
+- **Daily upload limit** makes full Bible take months (see above)
+- 1,189 videos is heavy channel clutter; viewers may find it overwhelming
+- Each video is a static image with audio, minimal visual value per upload
+- No multi-language support without uploading separate videos per language
+  (would multiply upload count by N languages)
+- Upload quota consumed per video regardless of content simplicity
+
+## Alternatives Considered
+
+### 1. Multi-Audio-Track Per Video (YouTube MLA Feature)
+
+YouTube supports adding multiple audio tracks to a single video (Multi-Language
+Audio). Viewers switch between tracks in the player settings.
+
+**How it works:**
+- Upload one base video per chapter (English audio + static image)
+- Add additional audio tracks (other voices, other languages) via YouTube Studio
+- Each track must match video duration within +/- 1 second
+- Supported formats: MP3, M4A, WAV, FLAC (up to 2GB each)
+
+**API limitation:** The YouTube Data API v3 does NOT expose an endpoint for
+uploading additional audio tracks. Multi-audio-track upload is **YouTube Studio
+UI only**. The API can upload the base video, but every additional track must be
+added manually in Studio.
+
+**Pros:**
+- One video per chapter regardless of how many languages/voices
+- Viewers pick their preferred audio track in-player
+- Clean channel (1,189 videos max, not 1,189 x N languages)
+- Localized metadata (title, description, tags) per language via Studio
+
+**Cons:**
+- Does NOT solve the daily upload limit (still 1,189 base videos needed)
+- Additional audio tracks require manual YouTube Studio work per video
+- No API automation for track uploads; doesn't scale to 1,189 chapters x N tracks
+- Duration must match exactly; our TTS audio lengths vary per voice/language
+
+**Verdict:** Good for a handful of high-value languages on popular videos, but
+not practical for automated full-Bible coverage due to the manual Studio step.
+
+### 2. Per-Book Compilation Videos
+
+Combine all chapters of a book into one long YouTube video with chapter
+timestamps/markers.
+
+**How it works:**
+- ffmpeg concatenates all chapter MP3s into one audio track
+- One MP4 per book (static image + full book audio)
+- Chapter markers in the video description for navigation
+- 66 videos total instead of 1,189
+
+**Pros:**
+- 66 videos = well within daily upload limits (upload the entire Bible in ~7 days)
+- Clean channel layout (one video per book)
+- Each video is substantial (30 min - several hours), which YouTube's algorithm
+  favors for watch time
+- Chapter markers provide navigation
+
+**Cons:**
+- Loses individual chapter searchability on YouTube
+- No per-chapter analytics
+- RSS feed no longer maps 1:1 to videos (podcast episodes are per-chapter)
+- Large file sizes (some books like Psalms/Isaiah would be many hours long)
+- Can't mark individual chapters as podcast episodes in YT Music
+
+**Verdict:** Solves the upload limit problem entirely. Best for YouTube
+discovery and watch-time optimization. Loses granularity.
+
+### 3. Account Verification
+
+Verify the YouTube account to increase the daily upload limit.
+
+**How it works:**
+- YouTube Studio > Settings > Feature eligibility > Verify phone number
+- Raises limit (exact number varies, typically 50-100+/day for verified accounts)
+- May require additional verification for very high volumes
+
+**Pros:**
+- No architecture change needed
+- Keeps per-chapter searchability and analytics
+- Simplest fix
+
+**Cons:**
+- Still 1,189 videos; even at 50/day that's ~24 days
+- Channel still has 1,189 videos (clutter concern remains)
+- Doesn't address multi-language scaling
+
+**Verdict:** Easy win that extends the current approach's runway. Pair with
+batching uploads across multiple days.
+
+### 4. RSS-Only Distribution (No YouTube Videos)
+
+Skip YouTube video uploads entirely. Distribute only via RSS podcast feed to
+YouTube Podcasts, Spotify, and Apple.
+
+**How it works:**
+- Host all MP3s on GitHub Releases (or R2/Arweave)
+- Generate one RSS feed with all 1,189 chapters
+- Submit RSS to YouTube Podcasts, Spotify, Apple
+- Platforms ingest episodes from the feed automatically
+
+**Pros:**
+- No daily upload limit (RSS is a catalog; MP3s are hosted externally)
+- One submission per platform; new episodes auto-ingested
+- Native podcast structure on all platforms (seasons, episodes)
+- No ffmpeg/MP4 encoding needed
+- No YouTube API quota consumed
+
+**Cons:**
+- YouTube Podcasts via RSS showed greyed-out/unplayable episodes in YT Music
+  during testing (may be a transient issue or a limitation of RSS-ingested content)
+- No YouTube search discovery (RSS podcast episodes don't appear in YouTube
+  search the same way uploaded videos do)
+- No visual component (no static image, no YouTube thumbnails)
+- Dependent on external hosting (GitHub Releases URLs work but aren't a CDN)
+
+**Verdict:** Best for Spotify/Apple. Uncertain for YouTube/YT Music due to the
+greyed-out issue observed during testing.
+
+### 5. Hybrid: Compilation Videos + RSS Podcast Feed
+
+Combine approaches 2 and 4.
+
+**YouTube:** One long-form video per book (66 total) with chapter markers.
+Solves upload limit, maximizes watch time, clean channel.
+
+**Podcast platforms:** RSS feed with individual chapter episodes (1,189 total).
+Spotify and Apple get per-chapter episodes; YouTube gets per-book compilations.
+
+**Pros:**
+- Best of both: YouTube discovery via compilations, podcast granularity via RSS
+- 66 YouTube uploads (done in a week)
+- 1,189 RSS episodes (no upload limit)
+- Per-chapter listening on Spotify/Apple, per-book listening on YouTube
+
+**Cons:**
+- Two separate distribution pipelines to maintain
+- YouTube listeners can't navigate to individual chapters (only markers)
+- More complex setup
+
+**Verdict:** Most robust. Solves upload limit, serves all platforms well,
+preserves per-chapter access where it matters (podcast apps).
+
+## Recommendation
+
+Short-term: **Verify the YouTube account** (option 3) to raise the daily limit
+and continue the current per-chapter approach while the Bible is being generated.
+
+Long-term: **Hybrid approach** (option 5) -- per-book compilation videos on
+YouTube for discovery + RSS feed for per-chapter podcast distribution on
+Spotify/Apple. This eliminates the upload bottleneck and serves each platform
+according to its strengths.
+
+Multi-audio-track (option 1) can be layered on top of either approach for
+high-value languages on specific books, but the manual Studio requirement makes
+it impractical for full-Bible automation.

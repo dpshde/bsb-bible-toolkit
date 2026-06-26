@@ -1,41 +1,27 @@
 #!/usr/bin/env python3
-"""Generate Bible audiobook audio via ElevenLabs TTS API and package for YouTube.
+"""Generate Bible audiobook audio via ElevenLabs TTS API.
 
-Reads BSB JSONL, generates per-chapter MP3 audio using ElevenLabs TTS,
-then wraps each chapter into an MP4 (with cover art) for YouTube upload.
+One API call per chapter. The model handles pacing and prosody naturally.
+Chapters over 5000 characters are split at sentence boundaries.
 
 Features:
-  - Per-verse generation then ffmpeg concat (natural pacing, resumable)
-  - Checkpoint per verse (resume after interruption)
-  - MP3 output per chapter (for Spotify/DistroKid)
-  - MP4 output per chapter (for YouTube, with cover art image)
-  - ID3 metadata embedding
+  - Per-book output folders
+  - Checkpointing (resume after interruption)
   - Dry-run mode for cost estimation
 
 Requirements:
   - pip install requests
-  - ffmpeg (brew install ffmpeg)
-  - Cover art image (PNG/JPG) for YouTube videos
 
 Usage:
-  # Generate a single book
-  python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Proverbs --cover cover.png
-
-  # Estimate cost without generating
-  python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Proverbs --dry-run
-
-  # Generate the entire Bible
-  python scripts/generate_elevenlabs_audio.py --api-key sk_... --all --cover cover.png
-
-  # Resume after interruption (just re-run the same command)
-  python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Proverbs --cover cover.png
+  python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Philippians
+  python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Philippians --dry-run
+  python scripts/generate_elevenlabs_audio.py --api-key sk_... --all
 """
 
 import argparse
 import json
 import os
-import subprocess
-import sys
+import re
 import time
 from pathlib import Path
 
@@ -43,7 +29,7 @@ import requests
 
 DEFAULT_JSONL = os.path.expanduser("~/Downloads/bsb.jsonl")
 DEFAULT_VOICE_ID = "pqHfZKP75CvOlQylNhV4"
-DEFAULT_MODEL_ID = "eleven_v3"
+DEFAULT_MODEL_ID = "eleven_flash_v2_5"
 DEFAULT_OUT_DIR = Path("output/elevenlabs_audio")
 TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 MAX_CHARS_PER_REQUEST = 4900
@@ -70,13 +56,7 @@ def load_bible(jsonl_path):
 
 
 def slugify(value):
-    return (
-        value.lower()
-        .replace(" ", "_")
-        .replace(".", "")
-        .replace(",", "")
-        .replace("-", "_")
-    )
+    return value.lower().replace(" ", "_").replace(".", "").replace(",", "").replace("-", "_")
 
 
 def get_headers(api_key):
@@ -87,8 +67,27 @@ def get_headers(api_key):
     }
 
 
-def generate_verse_audio(api_key, voice_id, model_id, text, output_path):
-    """Generate TTS audio for a single verse, save as MP3."""
+def split_long_text(text, max_chars=MAX_CHARS_PER_REQUEST):
+    """Split text at sentence boundaries if it exceeds max_chars."""
+    if len(text) <= max_chars:
+        return [text]
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    chunks = []
+    current = ""
+    for sent in sentences:
+        if len(current) + len(sent) + 1 > max_chars:
+            if current:
+                chunks.append(current.strip())
+            current = sent
+        else:
+            current += " " + sent if current else sent
+    if current.strip():
+        chunks.append(current.strip())
+    return chunks
+
+
+def generate_tts(api_key, voice_id, model_id, text, output_path):
+    """Generate TTS audio and save as MP3."""
     payload = {
         "text": text,
         "model_id": model_id,
@@ -100,7 +99,7 @@ def generate_verse_audio(api_key, voice_id, model_id, text, output_path):
                 TTS_URL.format(voice_id=voice_id),
                 headers=get_headers(api_key),
                 json=payload,
-                timeout=60,
+                timeout=120,
             )
             if res.status_code == 200:
                 with open(output_path, "wb") as f:
@@ -121,6 +120,112 @@ def generate_verse_audio(api_key, voice_id, model_id, text, output_path):
     return False
 
 
+def generate_chapter(api_key, voice_id, model_id, book_name, chapter_num,
+                     verses, out_dir, dry_run):
+    """Generate audio for a single chapter."""
+    book_slug = slugify(book_name)
+    chapter_slug = f"chapter_{chapter_num:02d}"
+    chapter_dir = out_dir / book_slug
+    chapter_dir.mkdir(parents=True, exist_ok=True)
+
+    mp3_path = chapter_dir / f"{book_slug}_{chapter_slug}.mp3"
+    checkpoint_path = chapter_dir / f".checkpoint_{chapter_slug}.json"
+    checkpoint = load_checkpoint(checkpoint_path)
+
+    chapter_title = f"{book_name} - Chapter {chapter_num}"
+
+    if checkpoint.get("complete") and mp3_path.exists():
+        print(f"  {chapter_title} - already done")
+        return True
+
+    # Build full chapter text: header + verses
+    verse_texts = [v["text"] for v in verses]
+    full_text = " ".join(verse_texts)
+
+    if dry_run:
+        print(f"  {chapter_title} - DRY RUN ({len(verses)} verses, {len(full_text)} chars)")
+        return True
+
+    print(f"  {chapter_title} - generating ({len(verses)} verses, {len(full_text)} chars)...")
+
+    # Generate header separately for a clean pause after the title
+    header_text = f"{book_name}. Chapter {chapter_num}."
+    header_file = chapter_dir / f".{chapter_slug}_header.mp3"
+
+    if not (checkpoint.get("header") and header_file.exists()):
+        if not generate_tts(api_key, voice_id, model_id, header_text, header_file):
+            print(f"    header: FAILED")
+            return False
+        checkpoint["header"] = True
+        save_checkpoint(checkpoint_path, checkpoint)
+        time.sleep(RATE_LIMIT_DELAY)
+
+    chunks = split_long_text(full_text)
+    if len(chunks) > 1:
+        print(f"    splitting into {len(chunks)} parts...")
+
+    chunk_files = []
+    for ci, chunk in enumerate(chunks):
+        chunk_key = f"chunk_{ci}"
+        chunk_file = chapter_dir / f".{chapter_slug}_part_{ci:02d}.mp3"
+
+        if checkpoint.get(chunk_key) and chunk_file.exists():
+            chunk_files.append(chunk_file)
+            continue
+
+        if not generate_tts(api_key, voice_id, model_id, chunk, chunk_file):
+            print(f"    part {ci}: FAILED")
+            return False
+
+        chunk_files.append(chunk_file)
+        checkpoint[chunk_key] = True
+        save_checkpoint(checkpoint_path, checkpoint)
+        time.sleep(RATE_LIMIT_DELAY)
+
+    # Final assembly: header + silence + body chunks
+    import subprocess
+
+    # Generate 1.5s silence file
+    silence_file = chapter_dir / f".{chapter_slug}_silence.mp3"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+         "-t", "1.5", "-q:a", "9", str(silence_file)],
+        capture_output=True, check=True,
+    )
+
+    all_parts = [header_file, silence_file] + chunk_files
+
+    all_parts = [header_file, silence_file] + chunk_files
+    concat_mp3s(all_parts, mp3_path)
+
+    # Clean up temp files
+    silence_file.unlink(missing_ok=True)
+    for cf in chunk_files:
+        cf.unlink(missing_ok=True)
+
+    checkpoint["complete"] = True
+    save_checkpoint(checkpoint_path, checkpoint)
+
+    size_mb = mp3_path.stat().st_size / (1024 * 1024)
+    print(f"    done: {mp3_path.name} ({size_mb:.1f} MB)")
+    return True
+
+
+def concat_mp3s(parts, output_path):
+    """Concatenate MP3 files using ffmpeg."""
+    list_file = output_path.with_suffix(".concat.txt")
+    with open(list_file, "w") as f:
+        for pf in parts:
+            f.write(f"file '{pf.resolve()}'\n")
+    import subprocess
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(list_file),
+         "-c", "copy", str(output_path)],
+        capture_output=True, check=True,
+    )
+    list_file.unlink(missing_ok=True)
+
+
 def load_checkpoint(path):
     if path.exists():
         with open(path) as f:
@@ -134,204 +239,8 @@ def save_checkpoint(path, data):
         json.dump(data, f, indent=2)
 
 
-def concat_verse_mp3s(verse_files, output_path):
-    """Concatenate verse MP3s into a single chapter MP3 using ffmpeg."""
-    list_file = output_path.with_suffix(".concat.txt")
-    with open(list_file, "w") as f:
-        for vf in verse_files:
-            f.write(f"file '{vf.resolve()}'\n")
-    cmd = [
-        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-        "-i", str(list_file),
-        "-c", "copy",
-        str(output_path),
-    ]
-    subprocess.run(cmd, capture_output=True, check=True)
-    list_file.unlink(missing_ok=True)
-
-
-def add_silence_between_verses(verse_files, output_path, silence_ms=300):
-    """Concat verse MP3s with a short silence between them for natural pacing."""
-    if not verse_files:
-        return
-    if silence_ms <= 0:
-        concat_verse_mp3s(verse_files, output_path)
-        return
-
-    chapter_dir = output_path.parent
-    silence_path = chapter_dir / ".silence.mp3"
-    subprocess.run(
-        [
-            "ffmpeg", "-y",
-            "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=mono",
-            "-t", f"{silence_ms / 1000}",
-            "-q:a", "9",
-            str(silence_path),
-        ],
-        capture_output=True,
-        check=True,
-    )
-
-    interleaved = []
-    for vf in verse_files:
-        interleaved.append(vf)
-        interleaved.append(silence_path)
-    interleaved.pop()
-
-    list_file = output_path.with_suffix(".concat.txt")
-    with open(list_file, "w") as f:
-        for vf in interleaved:
-            f.write(f"file '{vf.resolve()}'\n")
-    cmd = [
-        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-        "-i", str(list_file),
-        "-c", "copy",
-        str(output_path),
-    ]
-    subprocess.run(cmd, capture_output=True, check=True)
-    list_file.unlink(missing_ok=True)
-    silence_path.unlink(missing_ok=True)
-
-
-def create_youtube_video(mp3_path, cover_path, output_mp4, title, metadata=None):
-    """Wrap an MP3 with cover art into an MP4 for YouTube."""
-    cmd = [
-        "ffmpeg", "-y",
-        "-loop", "1",
-        "-i", str(cover_path),
-        "-i", str(mp3_path),
-        "-c:v", "libx264",
-        "-tune", "stillimage",
-        "-c:a", "aac",
-        "-b:a", "192k",
-        "-pix_fmt", "yuv420p",
-        "-shortest",
-        "-metadata", f"title={title}",
-    ]
-    if metadata:
-        for k, v in metadata.items():
-            cmd.extend(["-metadata", f"{k}={v}"])
-    cmd.append(str(output_mp4))
-    subprocess.run(cmd, capture_output=True, check=True)
-
-
-def embed_id3_tags(mp3_path, title, album, track_num, total_tracks):
-    """Embed ID3 metadata tags in MP3."""
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", str(mp3_path),
-        "-c", "copy",
-        "-metadata", f"title={title}",
-        "-metadata", f"album={album}",
-        "-metadata", f"track={track_num}/{total_tracks}",
-        "-metadata", f"artist=Crafted BSB Bible",
-        "-metadata", "genre=Audiobook",
-    ]
-    cmd.append(str(mp3_path))
-    subprocess.run(cmd, capture_output=True, check=True)
-
-
-def generate_chapter(
-    api_key, voice_id, model_id, book_name, chapter_num, verses,
-    out_dir, cover_path, silence_ms, dry_run
-):
-    """Generate audio for a single chapter."""
-    chapter_slug = f"chapter_{chapter_num:02d}"
-    book_slug = slugify(book_name)
-    chapter_dir = out_dir / book_slug / chapter_slug
-    chapter_dir.mkdir(parents=True, exist_ok=True)
-
-    checkpoint_path = chapter_dir / ".checkpoint.json"
-    checkpoint = load_checkpoint(checkpoint_path)
-
-    chapter_title = f"{book_name} - Chapter {chapter_num}"
-    album_name = f"{book_name} - BSB Audiobook"
-    total_verses = len(verses)
-
-    if checkpoint.get("chapter_complete"):
-        print(f"  {chapter_title} - already done")
-        return True
-
-    if dry_run:
-        char_count = sum(len(v["text"]) for v in verses)
-        print(f"  {chapter_title} - DRY RUN ({total_verses} verses, {char_count} chars)")
-        return True
-
-    print(f"  {chapter_title} - generating {total_verses} verses...")
-    verse_files = []
-
-    for i, verse in enumerate(verses):
-        verse_key = str(i)
-        verse_file = chapter_dir / f"verse_{i:04d}.mp3"
-
-        if checkpoint.get(verse_key):
-            verse_files.append(verse_file)
-            continue
-
-        text = verse["text"]
-        if len(text) > MAX_CHARS_PER_REQUEST:
-            print(f"    verse {i + 1}: too long ({len(text)} chars), splitting...")
-            chunks = [
-                text[j:j + MAX_CHARS_PER_REQUEST]
-                for j in range(0, len(text), MAX_CHARS_PER_REQUEST)
-            ]
-            chunk_files = []
-            for ci, chunk in enumerate(chunks):
-                chunk_file = chapter_dir / f"verse_{i:04d}_chunk_{ci:02d}.mp3"
-                if generate_verse_audio(api_key, voice_id, model_id, chunk, chunk_file):
-                    chunk_files.append(chunk_file)
-                    time.sleep(RATE_LIMIT_DELAY)
-                else:
-                    print(f"    verse {i + 1} chunk {ci}: FAILED")
-                    return False
-            concat_verse_mp3s(chunk_files, verse_file)
-            for cf in chunk_files:
-                cf.unlink(missing_ok=True)
-        else:
-            if not generate_verse_audio(api_key, voice_id, model_id, text, verse_file):
-                print(f"    verse {i + 1}: FAILED")
-                return False
-            time.sleep(RATE_LIMIT_DELAY)
-
-        verse_files.append(verse_file)
-        checkpoint[verse_key] = True
-        save_checkpoint(checkpoint_path, checkpoint)
-
-    chapter_mp3 = chapter_dir / f"{book_slug}_{chapter_slug}.mp3"
-    print(f"    concatenating {len(verse_files)} verses...")
-    add_silence_between_verses(verse_files, chapter_mp3, silence_ms)
-
-    track_num = chapter_num
-    total_chapters = 999
-    try:
-        embed_id3_tags(chapter_mp3, chapter_title, album_name, track_num, total_chapters)
-    except Exception:
-        pass
-
-    if cover_path and cover_path.exists():
-        video_mp4 = chapter_dir / f"{book_slug}_{chapter_slug}.mp4"
-        print(f"    creating YouTube video...")
-        try:
-            create_youtube_video(
-                chapter_mp3, cover_path, video_mp4, chapter_title,
-                {"album": album_name, "artist": "Crafted BSB Bible"},
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"    WARNING: video creation failed: {e.stderr.decode()[:200] if e.stderr else 'unknown'}")
-
-    checkpoint["chapter_complete"] = True
-    save_checkpoint(checkpoint_path, checkpoint)
-
-    size_mb = chapter_mp3.stat().st_size / (1024 * 1024)
-    print(f"    done: {chapter_mp3.name} ({size_mb:.1f} MB)")
-    return True
-
-
-def generate_book(
-    api_key, voice_id, model_id, book_name, chapters, out_dir,
-    cover_path, silence_ms, dry_run
-):
-    """Generate all chapters for a single book."""
+def generate_book(api_key, voice_id, model_id, book_name, chapters,
+                  out_dir, dry_run):
     total_verses = sum(len(v) for v in chapters.values())
     total_chars = sum(
         len(v["text"]) for ch_verses in chapters.values() for v in ch_verses
@@ -339,10 +248,9 @@ def generate_book(
     print(f"\n{book_name}: {len(chapters)} chapters, {total_verses} verses, {total_chars:,} chars")
 
     for ch_num in sorted(chapters.keys()):
-        verses = chapters[ch_num]
         if not generate_chapter(
-            api_key, voice_id, model_id, book_name, ch_num, verses,
-            out_dir, cover_path, silence_ms, dry_run
+            api_key, voice_id, model_id, book_name, ch_num,
+            chapters[ch_num], out_dir, dry_run
         ):
             print(f"  FAILED at {book_name} chapter {ch_num}")
             return False
@@ -351,34 +259,16 @@ def generate_book(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate Bible audiobook audio via ElevenLabs TTS for YouTube"
+        description="Generate Bible audiobook audio via ElevenLabs TTS"
     )
     parser.add_argument("--api-key", required=True, help="ElevenLabs API key")
-    parser.add_argument(
-        "--jsonl", default=DEFAULT_JSONL, help="Path to BSB JSONL file"
-    )
-    parser.add_argument(
-        "--voice-id", default=DEFAULT_VOICE_ID, help="Voice ID (default: Bill)"
-    )
-    parser.add_argument(
-        "--model-id", default=DEFAULT_MODEL_ID, help="TTS model ID"
-    )
-    parser.add_argument(
-        "--out-dir", default=str(DEFAULT_OUT_DIR), help="Output directory"
-    )
-    parser.add_argument(
-        "--cover", help="Cover art image (PNG/JPG) for YouTube videos"
-    )
-    parser.add_argument(
-        "--silence-ms", type=int, default=400,
-        help="Silence between verses in milliseconds (default: 400)"
-    )
-    parser.add_argument("--book", help="Generate a single book (e.g. 'Proverbs')")
+    parser.add_argument("--jsonl", default=DEFAULT_JSONL, help="Path to BSB JSONL file")
+    parser.add_argument("--voice-id", default=DEFAULT_VOICE_ID, help="Voice ID")
+    parser.add_argument("--model-id", default=DEFAULT_MODEL_ID, help="TTS model ID")
+    parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR), help="Output directory")
+    parser.add_argument("--book", help="Generate a single book (e.g. 'Philippians')")
     parser.add_argument("--all", action="store_true", help="Generate the entire Bible")
-    parser.add_argument(
-        "--dry-run", action="store_true",
-        help="Show cost estimate without generating"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Show cost estimate")
     args = parser.parse_args()
 
     if not args.book and not args.all:
@@ -389,26 +279,16 @@ def main():
     print(f"Loaded {len(bible)} books")
 
     out_dir = Path(args.out_dir)
-    cover_path = Path(args.cover) if args.cover else None
-
-    if cover_path and not cover_path.exists():
-        print(f"WARNING: cover art not found at {cover_path}, skipping video creation")
-        cover_path = None
 
     if args.book:
         if args.book not in bible:
-            available = ", ".join(sorted(bible.keys()))
-            parser.error(f"Book '{args.book}' not found. Available: {available}")
-        generate_book(
-            args.api_key, args.voice_id, args.model_id, args.book,
-            bible[args.book], out_dir, cover_path, args.silence_ms, args.dry_run
-        )
+            parser.error(f"Book '{args.book}' not found. Available: {', '.join(sorted(bible.keys()))}")
+        generate_book(args.api_key, args.voice_id, args.model_id, args.book,
+                      bible[args.book], out_dir, args.dry_run)
     elif args.all:
         for book_name in sorted(bible.keys()):
-            if not generate_book(
-                args.api_key, args.voice_id, args.model_id, book_name,
-                bible[book_name], out_dir, cover_path, args.silence_ms, args.dry_run
-            ):
+            if not generate_book(args.api_key, args.voice_id, args.model_id, book_name,
+                                 bible[book_name], out_dir, args.dry_run):
                 print(f"\nStopped at {book_name}")
                 break
 

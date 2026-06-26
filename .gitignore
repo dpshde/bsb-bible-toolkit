@@ -36,3 +36,4 @@ examples/tts/.venv-chatterbox/
 # Go compiled binary
 scripts/tui/bsb-tts-tui
 output/
+.secrets/
