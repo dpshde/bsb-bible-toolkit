@@ -108,18 +108,29 @@ def find_audio(book, chapter):
     return None
 
 
+def audio_duration(path):
+    out = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+         "-of", "csv=p=0", str(path)],
+        capture_output=True, text=True, check=True,
+    )
+    return float(out.stdout.strip())
+
+
 def make_video(audio_path, image_path, out_path):
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    duration = audio_duration(audio_path)
     cmd = [
         "ffmpeg", "-y",
-        "-loop", "1", "-i", str(image_path),
+        "-loop", "1", "-framerate", "1", "-i", str(image_path),
         "-i", str(audio_path),
+        "-t", f"{duration:.3f}",
+        "-map", "0:v:0", "-map", "1:a:0",
         "-vf", "scale=1920:1080:flags=lanczos,unsharp=5:5:0.8:5:5:0.0",
         "-c:v", "libx264", "-tune", "stillimage",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k",
-        "-shortest",
-        "-r", "1",
+        "-movflags", "+faststart",
         str(out_path),
     ]
     subprocess.run(cmd, check=True, capture_output=True)
