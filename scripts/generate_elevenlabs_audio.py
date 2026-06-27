@@ -198,6 +198,9 @@ def generate_chapter(api_key, voice_id, model_id, book_name, chapter_num,
     all_parts = [header_file, silence_file] + chunk_files
     concat_mp3s(all_parts, mp3_path)
 
+    # Trim trailing silence (ElevenLabs appends several seconds of dead air)
+    trim_trailing_silence(mp3_path)
+
     # Clean up temp files
     silence_file.unlink(missing_ok=True)
     for cf in chunk_files:
@@ -209,6 +212,19 @@ def generate_chapter(api_key, voice_id, model_id, book_name, chapter_num,
     size_mb = mp3_path.stat().st_size / (1024 * 1024)
     print(f"    done: {mp3_path.name} ({size_mb:.1f} MB)")
     return True
+
+
+def trim_trailing_silence(mp3_path):
+    """Remove trailing silence from an MP3, keeping 0.5s for natural pacing."""
+    import subprocess
+    tmp = mp3_path.with_suffix(".trimmed.mp3")
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(mp3_path),
+         "-af", "silenceremove=stop_periods=-1:stop_duration=1.0:stop_threshold=-30dB,apad=pad_dur=0.5",
+         "-c:a", "libmp3lame", "-q:a", "2", str(tmp)],
+        capture_output=True, check=True,
+    )
+    tmp.replace(mp3_path)
 
 
 def concat_mp3s(parts, output_path):
