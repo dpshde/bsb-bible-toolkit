@@ -1,4 +1,4 @@
-// Command bsb-tts-tui is a bubbletea + lipgloss TUI for scripts/mlx_tts.py.
+// Command bsb-tts-tui is a bubbletea + lipgloss TUI for audio/local/mlx_tts.py.
 //
 // It shells out to the Python mlx_tts.py generate pipeline and renders a
 // live, easily legible progress dashboard: per-voice progress bars, spinner,
@@ -27,7 +27,7 @@ import (
 
 const (
 	defaultPythonBin = "python3"
-	defaultScript    = "scripts/mlx_tts.py"
+	defaultScript    = "audio/local/mlx_tts.py"
 	padding          = 2
 )
 

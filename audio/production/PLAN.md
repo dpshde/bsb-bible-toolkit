@@ -21,18 +21,18 @@ BSB JSONL
   |
   v
 [1. TTS Generation] -- per-chapter MP3 via ElevenLabs Flash v2.5
-  |                    scripts/generate_elevenlabs_audio.py
+  |                    audio/production/generate.py
   v
-output/elevenlabs_audio/<book>/<book>_chapter_01.mp3
+output/audio/production/<book>/<book>_chapter_01.mp3
   |
   v
 [2. YouTube Upload] -- static image + audio = MP4, uploaded via Data API
-  |                     scripts/upload_youtube.py
+  |                     audio/production/upload_youtube.py
   v
 YouTube channel: per-book playlists, each marked as a podcast in YT Studio
   |
   v
-[3. RSS Feed] (optional, for Spotify/Apple) -- scripts/generate_podcast_rss.py
+[3. RSS Feed] (optional, for Spotify/Apple) -- audio/production/generate_rss.py
                 MP3s hosted on GitHub Releases, RSS XML uploaded as release asset
 ```
 
@@ -63,43 +63,43 @@ YouTube channel: per-book playlists, each marked as a podcast in YT Studio
 
 ## Scripts
 
-### scripts/generate_elevenlabs_audio.py
+### audio/production/generate.py
 Per-chapter TTS via ElevenLabs Flash v2.5. Checkpointed, resumable.
 
 ```bash
-python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Philippians
-python scripts/generate_elevenlabs_audio.py --api-key sk_... --book Philippians --dry-run
+python audio/production/generate.py --api-key sk_... --book Philippians
+python audio/production/generate.py --api-key sk_... --book Philippians --dry-run
 ```
 
-### scripts/upload_youtube.py
+### audio/production/upload_youtube.py
 Builds MP4 (static image + audio) and uploads to YouTube. Creates per-book
 playlists. Descriptions emphasize the BSB's public-domain, freely-given nature.
 
 ```bash
-python scripts/upload_youtube.py --book Philippians --chapter 1
-python scripts/upload_youtube.py --book Philippians --all
-python scripts/upload_youtube.py --book Philippians --all --dry-run
+python audio/production/upload_youtube.py --book Philippians --chapter 1
+python audio/production/upload_youtube.py --book Philippians --all
+python audio/production/upload_youtube.py --book Philippians --all --dry-run
 ```
 
-### scripts/generate_podcast_rss.py
+### audio/production/generate_rss.py
 Generates a podcast RSS feed with iTunes season/episode tags. Supports
 GitHub Releases hosting via `--github-releases` or custom hosting via
 `--base-url`.
 
 ```bash
 # GitHub Releases hosting (per-book releases)
-python scripts/generate_podcast_rss.py \
+python audio/production/generate_rss.py \
     --github-releases dpshde/bsb-bible-toolkit \
     --books Philippians \
     --output output/rss/podcast.xml
 
 # Custom hosting
-python scripts/generate_podcast_rss.py \
+python audio/production/generate_rss.py \
     --base-url https://arweave.net/bsb-audio \
     --output output/rss/podcast.xml
 
 # Dry run
-python scripts/generate_podcast_rss.py --github-releases dpshde/bsb-bible-toolkit --dry-run
+python audio/production/generate_rss.py --github-releases dpshde/bsb-bible-toolkit --dry-run
 ```
 
 ## Current Progress

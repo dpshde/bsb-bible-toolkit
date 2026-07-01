@@ -60,7 +60,7 @@ broaden if needed.
 Recommended public-readiness checks:
 
 ```bash
-python -m compileall -q src scripts design_bsb.py smoke_test.py setup.py
+python -m compileall -q src scripts audio design_bsb.py smoke_test.py setup.py
 python design_bsb.py --qa-only --verify
 git diff --check
 ```

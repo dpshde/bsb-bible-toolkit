@@ -26,14 +26,18 @@ dist/
 bsb-*.typ
 .DS_Store
 
-# TTS generated audio and venvs
-examples/tts/output/
-examples/tts/.venv/
-examples/tts/.venv-chatterbox/
+# Audio generated output and local venvs
+output/audio/
+audio/local/.venv*/
 *.wav
 *.aiff
 
+# Legacy audio output paths (pre-reorg)
+output/elevenlabs_audio/
+examples/tts/output/
+examples/tts/.venv*/
+
 # Go compiled binary
-scripts/tui/bsb-tts-tui
+audio/local/tui/bsb-tts-tui
 output/
 .secrets/
