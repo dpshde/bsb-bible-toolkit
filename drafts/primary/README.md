@@ -1,8 +1,10 @@
 # Primary BSB Draft
 
 This directory is the active prototyping area for the current BSB PDF draft.
-Generated PDFs, source archives, and rendered QA images are intentionally
-ignored by git; this manifest records the current reproducible state.
+The current release PDFs are committed so the delivery workflow can verify and
+package them. Source archives, work PDFs, and rendered QA images are
+intentionally ignored by git; this manifest records the current reproducible
+state.
 
 ## Primary Fixed-Layout Draft
 
@@ -111,5 +113,5 @@ The comparison sheets are written to:
 
 | Artifact | Semantic SHA-256 |
 |----------|------------------|
-| `bsb-primary-draft.pdf` | `a4089c3d8697cc3e4ec1e9f18c5acc24075e2f7b20b9d416dbeb412c5b0ecbad` |
+| `bsb-primary-draft.pdf` | `db33a516822ddfa9a4ac07024379b724396e1ccc5974bc86414d244ebc11b7ea` |
 | `bsb-single-column-draft.pdf` | `248ccd6baa96f3cacd122855407a1f4aeff8e4efd6220182205147d0081502a4` |

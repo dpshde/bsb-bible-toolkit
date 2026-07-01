@@ -2,14 +2,60 @@
 
 Generate custom PDFs and EPUBs from the Berean Standard Bible (BSB) source files.
 
-## Quick Start
+## Mission
+
+This project exists to help Christian technologists, designers, publishers, and
+builders download, study, remix, and share Scripture resources in creative new
+ways. The BSB text has been dedicated to the public domain, so the goal here is
+to make practical tooling and example editions that encourage more people to
+distribute Scripture freely.
+
+This is an unofficial community toolkit. It is not affiliated with or endorsed
+by the Berean Bible Translation Committee, Bible Hub, or the other BSB project
+partners.
+
+## Download and Share
+
+If you only want the current generated Bible PDFs, download them directly:
+
+| Edition | File |
+|---------|------|
+| Primary fixed-layout PDF | [`drafts/primary/bsb-primary-draft.pdf`](drafts/primary/bsb-primary-draft.pdf) |
+| Single-column PDF | [`drafts/primary/bsb-single-column-draft.pdf`](drafts/primary/bsb-single-column-draft.pdf) |
+
+If GitHub Releases are available for this repo, prefer the latest release for
+versioned PDFs and SHA-256 checksums.
+
+You are encouraged to copy, share, print, adapt, and build new Scripture tools
+from these resources. Keep the BSB text verbatim if you use the Berean name; if
+you make textual changes, present the result as your own derivative rather than
+as an official Berean Bible text.
+
+## Build Your Own Edition
 
 ```bash
+# Create and activate an isolated environment
+python -m venv .venv
+source .venv/bin/activate
+
 # Install dependencies
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 
 # Build the primary PDF draft from the official fixed-layout BSB PDF
 python design_bsb.py
+```
+
+Commands use `python` for readability; use `python3` on systems where `python`
+is not available.
+
+After installing the package in editable mode, you can use the console commands
+directly:
+
+```bash
+python -m pip install -e .
+bsb-design --qa-only --verify
+bsb-reflow-pdf drafts/primary/source/engbsb_usfm.zip my-single-column.pdf --font-dir fonts --columns 1
 ```
 
 The current prototyping flow has one primary draft. It uses
@@ -20,6 +66,8 @@ route.bible annotations, then redraws the fixed layout with Lexend.
 |------|---------|
 | `design_bsb.py` | Single entry point for the draft workflow |
 | `src/bsb_pdf_toolkit/` | Python package containing generators and utilities |
+| `audio/` | BSB audio tooling: `production/` (ElevenLabs) and `local/` (MLX/Kokoro) |
+| `scripts/` | Compatibility shims and `scripts/pdf/` utilities |
 | `fonts/` | Font assets used by draft rendering |
 | `drafts/primary/README.md` | Current draft manifest and QA record |
 | `drafts/primary/source/bsb-book-9.pdf` | Downloaded or supplied fixed-layout source |
@@ -61,7 +109,7 @@ The primary draft uses the calmer Lexend profile by default:
 | `soft` | Lexend Light body, Regular italics, SemiBold headings/verse numbers |
 | `airy` | Lexend Thin body, Light italics, Medium headings/verse numbers |
 | `standard` | Lexend Regular body, Medium italics, Bold headings/verse numbers |
- 
+
 An exploratory single-column reflow is also available:
 
 ```bash
@@ -98,22 +146,37 @@ Add `--strict-fingerprints` when you need the current SHA-256 fingerprints to
 match exactly. The default verifier enforces stable semantic fingerprints and
 reports raw PDF hashes.
 
+## How to Help
+
+Ideas that fit this repo's mission:
+
+- improve readable, printable BSB layouts;
+- build web, mobile, EPUB, print, or study-tool experiments around the public-domain BSB;
+- improve route.bible linking, OSIS indexing, and reader navigation;
+- add clear documentation so churches, ministries, and developers can reuse the work;
+- share examples of creative Scripture distribution projects inspired by this toolkit.
+
+Please keep changes reproducible, document generated artifacts, and run the
+structural verifier before proposing release-affecting changes.
+
 ## CI/CD Asset Delivery
 
 This repo includes a GitHub Actions workflow at
 `.github/workflows/deliver-assets.yml` that verifies the committed PDF
-artifacts, stamps release copies as `Version`, packages them with SHA-256
-checksums, uploads the package as a separate GitHub Actions artifact per
-variant, uploads the generated PDFs and checksums to a GitHub Release tagged
-with the requested version, and publishes the variants to itch.io through
-Butler.
+artifacts, stamps release copies as `Version`, and packages them with SHA-256
+checksums. Manual dispatch runs can also upload the generated PDFs and checksums
+to a GitHub Release, publish the variants to itch.io through Butler, and deploy
+the web-reader bundle to Permaweb.
 
-Configure these repository secrets before enabling delivery:
+Configure these repository secrets before enabling manual delivery targets:
 
 | Secret | Value |
 |--------|-------|
-| `BUTLER_API_KEY` | itch.io Butler API key |
-| `ITCH_PROJECT` | itch project target in `user/project` format |
+| `BUTLER_API_KEY` | itch.io Butler API key, required only when publishing to itch.io |
+| `DEPLOY_KEY` | Arweave upload wallet JWK, base64-encoded, required only for Permaweb deploys |
+| `ARNS_KEY` | Solana key that controls the configured ArNS name, required only for Permaweb deploys |
+
+The itch.io target is configured in the workflow as `ITCH_TARGET`.
 
 The workflow publishes two Butler channels:
 
@@ -130,8 +193,8 @@ Actions artifact:
 | `berean-standard-bible-primary-fixed-layout-pdf-` | Primary fixed-layout PDF package |
 | `berean-standard-bible-single-column-pdf-` | Single-column PDF package |
 
-When `dry_run` is false, the workflow creates or updates the GitHub Release
-tagged `v<release_version>` and uploads:
+When a manual run sets `dry_run` to false, the workflow creates or updates the
+GitHub Release tagged `v<release_version>` and uploads:
 
 | Release asset | Contents |
 |---------------|----------|
@@ -140,9 +203,10 @@ tagged `v<release_version>` and uploads:
 | `primary-fixed-layout-SHA256SUMS.txt` | Primary fixed-layout checksum |
 | `single-column-SHA256SUMS.txt` | Single-column checksum |
 
-Run it manually from GitHub Actions with `dry_run: true` to verify/package
-without pushing to itch.io. The workflow defaults to version `0.0.1`; provide
-`release_version` when dispatching manually to publish another semantic version.
+Run it manually from GitHub Actions with the default `dry_run: true` to
+verify/package without publishing. Set `dry_run: false` only when you are ready
+to publish. The workflow defaults to version `0.0.1`; provide `release_version`
+when dispatching manually to publish another semantic version.
 
 ## Legacy/Utility Commands
 
@@ -317,4 +381,14 @@ PYTHONPATH=src python -m bsb_pdf_toolkit.customize_epub bsb.epub bsb-lexend.epub
 
 ## License
 
-BSB text is public domain. This toolkit is MIT licensed.
+The Berean Bible and Majority Bible texts were dedicated to the public domain
+under CC0 on April 30, 2023. The official terms say all uses are freely
+permitted; attribution is appreciated but not required. See
+<https://berean.bible/terms.htm>.
+
+Toolkit source code is MIT licensed; see [`LICENSE`](LICENSE). Bundled Lexend
+font files are distributed under the SIL Open Font License 1.1; see
+[`fonts/OFL.txt`](fonts/OFL.txt). Generated documents may embed the fonts under
+the OFL, but the font files must not be sold by themselves.
+
+Additional attribution and project notices are collected in [`NOTICE`](NOTICE).
