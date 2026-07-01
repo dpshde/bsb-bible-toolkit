@@ -36,9 +36,7 @@ VIDEO_DIR = REPO / "output" / "youtube_videos"
 SECRET_PATH = REPO / ".secrets" / "client_secret.json"
 TOKEN_PATH = REPO / ".secrets" / "youtube_token.json"
 
-STATIC_IMAGE = os.path.expanduser(
-    "~/Downloads/grok-image-6690b34c-2de7-4cdd-9eac-39222f359ceb.jpg"
-)
+STATIC_IMAGE = str(REPO / "assets" / "bsb-audio-emblem.jpg")
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
