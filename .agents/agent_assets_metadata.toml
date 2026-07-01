@@ -1,8 +1,0 @@
-uploads = []
-generated = []
-
-[[outputs]]
-id = "X7wXEP5IPTx32icuFyyZh"
-uri = "file://drafts/primary/work/smoke-test.pdf"
-type = "pdf"
-title = "Smoke test — lighter body, padding below titles"
