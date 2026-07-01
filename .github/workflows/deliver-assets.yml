@@ -10,7 +10,7 @@ on:
       dry_run:
         description: "Verify and package assets without pushing to itch.io or Permaweb."
         required: false
-        default: false
+        default: true
         type: boolean
       skip_itch_and_release:
         description: "Skip GitHub release and itch.io pushes."
@@ -197,7 +197,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload packaged assets to GitHub release
-        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.version.outputs.value }}
@@ -221,11 +221,11 @@ jobs:
             --clobber
 
       - name: Install Butler
-        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.skip_itch_and_release }}
         uses: remarkablegames/setup-butler@v3
 
       - name: Validate Butler configuration
-        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -235,7 +235,7 @@ jobs:
           fi
 
       - name: Push primary fixed-layout PDF to itch.io
-        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -243,7 +243,7 @@ jobs:
             --userversion "${{ steps.version.outputs.value }}"
 
       - name: Push single-column PDF to itch.io
-        if: ${{ !inputs.dry_run && !inputs.skip_itch_and_release }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run && !inputs.skip_itch_and_release }}
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -288,5 +288,4 @@ jobs:
           cluster: mainnet
           on-demand: ario
           max-token-amount: ${{ env.PERMAWEB_ON_DEMAND_MAX_ARIO }}
-
 
