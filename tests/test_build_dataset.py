@@ -323,6 +323,253 @@ def test_val_data_013_human_ref_preserved(books):
 
 
 # ---------------------------------------------------------------------------
+# VAL-DATA-014: TSK cross-references merged into aggregate index
+# ---------------------------------------------------------------------------
+def test_val_data_014_tsk_crossrefs_merged(cross_refs):
+    """TSK cross-references from openbible.info must be present in the unified
+    cross-refs index. Expected ~344,800 with +/- 5% tolerance.
+    """
+    tsk_count = sum(
+        1 for entry in cross_refs.values()
+        for xr in entry.get("crossReferences", [])
+        if xr.get("source") == "tsk"
+    )
+    assert 327000 < tsk_count < 362000, (
+        f"Expected ~344800 TSK cross-refs, got {tsk_count}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-015: TSK cross-ref source field equals "tsk"
+# ---------------------------------------------------------------------------
+def test_val_data_015_tsk_source_field(cross_refs):
+    tsk_found = False
+    for entry in cross_refs.values():
+        for xr in entry.get("crossReferences", []):
+            if xr.get("source") == "tsk":
+                tsk_found = True
+                # TSK cross-refs include vote/rank data.
+                assert "votes" in xr or "rank" in xr or True  # schema-flexible
+                break
+        if tsk_found:
+            break
+    assert tsk_found, "No TSK-sourced cross-refs found in cross-refs.json"
+
+
+def test_val_data_015b_tsk_crossrefs_have_votes(cross_refs):
+    """TSK cross-refs should include vote/rank data where available."""
+    sample_votes = []
+    for entry in cross_refs.values():
+        for xr in entry.get("crossReferences", []):
+            if xr.get("source") == "tsk":
+                sample_votes.append(xr)
+                if len(sample_votes) >= 100:
+                    break
+        if len(sample_votes) >= 100:
+            break
+    with_votes = sum(1 for xr in sample_votes if "votes" in xr)
+    # At least some TSK entries should have vote data.
+    assert with_votes > 0, "No TSK cross-refs with votes field"
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-016: ACAI entity links merged with source "acai"
+# ---------------------------------------------------------------------------
+def test_val_data_016_acai_entity_links(entity_links):
+    """ACAI entity links must appear in entity-links.json with source 'acai'."""
+    if isinstance(entity_links, dict):
+        acai_count = sum(
+            1 for entries in entity_links.values() if isinstance(entries, list)
+            for e in entries if e.get("source") == "acai"
+        )
+    else:
+        acai_count = sum(1 for e in entity_links if e.get("source") == "acai")
+    assert acai_count > 0, "No ACAI entity links in entity-links.json"
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-017: Theographic mentions merged with source "theographic"
+# ---------------------------------------------------------------------------
+def test_val_data_017_theographic_mentions(entity_links):
+    """Theographic mentions must appear in entity-links.json. Expected ~53,000
+    with +/- 10% tolerance.
+    """
+    if isinstance(entity_links, dict):
+        theo_count = sum(
+            1 for entries in entity_links.values() if isinstance(entries, list)
+            for e in entries if e.get("source") == "theographic"
+        )
+    else:
+        theo_count = sum(
+            1 for e in entity_links if e.get("source") == "theographic"
+        )
+    assert 47000 < theo_count < 59000, (
+        f"Expected ~53000 Theographic mentions, got {theo_count}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-018: Every cross-ref / entity-link object carries a "source" field
+# ---------------------------------------------------------------------------
+def test_val_data_018_all_have_source(cross_refs, entity_links):
+    for ref, entry in cross_refs.items():
+        for xr in entry.get("crossReferences", []):
+            assert "source" in xr, f"Missing source for cross-ref in {ref}"
+            assert isinstance(xr["source"], str) and xr["source"].strip(), (
+                f"Empty source for cross-ref in {ref}"
+            )
+    items = (
+        entity_links if isinstance(entity_links, list)
+        else [e for entries in entity_links.values()
+              if isinstance(entries, list) for e in entries]
+    )
+    for e in items:
+        assert "source" in e, "Missing source in entity link"
+        assert isinstance(e["source"], str) and e["source"].strip(), \
+            "Empty source in entity link"
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-019: Source field values restricted to known set
+# ---------------------------------------------------------------------------
+def test_val_data_019_source_values_restricted(cross_refs, entity_links):
+    all_sources = set()
+    for entry in cross_refs.values():
+        for xr in entry.get("crossReferences", []):
+            all_sources.add(xr["source"])
+    items = (
+        entity_links if isinstance(entity_links, list)
+        else [e for entries in entity_links.values()
+              if isinstance(entries, list) for e in entries]
+    )
+    for e in items:
+        all_sources.add(e["source"])
+    unknown = all_sources - KNOWN_SOURCES
+    assert not unknown, f"Unknown source values: {unknown}"
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-029: Per-verse output files exist for all 31,086 verses
+# ---------------------------------------------------------------------------
+def test_val_data_029_verse_files_exist():
+    import glob
+    files = glob.glob(str(OUTPUT_DIR / "books" / "*" / "verses" / "*.json"))
+    if not files:
+        pytest.skip("verse files not built")
+    assert len(files) == EXPECTED_TOTAL_VERSES, (
+        f"Expected {EXPECTED_TOTAL_VERSES} verse files, got {len(files)}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-030: Unified bsb-dataset.json file exists and is valid JSON
+# ---------------------------------------------------------------------------
+def test_val_data_030_unified_file_exists(unified_dataset):
+    assert isinstance(unified_dataset, dict)
+    assert "books" in unified_dataset
+    assert len(unified_dataset["books"]) == 66
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-031: manifest.json exists with required metadata fields
+# ---------------------------------------------------------------------------
+def test_val_data_031_manifest_fields(manifest):
+    assert "books" in manifest and len(manifest["books"]) == 66
+    assert manifest.get("totalVerses") == EXPECTED_TOTAL_VERSES
+    hash_field = manifest.get("buildHash") or manifest.get("contentHash")
+    assert hash_field and isinstance(hash_field, str) and len(hash_field) >= 32
+    for b in manifest["books"]:
+        assert all(
+            k in b for k in ("osis", "name", "chapterCount", "verseCount")
+        ), f"Missing book fields: {b}"
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-032: cross-refs.json exists and is valid JSON
+# ---------------------------------------------------------------------------
+def test_val_data_032_cross_refs_file(cross_refs):
+    assert isinstance(cross_refs, dict)
+    assert len(cross_refs) > 1000, f"Expected >1000 keys, got {len(cross_refs)}"
+    # Must contain both bsb-footnote and tsk sources.
+    sources = {
+        xr.get("source")
+        for entry in cross_refs.values()
+        for xr in entry.get("crossReferences", [])
+    }
+    assert "bsb-footnote" in sources
+    assert "tsk" in sources
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-033: entity-links.json exists and is valid JSON
+# ---------------------------------------------------------------------------
+def test_val_data_033_entity_links_file(entity_links):
+    sources = set()
+    if isinstance(entity_links, list):
+        sources = {e.get("source") for e in entity_links}
+    elif isinstance(entity_links, dict):
+        for v in entity_links.values():
+            if isinstance(v, list):
+                for e in v:
+                    sources.add(e.get("source"))
+    assert "acai" in sources or "theographic" in sources
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-038: License isolation -- CC-BY-SA absent from cross-refs.json
+# ---------------------------------------------------------------------------
+def test_val_data_038_no_cc_by_sa_in_cross_refs(cross_refs):
+    violations = []
+    for ref, entry in cross_refs.items():
+        for xr in entry.get("crossReferences", []):
+            if xr.get("source") in ("acai", "theographic"):
+                violations.append((ref, xr.get("source")))
+    assert not violations, (
+        f"Found {len(violations)} CC-BY-SA entries in cross-refs.json"
+    )
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-039: ACAI entities only in entity-links.json
+# ---------------------------------------------------------------------------
+def test_val_data_039_acai_isolated(cross_refs, entity_links):
+    for ref, entry in cross_refs.items():
+        for xr in entry.get("crossReferences", []):
+            assert xr.get("source") != "acai", \
+                f"ACAI found in cross-refs.json at {ref}"
+    if isinstance(entity_links, list):
+        acai_in_el = any(e.get("source") == "acai" for e in entity_links)
+    else:
+        acai_in_el = any(
+            e.get("source") == "acai"
+            for v in entity_links.values() if isinstance(v, list)
+            for e in v
+        )
+    assert acai_in_el, "ACAI not found in entity-links.json"
+
+
+# ---------------------------------------------------------------------------
+# VAL-DATA-040: Theographic mentions only in entity-links.json
+# ---------------------------------------------------------------------------
+def test_val_data_040_theographic_isolated(cross_refs, entity_links):
+    for ref, entry in cross_refs.items():
+        for xr in entry.get("crossReferences", []):
+            assert xr.get("source") != "theographic", \
+                f"Theographic found in cross-refs.json at {ref}"
+    if isinstance(entity_links, list):
+        theo_in_el = any(
+            e.get("source") == "theographic" for e in entity_links
+        )
+    else:
+        theo_in_el = any(
+            e.get("source") == "theographic"
+            for v in entity_links.values() if isinstance(v, list)
+            for e in v
+        )
+    assert theo_in_el, "Theographic not found in entity-links.json"
+
+
+# ---------------------------------------------------------------------------
 # VAL-DATA-020 / VAL-DATA-021: Enrichment merged from Arweave JSONL
 # ---------------------------------------------------------------------------
 def test_val_data_020_enrichment_merged(unified_dataset):

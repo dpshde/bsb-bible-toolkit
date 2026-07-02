@@ -43,6 +43,11 @@ DEFAULT_ENRICHMENT_URL = (
 )
 TSK_URL = "https://a.openbible.info/data/cross-references.zip"
 ACAI_RAW_BASE = "https://raw.githubusercontent.com/BibleAquifer/ACAI/main"
+ACAI_RELEASE_TAG = "v2025-07-23"
+ACAI_TARBALL_URL = (
+    f"https://codeload.github.com/BibleAquifer/ACAI/tar.gz/refs/tags/"
+    f"{ACAI_RELEASE_TAG}"
+)
 THEOGRAPHIC_VERSES_URL = (
     "https://raw.githubusercontent.com/robertrouse/"
     "theographic-bible-metadata/master/json/verses.json"
@@ -726,52 +731,65 @@ def _acai_bcv8_to_osis(bcv: str) -> Optional[str]:
 
 
 def fetch_acai_entity_links(base_url: str = ACAI_RAW_BASE,
-                            timeout: float = 30.0
+                            timeout: float = 120.0,
+                            tarball_url: str = ACAI_TARBALL_URL
                             ) -> Dict[str, List[Dict[str, str]]]:
     """Fetch ACAI entity JSON files and build a per-verse entity-link index.
 
     Returns a dict keyed by OSIS verse ref; each value is a list of dicts with
     ``entity`` (the ACAI identifier like ``person:Aaron``), ``type`` (people,
     places, ...), and ``source: "acai"``.
+
+    ACAI publishes one JSON file per entity spread across eight type
+    directories. Fetching these one-at-a-time via the GitHub raw endpoint
+    requires thousands of HTTP requests and is impractical in a single
+    session. Instead we download the release tarball (a single ~7MB request)
+    and stream every entity record out of it. This is the strategy
+    recommended by the feature description.
     """
     import requests
+    import tarfile
 
+    resp = requests.get(tarball_url, timeout=timeout)
+    resp.raise_for_status()
     data: Dict[str, List[Dict[str, str]]] = {}
-    for type_dir in ACAI_TYPE_DIRS:
-        # List the JSON files via the GitHub contents API.
-        api_url = f"https://api.github.com/repos/BibleAquifer/ACAI/contents/{type_dir}/json"
+    try:
+        tf = tarfile.open(fileobj=io.BytesIO(resp.content), mode="r:gz")
+    except tarfile.TarError as exc:
+        raise RuntimeError(f"could not open ACAI tarball: {exc}") from exc
+    for member in tf.getmembers():
+        if not member.isfile() or not member.name.endswith(".json"):
+            continue
+        # Path layout inside the tarball:
+        #   ACAI-<tag>/<type_dir>/json/<name>.json
+        parts = member.name.split("/")
+        if len(parts) < 4:
+            continue
+        type_dir = parts[-3]
+        if type_dir not in ACAI_TYPE_DIRS:
+            continue
+        fh = tf.extractfile(member)
+        if fh is None:
+            continue
         try:
-            resp = requests.get(api_url, timeout=timeout)
-            resp.raise_for_status()
-            files = resp.json()
-        except Exception:
+            record = json.loads(fh.read())
+        except (ValueError, json.JSONDecodeError):
             continue
-        if not isinstance(files, list):
-            continue
-        for entry in files:
-            fname = entry.get("name", "")
-            if not fname.endswith(".json"):
-                continue
-            raw_url = f"{base_url}/{type_dir}/json/{fname}"
-            try:
-                resp = requests.get(raw_url, timeout=timeout)
-                resp.raise_for_status()
-                record = resp.json()
-            except Exception:
-                continue
-            entity_id = record.get("id") or f"{type_dir}:{entry.get('name','')}"
-            entity_type = record.get("type", type_dir.rstrip("s"))
-            for ref_field in ("references", "key_references"):
-                for bcv in record.get(ref_field, []) or []:
-                    osis = _acai_bcv8_to_osis(str(bcv))
-                    if osis:
-                        data.setdefault(osis, []).append({
-                            "entity": entity_id,
-                            "type": entity_type,
-                            "source": "acai",
-                        })
+        entity_id = record.get("id") or f"{type_dir}:{parts[-1]}"
+        entity_type = record.get("type", type_dir.rstrip("s"))
+        for ref_field in ("references", "key_references"):
+            for bcv in record.get(ref_field, []) or []:
+                osis = _acai_bcv8_to_osis(str(bcv))
+                if osis:
+                    data.setdefault(osis, []).append({
+                        "entity": entity_id,
+                        "type": entity_type,
+                        "source": "acai",
+                    })
     for key in data:
-        data[key] = sorted(data[key], key=lambda x: (x["entity"], x["type"]))
+        data[key] = sorted(
+            data[key], key=lambda x: (x["entity"], x["type"])
+        )
     return data
 
 
@@ -889,19 +907,34 @@ def attach_cross_refs_to_verses(
 def build_entity_links_index(
     acai: Optional[Dict[str, List[Dict[str, str]]]] = None,
     theographic: Optional[Dict[str, List[Dict[str, str]]]] = None,
-) -> Dict[str, List[Dict[str, str]]]:
-    """Merge ACAI and Theographic entity-link data into a single per-verse
-    index. Both sources are CC-BY-SA and live only in ``entity-links.json``.
+) -> List[Dict[str, str]]:
+    """Merge ACAI and Theographic entity-link data into a single flat list of
+    entity-link records. Both sources are CC-BY-SA and live only in
+    ``entity-links.json``.
+
+    The list form is chosen so that downstream consumers (and the validation
+    contract tests VAL-DATA-016/017/018) can iterate records directly and
+    filter by ``source``. Each record carries the verse OSIS reference
+    (``verseRef``), the entity identifier (``entity``), the entity ``type``,
+    and the provenance ``source`` field.
     """
-    merged: Dict[str, List[Dict[str, str]]] = {}
-    for source in (acai, theographic):
-        if not source:
+    records: List[Dict[str, str]] = []
+    for source_data in (acai, theographic):
+        if not source_data:
             continue
-        for osis, entries in source.items():
-            merged.setdefault(osis, []).extend(entries)
-    for key in merged:
-        merged[key] = sorted(merged[key], key=lambda x: (x["source"], x["entity"], x["type"]))
-    return merged
+        for osis, entries in source_data.items():
+            for entry in entries:
+                record = {"verseRef": osis}
+                record.update(entry)
+                records.append(record)
+    # Deterministic ordering for byte-identical rebuilds.
+    records.sort(key=lambda x: (
+        x.get("verseRef", ""),
+        x.get("source", ""),
+        x.get("entity", ""),
+        x.get("type", ""),
+    ))
+    return records
 
 
 # ---------------------------------------------------------------------------
@@ -962,7 +995,7 @@ def build_dataset_metadata(books: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def build_manifest(books: List[Dict[str, Any]],
                    cross_refs: Dict[str, Dict[str, List[Dict[str, Any]]]],
-                   entity_links: Dict[str, List[Dict[str, str]]],
+                   entity_links: List[Dict[str, str]],
                    source_versions: Dict[str, Any],
                    build_hash: str) -> Dict[str, Any]:
     """Assemble the manifest dict. Does not include timestamps or random
@@ -999,13 +1032,9 @@ def build_manifest(books: List[Dict[str, Any]],
         for xr in entry.get("crossReferences", [])
         if xr.get("source") == "bsb-footnote"
     )
-    acai_total = sum(
-        1 for entries in entity_links.values()
-        for e in entries if e.get("source") == "acai"
-    )
+    acai_total = sum(1 for e in entity_links if e.get("source") == "acai")
     theo_total = sum(
-        1 for entries in entity_links.values()
-        for e in entries if e.get("source") == "theographic"
+        1 for e in entity_links if e.get("source") == "theographic"
     )
     manifest = {
         "books": book_entries,
@@ -1031,7 +1060,7 @@ def build_manifest(books: List[Dict[str, Any]],
 def write_outputs(output_dir: Path,
                   books: List[Dict[str, Any]],
                   cross_refs: Dict[str, Dict[str, List[Dict[str, Any]]]],
-                  entity_links: Dict[str, List[Dict[str, str]]],
+                  entity_links: List[Dict[str, str]],
                   manifest: Dict[str, Any]) -> None:
     """Write all output artifacts deterministically to ``output_dir``."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1069,7 +1098,7 @@ def write_outputs(output_dir: Path,
 # ---------------------------------------------------------------------------
 def validate_outputs(books: List[Dict[str, Any]],
                      cross_refs: Dict[str, Dict[str, List[Dict[str, Any]]]],
-                     entity_links: Dict[str, List[Dict[str, str]]]) -> None:
+                     entity_links: List[Dict[str, str]]) -> None:
     """Run integrity checks that would otherwise produce silently corrupt
     output. Raises ``AssertionError`` on any structural problem.
     """
@@ -1199,8 +1228,14 @@ def build_dataset(usfm_zip: Path,
             acai_index = fetch_acai_entity_links()
             acai_total = sum(len(v) for v in acai_index.values())
             source_versions["acai"] = {
-                "url": ACAI_RAW_BASE,
+                "url": ACAI_TARBALL_URL,
+                "releaseTag": ACAI_RELEASE_TAG,
+                "license": "CC-BY-SA 4.0",
                 "links": acai_total,
+                "entityRecords": len({
+                    e.get("entity") for entries in acai_index.values()
+                    for e in entries
+                }),
             }
             log(f"[build_dataset] Loaded {acai_total} ACAI entity links")
         except Exception as exc:
@@ -1215,6 +1250,7 @@ def build_dataset(usfm_zip: Path,
             theo_total = sum(len(v) for v in theo_index.values())
             source_versions["theographic"] = {
                 "url": THEOGRAPHIC_VERSES_URL,
+                "license": "CC-BY-SA 4.0",
                 "mentions": theo_total,
             }
             log(f"[build_dataset] Loaded {theo_total} Theographic mentions")
