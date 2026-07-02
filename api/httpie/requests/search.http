@@ -1,0 +1,6 @@
+# Substring search across all verse text
+GET :8787/v1/search?q=love
+
+# Other examples:
+# GET :8787/v1/search?q=light%20of%20the%20world
+# GET :8787/v1/search?q=Genesis

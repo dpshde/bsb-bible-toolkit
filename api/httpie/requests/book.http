@@ -1,0 +1,7 @@
+# Single book metadata by OSIS code
+GET :8787/v1/book/JHN
+
+# Other examples:
+# GET :8787/v1/book/GEN
+# GET :8787/v1/book/1CO
+# GET :8787/v1/book/PSA

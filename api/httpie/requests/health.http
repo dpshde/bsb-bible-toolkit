@@ -1,0 +1,2 @@
+# Service status, version, and cache tier availability
+GET :8787/v1/health

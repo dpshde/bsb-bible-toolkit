@@ -1,0 +1,12 @@
+# Worker dependencies and build artifacts (not committed).
+node_modules/
+.wrangler/
+
+# Generated seed-data/ (produced by scripts/seed-r2-local.mjs from output/dataset/).
+# Generated R2 fixtures are reproducible from the dataset builder output and are
+# not committed; CI regenerates them.
+seed-data/
+
+# Local dev vars (DO NOT commit secrets).
+.dev.vars
+.dev.vars.*

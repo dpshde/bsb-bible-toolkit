@@ -1,0 +1,6 @@
+# Single verse by dotted OSIS reference
+GET :8787/v1/verse/JHN.3.16
+
+# Other examples:
+# GET :8787/v1/verse/GEN.1.1
+# GET :8787/v1/verse/1CO.13.4

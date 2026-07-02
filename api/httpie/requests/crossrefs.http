@@ -1,0 +1,7 @@
+# Cross-references and entity links for a verse
+# Optional ?source= filter (repeatable, case-insensitive)
+GET :8787/v1/crossrefs/JHN.3.16
+
+# Other examples:
+# GET :8787/v1/crossrefs/JHN.3.16?source=tsk
+# GET :8787/v1/crossrefs/GEN.1.1?source=tsk&source=acai

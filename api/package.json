@@ -1,0 +1,25 @@
+{
+  "name": "bsb-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker serving the BSB JSON dataset via 4-tier cache-aside",
+  "type": "module",
+  "main": "worker.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "wrangler deploy --dry-run",
+    "dev": "wrangler dev --port 8787",
+    "deploy:dry": "wrangler deploy --dry-run",
+    "seed:r2": "node scripts/seed-r2-local.mjs"
+  },
+  "dependencies": {
+    "grab-bcv": "0.1.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,7 @@
+# Parse a reference (human or OSIS), expand range, fetch all verses
+GET :8787/v1/passage/John%203:16
+
+# Other examples:
+# GET :8787/v1/passage/1%20Cor%2013:4-7
+# GET :8787/v1/passage/GEN.1.1-GEN.1.2
+# GET :8787/v1/passage/Psalm%2023

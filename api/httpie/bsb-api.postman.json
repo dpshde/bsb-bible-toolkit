@@ -1,0 +1,127 @@
+{
+  "info": {
+ "name": "BSB API",
+ "_postman_id": "bsb-api-collection",
+ "description": "BSB Bible Toolkit API (Cloudflare Worker). Dev server: cd api && npm run dev (localhost:8787)",
+ "_schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+ { "key": "baseUrl", "value": "http://localhost:8787" }
+  ],
+  "item": [
+ {
+   "name": "Health",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/health",
+     "description": "Service status, version, and cache tier availability"
+   }
+ },
+ {
+   "name": "Books",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/books",
+     "description": "Full book catalog (66 books with OSIS codes, names, chapter counts)"
+   }
+ },
+ {
+   "name": "Book — JHN",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/book/JHN",
+     "description": "Single book metadata by OSIS code"
+   }
+ },
+ {
+   "name": "Book — GEN",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/book/GEN"
+   }
+ },
+ {
+   "name": "Chapter — John 3",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/chapter/JHN/3",
+     "description": "Full chapter with all verses, cross-refs, footnotes, and entities"
+   }
+ },
+ {
+   "name": "Verse — JHN.3.16",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/verse/JHN.3.16",
+     "description": "Single verse by dotted OSIS reference"
+   }
+ },
+ {
+   "name": "Passage — John 3:16",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/passage/John%203:16",
+     "description": "Parse a reference (human or OSIS), expand range, fetch all verses"
+   }
+ },
+ {
+   "name": "Passage — 1 Cor 13:4-7 (range)",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/passage/1%20Cor%2013:4-7"
+   }
+ },
+ {
+   "name": "Resolve — human ref",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/resolve/John%203:16",
+     "description": "Accepts ANY input format: human refs, OSIS, Bible app URIs, provider URLs"
+   }
+ },
+ {
+   "name": "Resolve — OSIS",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/resolve/JHN.3.16"
+   }
+ },
+ {
+   "name": "Resolve — Accordance URI",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/resolve/accordance:bible:John%203:16"
+   }
+ },
+ {
+   "name": "Resolve — Logos URI",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/resolve/bible+bsb.64.3.16"
+   }
+ },
+ {
+   "name": "Search — love",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/search?q=love",
+     "description": "Substring search across all verse text"
+   }
+ },
+ {
+   "name": "Crossrefs — JHN.3.16",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/crossrefs/JHN.3.16",
+     "description": "Cross-references and entity links for a verse"
+   }
+ },
+ {
+   "name": "Crossrefs — JHN.3.16 (source=tsk)",
+   "request": {
+     "method": "GET",
+     "url": "{{baseUrl}}/v1/crossrefs/JHN.3.16?source=tsk"
+   }
+ }
+  ]
+}

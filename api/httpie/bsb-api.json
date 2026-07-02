@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "BSB API HTTPie Collection",
+  "description": "HTTPie collection for the BSB Bible Toolkit API (Cloudflare Worker). Run `npm run dev` in the api/ directory to start wrangler dev on :8787, then use these requests with `http --pretty=all < ./path/to/file.http` or source them via the shell wrappers.",
+  "env": {
+    "local": {
+      "host": "localhost:8787",
+      "protocol": "http"
+    },
+    "production": {
+      "host": "api.bsb.toolkit",
+      "protocol": "https"
+    }
+  },
+  "requests": [
+    {
+      "name": "health",
+      "method": "GET",
+      "path": "/v1/health",
+      "description": "Service status, version, and cache tier availability"
+    },
+    {
+      "name": "books",
+      "method": "GET",
+      "path": "/v1/books",
+      "description": "Full book catalog (66 books with OSIS codes, names, chapter counts)"
+    },
+    {
+      "name": "book",
+      "method": "GET",
+      "path": "/v1/book/:osis",
+      "description": "Single book metadata by OSIS code (e.g. JHN, GEN, 1CO)",
+      "examples": ["JHN", "GEN", "1CO", "PSA"]
+    },
+    {
+      "name": "chapter",
+      "method": "GET",
+      "path": "/v1/chapter/:osis/:chapter",
+      "description": "Full chapter with all verses, cross-refs, footnotes, and entities",
+      "examples": ["JHN/3", "GEN/1", "PSA/23"]
+    },
+    {
+      "name": "verse",
+      "method": "GET",
+      "path": "/v1/verse/:osisRef",
+      "description": "Single verse by dotted OSIS reference",
+      "examples": ["JHN.3.16", "GEN.1.1", "1CO.13.4"]
+    },
+    {
+      "name": "passage",
+      "method": "GET",
+      "path": "/v1/passage/:ref",
+      "description": "Parse a reference (human or OSIS), expand range, fetch all verses. Supports ranges.",
+      "examples": ["John+3:16", "1+Cor+13:4-7", "GEN.1.1-GEN.1.2", "Psalm+23"]
+    },
+    {
+      "name": "resolve",
+      "method": "GET",
+      "path": "/v1/resolve/:input",
+      "description": "Accepts ANY input format (human refs, OSIS, Bible app URIs, provider URLs) and returns canonical passage + verse text",
+      "examples": [
+        "John+3:16",
+        "JHN.3.16",
+        "accordance:bible:John+3:16",
+        "bible+bsb.64.3.16",
+        "https://www.bible.com/bible/111/JHN.3.16"
+      ]
+    },
+    {
+      "name": "search",
+      "method": "GET",
+      "path": "/v1/search?q=:query",
+      "description": "Substring search across all verse text",
+      "examples": ["?q=love", "?q=light+of+the+world", "?q=Genesis"]
+    },
+    {
+      "name": "crossrefs",
+      "method": "GET",
+      "path": "/v1/crossrefs/:osisRef",
+      "description": "Cross-references and entity links for a verse. Optional ?source= filter (repeatable).",
+      "examples": ["JHN.3.16", "JHN.3.16?source=tsk", "GEN.1.1?source=tsk&source=acai"]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Accepts ANY input format: human refs, OSIS, Bible app URIs, provider URLs
+# Returns canonical passage + verse text
+GET :8787/v1/resolve/John%203:16
+
+# Other examples:
+# GET :8787/v1/resolve/JHN.3.16
+# GET :8787/v1/resolve/accordance:bible:John%203:16
+# GET :8787/v1/resolve/bible+bsb.64.3.16
+# GET :8787/v1/resolve/https://www.bible.com/bible/111/JHN.3.16

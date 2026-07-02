@@ -1,0 +1,2 @@
+# Full book catalog (66 books with OSIS codes, names, chapter counts)
+GET :8787/v1/books

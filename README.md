@@ -146,6 +146,52 @@ Add `--strict-fingerprints` when you need the current SHA-256 fingerprints to
 match exactly. The default verifier enforces stable semantic fingerprints and
 reports raw PDF hashes.
 
+## BSB JSON API
+
+In addition to the PDF/EPUB tooling, this repo publishes a free, structured
+**BSB JSON API** that serves the public-domain Berean Standard Bible over
+HTTPS with no API key and no rate limit. The API is a Cloudflare Worker using
+a 4-tier cache-aside pattern: edge cache, then an R2 bucket, then the Arweave
+permanent origin (`api_bsb` undername on the `scripture` ArNS name), and
+finally a 503 if every tier is exhausted. All Bible reference parsing is
+delegated to `grab-bcv`.
+
+| Endpoint | Example | Returns |
+|----------|---------|---------|
+| `GET /v1/books` | `/v1/books` | All 66 books with metadata |
+| `GET /v1/book/:osis` | `/v1/book/GEN` | Full book JSON |
+| `GET /v1/chapter/:osis/:ch` | `/v1/chapter/GEN/1` | Full chapter |
+| `GET /v1/verse/:osisRef` | `/v1/verse/GEN.1.1` | Single verse with footnotes, cross-refs, events |
+| `GET /v1/passage/:ref` | `/v1/passage/John%203:16-18` | Parsed range expanded to verses |
+| `GET /v1/search?q=...` | `/v1/search?q=beginning` | Verses matching the query |
+| `GET /v1/crossrefs/:osisRef` | `/v1/crossrefs/GEN.1.1` | Cross-references (with `?source=` filtering) |
+| `GET /v1/health` | `/v1/health` | Service health, version, cache tier status |
+
+Quick start:
+
+```bash
+# Local Worker on port 8787
+cd api && npm install && npx wrangler dev --port 8787
+
+# Fetch a verse
+curl 'http://localhost:8787/v1/verse/JHN.3.16'
+
+# Fetch a passage (URL-encode spaces)
+curl 'http://localhost:8787/v1/passage/John%203:16-18'
+
+# Filter cross-references by source (tsk, bsb-footnote, acai, theographic)
+curl 'http://localhost:8787/v1/crossrefs/GEN.1.1?source=tsk'
+```
+
+The `/v1/` paths are frozen forever; schema changes go to `/v2/`. Responses are
+CORS-enabled with `Cache-Control: public, max-age=31536000, immutable` and an
+`X-Origin` header indicating which cache tier served the request (`edge`, `r2`,
+or `arweave`).
+
+See [`dataset/README.md`](dataset/README.md) for the full JSON schema, OSIS
+reference format, source-filtering docs, and Python/JavaScript quickstarts.
+Example consumers live in [`dataset/examples/`](dataset/examples/).
+
 ## How to Help
 
 Ideas that fit this repo's mission:

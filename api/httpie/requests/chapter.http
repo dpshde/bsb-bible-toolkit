@@ -1,0 +1,6 @@
+# Full chapter with all verses, cross-refs, footnotes, and entities
+GET :8787/v1/chapter/JHN/3
+
+# Other examples:
+# GET :8787/v1/chapter/GEN/1
+# GET :8787/v1/chapter/PSA/23

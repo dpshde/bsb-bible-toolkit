@@ -1,0 +1,299 @@
+name: Deploy BSB JSON API
+
+# CI pipeline for the BSB JSON API: build the Python dataset, upload the
+# canonical origin to Arweave, pre-seed the Cloudflare R2 cache bucket, and
+# deploy the edge Worker. All publish steps are gated behind a dry-run flag
+# that defaults to true so test runs never publish external assets.
+#
+# Required repository secrets:
+#   DEPLOY_KEY              - Arweave upload wallet JWK (base64-encoded)
+#   ARNS_KEY                - Solana key that controls the "scripture" ArNS name
+#   CLOUDFLARE_API_TOKEN    - Workers + R2 access token
+#   CLOUDFLARE_ACCOUNT_ID   - Cloudflare account scoping ID
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Verify and build without publishing to Arweave, R2, or Workers."
+        required: false
+        default: true
+        type: boolean
+      release_version:
+        description: "Semantic version label recorded in the dataset manifest (e.g. 1.0.0)."
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy_api.yml"
+      - "api/**"
+      - "src/bsb_pdf_toolkit/build_dataset.py"
+      - "tests/test_build_dataset.py"
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "22"
+  ARNS_NAME: scripture
+  ARNS_UNDERNAME: api_bsb
+  R2_BUCKET: bsb-dataset
+  DATASET_DIR: output/dataset
+  WORKER_DIR: api
+
+jobs:
+  # 1. Build the BSB JSON dataset from USFM + enrichment sources.
+  build-dataset:
+    name: Build dataset
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+
+      - name: Build dataset
+        run: |
+          python -m bsb_pdf_toolkit.build_dataset \
+            --usfm drafts/primary/source/engbsb_usfm.zip \
+            --output ${{ env.DATASET_DIR }}
+
+      - name: Verify dataset outputs
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          d = pathlib.Path("${{ env.DATASET_DIR }}")
+          manifest = json.loads((d / "manifest.json").read_text())
+          assert manifest["totalBooks"] == 66, f"Expected 66 books, got {manifest['totalBooks']}"
+          assert manifest["totalVerses"] == 31086, f"Expected 31086 verses, got {manifest['totalVerses']}"
+          assert (d / "bsb-dataset.json").exists(), "bsb-dataset.json missing"
+          assert (d / "cross-refs.json").exists(), "cross-refs.json missing"
+          print(f"Dataset OK: {manifest['totalBooks']} books, {manifest['totalVerses']} verses")
+          PY
+
+      - name: Run dataset unit tests
+        run: python -m pytest tests/test_build_dataset.py -q
+
+      - name: Upload dataset artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bsb-dataset
+          path: ${{ env.DATASET_DIR }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  # 2. Deploy the canonical permanent origin to Arweave via ar-io-deploy.
+  deploy-arweave:
+    name: Deploy to Arweave (api_bsb @ scripture)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: build-dataset
+    # Only publish when dry_run is explicitly false (manual dispatch).
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download dataset artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bsb-dataset
+          path: ${{ env.DATASET_DIR }}/
+
+      - name: Validate Arweave deploy secrets
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          ARNS_KEY: ${{ secrets.ARNS_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "Missing required repository secret: DEPLOY_KEY (Arweave JWK, base64)" >&2
+            exit 1
+          fi
+          if [ -z "$ARNS_KEY" ]; then
+            echo "Missing required repository secret: ARNS_KEY (Solana key for scripture ArNS)" >&2
+            exit 1
+          fi
+
+      - name: Deploy dataset to Arweave (api_bsb @ scripture)
+        uses: ar-io/ar-io-deploy@v1.0.0
+        with:
+          deploy-key: ${{ secrets.DEPLOY_KEY }}
+          arns-key: ${{ secrets.ARNS_KEY }}
+          arns-name: ${{ env.ARNS_NAME }}
+          undername: ${{ env.ARNS_UNDERNAME }}
+          deploy-folder: ${{ env.DATASET_DIR }}
+          cluster: mainnet
+          on-demand: ario
+          max-token-amount: "10.0"
+
+  # 3. Pre-seed the Cloudflare R2 cache bucket with the v1/ key structure.
+  seed-r2:
+    name: Pre-seed R2 bucket (bsb-dataset)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: build-dataset
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download dataset artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bsb-dataset
+          path: ${{ env.DATASET_DIR }}/
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.WORKER_DIR }}/package-lock.json
+
+      - name: Validate Cloudflare secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Missing required repository secret: CLOUDFLARE_API_TOKEN" >&2
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Missing required repository secret: CLOUDFLARE_ACCOUNT_ID" >&2
+            exit 1
+          fi
+
+      - name: Seed R2 bucket with v1/ key structure
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        working-directory: ${{ env.WORKER_DIR }}
+        run: |
+          npm install
+          # Seed the v1/ R2 key structure consumed by the Worker.
+          # books.json, per-book, per-chapter, per-verse, crossrefs, search index.
+          python3 - <<'PY'
+          import json, pathlib, sys
+          dataset = pathlib.Path("../${{ env.DATASET_DIR }}")
+          manifest = json.loads((dataset / "manifest.json").read_text())
+          cross_refs = json.loads((dataset / "cross-refs.json").read_text())
+          entity_links = json.loads((dataset / "entity-links.json").read_text())
+
+          el_by_verse = {}
+          for el in entity_links:
+              ref = el.get("verseRef")
+              if ref:
+                  el_by_verse.setdefault(ref, []).append({
+                      "entity": el.get("entity"),
+                      "type": el.get("type"),
+                      "source": el.get("source"),
+                  })
+
+          seed_dir = pathlib.Path("../seed-r2-keys")
+          if seed_dir.exists():
+              import shutil
+              shutil.rmtree(seed_dir)
+          seed_dir.mkdir(parents=True)
+
+          def write_key(key, obj):
+              full = seed_dir / key
+              full.parent.mkdir(parents=True, exist_ok=True)
+              full.write_text(json.dumps(obj, separators=(",", ":")))
+
+          books_catalog = [{
+              "osis": b["osis"],
+              "name": b["name"],
+              "chapters": b["chapterCount"],
+              "verses": b["verseCount"],
+              "footnotes": b["footnoteCount"],
+              "crossReferences": b["crossReferenceCount"],
+          } for b in manifest["books"]]
+          write_key("v1/books.json", books_catalog)
+
+          for meta in manifest["books"]:
+              osis = meta["osis"]
+              book = json.loads((dataset / "books" / f"{osis}.json").read_text())
+              write_key(f"v1/book/{osis}.json", book)
+              for ch in book["chapters"]:
+                  write_key(f"v1/chapter/{osis}/{ch['chapter']}.json", ch)
+                  for v in ch["verses"]:
+                      ref = v["osisRef"]
+                      write_key(f"v1/verse/{ref}.json", v)
+                      base = cross_refs.get(ref, {"crossReferences": []})
+                      write_key(f"v1/crossrefs/{ref}.json", {
+                          "ref": ref,
+                          "crossReferences": base.get("crossReferences", []),
+                          "entityLinks": el_by_verse.get(ref, []),
+                      })
+          print(f"Seed directory ready at {seed_dir}")
+          PY
+
+          # Upload each generated key to the R2 bucket.
+          find ../seed-r2-keys -type f -name '*.json' -print0 | while IFS= read -r -d '' f; do
+            key="${f#../seed-r2-keys/}"
+            echo "Putting r2://${{ env.R2_BUCKET }}/${key}"
+            npx wrangler r2 object put "${{ env.R2_BUCKET }}/${key}" \
+              --file "$f" --content-type "application/json" --remote
+          done
+
+  # 4. Deploy the Cloudflare Worker (edge API).
+  deploy-worker:
+    name: Deploy Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: build-dataset
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.WORKER_DIR }}/package-lock.json
+
+      - name: Validate Cloudflare secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Missing required repository secret: CLOUDFLARE_API_TOKEN" >&2
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Missing required repository secret: CLOUDFLARE_ACCOUNT_ID" >&2
+            exit 1
+          fi
+
+      - name: Install Worker dependencies
+        working-directory: ${{ env.WORKER_DIR }}
+        run: npm install
+
+      - name: Typecheck Worker (dry-run deploy)
+        working-directory: ${{ env.WORKER_DIR }}
+        run: npx wrangler deploy --dry-run
+
+      - name: Deploy Worker to Cloudflare
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
