@@ -66,7 +66,7 @@ route.bible annotations, then redraws the fixed layout with Lexend.
 |------|---------|
 | `design_bsb.py` | Single entry point for the draft workflow |
 | `src/bsb_pdf_toolkit/` | Python package containing generators and utilities |
-| `audio/` | BSB audio tooling: `production/` (ElevenLabs) and `local/` (MLX/Kokoro) |
+| `audio/` | BSB audio tooling: `production/` (ElevenLabs) and `local/` (Kokoro, Chatterbox MLX/torch) |
 | `scripts/` | Compatibility shims and `scripts/pdf/` utilities |
 | `fonts/` | Font assets used by draft rendering |
 | `drafts/primary/README.md` | Current draft manifest and QA record |

@@ -26,32 +26,40 @@ python audio/production/generate_rss.py \
     --books Philippians
 ```
 
-## Local (MLX / Kokoro)
+## Local (Kokoro, Chatterbox, demos)
 
-Offline TTS on Apple Silicon for voice experiments, chapter demos, and
-listen.html review. No API keys required.
+Offline TTS for voice experiments, chapter demos, and listen.html review. No
+API keys required. Kokoro is the quick baseline; Chatterbox is the
+higher-quality clone path (MLX preferred on Apple Silicon, PyTorch fallback).
 
 | Script | Purpose |
 |--------|---------|
-| [`local/mlx_tts.py`](local/mlx_tts.py) | Checkpointed chapter rendering |
-| [`local/generate_demo.py`](local/generate_demo.py) | Multi-engine demo snippets |
+| [`local/mlx_tts.py`](local/mlx_tts.py) | Checkpointed Kokoro chapter rendering (mlx-audio) |
+| [`local/generate_demo.py`](local/generate_demo.py) | Multi-engine demo snippets (Chatterbox = PyTorch) |
+| [`local/generate_chatterbox.py`](local/generate_chatterbox.py) | Checkpointed Chatterbox book/NT/Bible (MLX or torch, clone-calm) |
+| [`local/voice_match_chatterbox.py`](local/voice_match_chatterbox.py) | Chatterbox A/B grid vs Bill reference (PyTorch) |
 | [`local/prebuild_assets.py`](local/prebuild_assets.py) | Batch WAV prebuild |
 | [`local/build_manifest.py`](local/build_manifest.py) | `assets.json` for the player |
 | [`local/tui/`](local/tui/) | Terminal UI for `mlx_tts.py` |
 
 Output: `output/audio/local/`
 
-See [`local/README.md`](local/README.md) for engine setup and pause tuning.
+See [`local/README.md`](local/README.md) for engine setup, Chatterbox MLX vs
+PyTorch recipes, JSONL prerequisites, and pause tuning.
 
 ```bash
 python audio/local/mlx_tts.py generate --book Psalm --chapter 23 --voices af_heart
 python audio/local/generate_demo.py --book John --chapter 3
+# Chatterbox batch (needs local JSONL + .venv-mlx; see local/README.md)
+audio/local/.venv-mlx/bin/python audio/local/generate_chatterbox.py \
+  --book "2 John" --backend mlx
 ```
 
 ## Shared paths
 
-Path constants live in [`paths.py`](paths.py). Both pipelines read the same BSB
-JSONL verse source (local file or Arweave URL).
+Path constants live in [`paths.py`](paths.py). Demo tools can read the Arweave
+JSONL URL; `generate_chatterbox.py` and production scripts expect a **local**
+JSONL file path (default often `~/Downloads/bsb.jsonl`).
 
 ## Legacy entry points
 

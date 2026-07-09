@@ -22,6 +22,11 @@ DEFAULT_CHAPTER = "23"
 
 DEFAULT_OUT_DIR = LOCAL_AUDIO_DIR
 
+# Best A/B match to production ElevenLabs Bill (voice-match grid: clone-calm).
+DEFAULT_CHATTERBOX_EXAGGERATION = 0.35
+DEFAULT_CHATTERBOX_CFG_WEIGHT = 0.4
+DEFAULT_CHATTERBOX_AUDIO_PROMPT = LOCAL_AUDIO_DIR / "voice-match" / "ref-bill-phil1.wav"
+
 PRONUNCIATION_REPLACEMENTS = (
     ("LORD", "Lord"),
     ("\u2014", ", "),
@@ -263,24 +268,74 @@ def render_with_kokoro_segments(
                 output.write(numpy.zeros(int(24000 * pause_ms / 1000), dtype="float32"))
 
 
+def _patch_torch_load_for_device(device: str) -> None:
+    """Map checkpoints onto MPS/CPU (Chatterbox official Mac example pattern)."""
+    torch = require_dependency("torch", "python3 -m pip install chatterbox-tts")
+    if getattr(torch, "_bsb_chatterbox_load_patched", False):
+        return
+    map_location = torch.device(device)
+    original_load = torch.load
+
+    def patched_load(*args, **kwargs):
+        if "map_location" not in kwargs:
+            kwargs["map_location"] = map_location
+        return original_load(*args, **kwargs)
+
+    torch.load = patched_load
+    torch._bsb_chatterbox_load_patched = True
+
+
 def render_with_chatterbox(
     text: str,
     output_path: Path,
     device: str,
     audio_prompt_path: str,
+    exaggeration: float = DEFAULT_CHATTERBOX_EXAGGERATION,
+    cfg_weight: float = DEFAULT_CHATTERBOX_CFG_WEIGHT,
 ) -> None:
     require_dependency("torch", "python3 -m pip install chatterbox-tts")
     torchaudio = require_dependency("torchaudio", "python3 -m pip install chatterbox-tts")
+    try:
+        import pkg_resources  # noqa: F401 — perth needs this; setuptools>=81 may omit it
+    except ImportError as exc:
+        raise RuntimeError(
+            "Missing pkg_resources (needed by resemble-perth). "
+            "Install with: uv pip install 'setuptools<81'"
+        ) from exc
+
+    _patch_torch_load_for_device(device)
     from chatterbox.tts import ChatterboxTTS
 
     model = ChatterboxTTS.from_pretrained(device=device)
-    kwargs = {}
+    kwargs = {
+        "exaggeration": exaggeration,
+        "cfg_weight": cfg_weight,
+    }
     if audio_prompt_path:
         kwargs["audio_prompt_path"] = audio_prompt_path
     wav = model.generate(text, **kwargs)
     if getattr(wav, "dim", lambda: 1)() == 1:
         wav = wav.unsqueeze(0)
     torchaudio.save(str(output_path), wav.cpu(), model.sr)
+
+
+def chatterbox_output_stem(
+    audio_prompt_path: str,
+    exaggeration: float,
+    cfg_weight: float,
+    output_tag: str = "",
+) -> str:
+    """Build a stable filename stem so param grids do not overwrite each other."""
+    parts = ["chatterbox"]
+    if audio_prompt_path:
+        parts.append("clone")
+    else:
+        parts.append("default")
+    parts.append(f"e{exaggeration:g}")
+    parts.append(f"c{cfg_weight:g}")
+    if output_tag:
+        parts.append(slugify(output_tag))
+    return "-".join(parts)
 
 
 def render_with_dia(text: str, output_path: Path, device: str) -> None:
@@ -336,9 +391,28 @@ def render_engines(
                     args.pause_ms,
                 )
         elif engine == "chatterbox":
-            output_path = chapter_dir / f"chatterbox{suffix}.wav"
+            stem = chatterbox_output_stem(
+                args.audio_prompt_path,
+                args.exaggeration,
+                args.cfg_weight,
+                args.output_tag,
+            )
+            # Short name when using the recommended clone-calm defaults.
+            if (
+                args.exaggeration == DEFAULT_CHATTERBOX_EXAGGERATION
+                and args.cfg_weight == DEFAULT_CHATTERBOX_CFG_WEIGHT
+                and not args.output_tag
+            ):
+                output_path = chapter_dir / f"chatterbox{suffix}.wav"
+            else:
+                output_path = chapter_dir / f"{stem}.wav"
             render_with_chatterbox(
-                speech_text, output_path, args.device, args.audio_prompt_path
+                speech_text,
+                output_path,
+                args.device,
+                args.audio_prompt_path,
+                args.exaggeration,
+                args.cfg_weight,
             )
         elif engine == "dia":
             output_path = chapter_dir / f"dia{suffix}.mp3"
@@ -404,8 +478,32 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument("--say-voice", default="Daniel")
     parser.add_argument(
         "--audio-prompt-path",
-        default="",
-        help="Optional local reference voice clip for Chatterbox.",
+        default=str(DEFAULT_CHATTERBOX_AUDIO_PROMPT),
+        help=(
+            "Reference voice clip for Chatterbox zero-shot cloning. "
+            f"Default: {DEFAULT_CHATTERBOX_AUDIO_PROMPT} (Bill clone-calm). "
+            "Pass empty string to use the model default voice."
+        ),
+    )
+    parser.add_argument(
+        "--exaggeration",
+        type=float,
+        default=DEFAULT_CHATTERBOX_EXAGGERATION,
+        help=(
+            "Chatterbox emotional intensity "
+            f"(default {DEFAULT_CHATTERBOX_EXAGGERATION:g}, clone-calm). "
+            "Higher is more dramatic."
+        ),
+    )
+    parser.add_argument(
+        "--cfg-weight",
+        type=float,
+        default=DEFAULT_CHATTERBOX_CFG_WEIGHT,
+        help=(
+            "Chatterbox CFG / pacing control "
+            f"(default {DEFAULT_CHATTERBOX_CFG_WEIGHT:g}, clone-calm). "
+            "Lower (~0.3) often slows speech."
+        ),
     )
     return parser.parse_args(argv)
 

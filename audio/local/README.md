@@ -1,4 +1,4 @@
-# BSB Local Audio (MLX / Kokoro)
+# BSB Local Audio (Kokoro, Chatterbox, demos)
 
 Offline TTS for rendering BSB chapters from the verse-level JSONL source at:
 
@@ -150,24 +150,165 @@ On Apple Silicon, Kokoro's upstream docs recommend enabling MPS fallback:
 PYTORCH_ENABLE_MPS_FALLBACK=1 python3 audio/local/generate_demo.py --engine kokoro
 ```
 
-Chatterbox is a stronger local quality/voice-cloning candidate. Use a separate
-Python 3.11 environment if dependency resolution gets tight.
+### Chatterbox (MLX or PyTorch)
+
+Chatterbox is the stronger local quality / voice-cloning path. Prefer **MLX**
+on Apple Silicon for multi-chapter or full-Bible runs. Use **PyTorch** for
+short demos, the voice-match grid, or when `mlx-audio` is unavailable.
+
+**Default voice profile is `clone-calm`** (best A/B match to production
+ElevenLabs Bill): `exaggeration=0.35`, `cfg_weight=0.4`, cloning from
+`output/audio/local/voice-match/ref-bill-phil1.wav`.
+
+| Script | Backend | Role |
+|--------|---------|------|
+| `generate_demo.py --engine chatterbox` | **PyTorch only** | Short chapter / excerpt WAVs |
+| `voice_match_chatterbox.py` | **PyTorch only** | A/B grid against Bill reference |
+| `generate_chatterbox.py` | **MLX (default)** or PyTorch | Checkpointed book / NT / full Bible → MP3 |
+
+#### Prerequisites
+
+1. **`ffmpeg`** on `PATH` (ref-clip extract, WAV concat, MP3 encode).
+2. **Python 3.11** venvs (separate installs; do not mix stacks in one env).
+3. **Local BSB JSONL** for `generate_chatterbox.py` (file path only; no URL
+   fetch). Default: `~/Downloads/bsb.jsonl`. Override with `--jsonl /path/to/bsb.jsonl`.
+   Demo and voice-match scripts can use the Arweave URL above when a local file
+   is not present.
+4. **Voice reference WAV** for clone-calm (or pass `--audio-prompt-path ""` for
+   the model default voice).
+5. **Hugging Face model download** on first run (weights cached under HF home).
+6. Disk under `output/audio/local/chatterbox/` for chapter MP3s, hidden
+   `.checkpoint_*.json` / `.parts_*` resume files, and optional `logs/`.
+
+Where to get JSONL: download or copy a verse-level BSB JSONL to a local path
+(production tooling often uses `~/Downloads/bsb.jsonl`). The same verse schema
+as the Arweave demo source is expected (`book`, `chapter`, `verseNum`, text).
+
+#### One-time setup
 
 ```bash
-python3 -m pip install chatterbox-tts
-PYTORCH_ENABLE_MPS_FALLBACK=1 python3 audio/local/generate_demo.py \
-    --engine chatterbox \
-    --device mps
+# PyTorch Chatterbox (demos + voice-match + --backend torch)
+uv venv audio/local/.venv-chatterbox --python 3.11
+uv pip install --python audio/local/.venv-chatterbox/bin/python chatterbox-tts
+# resemble-perth still imports pkg_resources; pin setuptools below 81
+uv pip install --python audio/local/.venv-chatterbox/bin/python 'setuptools<81'
+
+# MLX Chatterbox (preferred for batch / NT)
+uv venv audio/local/.venv-mlx --python 3.11
+uv pip install --python audio/local/.venv-mlx/bin/python mlx-audio soundfile
+# mlx-lm currently needs transformers 4.x (5.x breaks AutoTokenizer.register)
+uv pip install --python audio/local/.venv-mlx/bin/python 'transformers>=4.49,<5'
+
+# Bill reference clip (once; needs a production Philippians ch.1 MP3 or any mono WAV)
+mkdir -p output/audio/local/voice-match
+ffmpeg -y -ss 5 -t 8 \
+  -i output/elevenlabs_audio/philippians/philippians_chapter_01.mp3 \
+  -ac 1 -ar 24000 \
+  output/audio/local/voice-match/ref-bill-phil1.wav
 ```
 
-With a permitted local reference voice clip:
+If you do not have the ElevenLabs Philippians file, point
+`--audio-prompt-path` at any short mono reference WAV (roughly 6–10s works well),
+or use the built-in voice with `--audio-prompt-path ""`.
+
+#### Smoke-test matrix
 
 ```bash
-python3 audio/local/generate_demo.py \
-    --engine chatterbox \
-    --device mps \
-    --audio-prompt-path path/to/your-voice-reference.wav
+# 1) Inventory only (no model) — confirms JSONL + book list
+audio/local/.venv-mlx/bin/python audio/local/generate_chatterbox.py \
+  --nt --dry-run
+
+# 2) MLX: one short book (or first chapter of a longer book)
+audio/local/.venv-mlx/bin/python audio/local/generate_chatterbox.py \
+  --book "2 John" --backend mlx
+# longer book, first chapter only:
+audio/local/.venv-mlx/bin/python audio/local/generate_chatterbox.py \
+  --book Philippians --backend mlx --max-chapters 1
+
+# 3) PyTorch: short demo excerpt (generate_demo is torch-only for chatterbox)
+PYTORCH_ENABLE_MPS_FALLBACK=1 audio/local/.venv-chatterbox/bin/python \
+  audio/local/generate_demo.py \
+  --engine chatterbox \
+  --device mps \
+  --max-verses 2
+
+# 4) PyTorch: one book via the batch script
+PYTORCH_ENABLE_MPS_FALLBACK=1 audio/local/.venv-chatterbox/bin/python \
+  audio/local/generate_chatterbox.py \
+  --book Philippians --backend torch --device mps --max-chapters 1
 ```
+
+#### Full New Testament / Bible (batch)
+
+Defaults for `generate_chatterbox.py`: **MLX** backend,
+`mlx-community/chatterbox-fp16`, clone-calm knobs, local JSONL path above.
+Optional faster model: `--model mlx-community/chatterbox-turbo-fp16` (re-check
+voice match first).
+
+```bash
+mkdir -p output/audio/local/chatterbox/logs
+
+# MLX NT (preferred on Apple Silicon)
+caffeinate -dims nohup \
+  audio/local/.venv-mlx/bin/python -u \
+  audio/local/generate_chatterbox.py --nt --backend mlx \
+  > output/audio/local/chatterbox/logs/nt-mlx.log 2>&1 &
+tail -f output/audio/local/chatterbox/logs/nt-mlx.log
+
+# PyTorch / MPS fallback (slower; same clone-calm defaults)
+caffeinate -dims nohup \
+  env PYTORCH_ENABLE_MPS_FALLBACK=1 \
+  audio/local/.venv-chatterbox/bin/python -u \
+  audio/local/generate_chatterbox.py --nt --backend torch --device mps \
+  > output/audio/local/chatterbox/logs/nt-torch.log 2>&1 &
+```
+
+Other useful flags:
+
+| Flag | Purpose |
+|------|---------|
+| `--book Philippians` | Single book (case-insensitive match) |
+| `--nt` / `--all` | Full New Testament or entire Bible |
+| `--jsonl PATH` | Local BSB JSONL (required path; default `~/Downloads/bsb.jsonl`) |
+| `--max-chapters N` | Limit chapters per book (smoke tests) |
+| `--max-chars N` | Chunk size (default 320; stay under model token cap) |
+| `--dry-run` | Inventory chapters/chunks without loading weights |
+| `--audio-prompt-path PATH` or `""` | Clone reference, or empty for built-in voice |
+| `--exaggeration` / `--cfg-weight` | Override clone-calm knobs |
+
+Checkpointed MP3s land under `output/audio/local/chatterbox/<book_slug>/`.
+Re-run the same command to **resume**; completed chapters (checkpoint + MP3)
+are skipped. Partial chapter parts live in hidden `.parts_*` directories beside
+the MP3s.
+
+Override knobs or the reference clip on demos when needed:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 audio/local/.venv-chatterbox/bin/python \
+  audio/local/generate_demo.py \
+  --engine chatterbox \
+  --device mps \
+  --audio-prompt-path path/to/other-reference.wav \
+  --exaggeration 0.5 \
+  --cfg-weight 0.3
+```
+
+#### Voice-match grid (ElevenLabs Bill target)
+
+Chatterbox has no named voice catalog. Speaker identity comes from zero-shot
+cloning (`--audio-prompt-path`) plus `exaggeration` and `cfg_weight`. After a
+short A/B against production Bill (`pqHfZKP75CvOlQylNhV4`), **clone-calm**
+(`e=0.35`, `c=0.4`) was chosen as the project default above.
+
+This helper is **PyTorch only** (same `.venv-chatterbox` env as demos):
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 audio/local/.venv-chatterbox/bin/python \
+  audio/local/voice_match_chatterbox.py --device mps
+```
+
+Outputs land under `output/audio/local/voice-match/` with labeled WAVs and a
+`comparison.json` manifest.
 
 Dia is a larger, more experimental dialogue-oriented local model. It is best
 suited to a CUDA GPU and may not be practical on CPU.
