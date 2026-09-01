@@ -139,11 +139,15 @@ make travel-john
 # or: mise run travel-john
 ```
 
-The print target fails closed if those fonts are missing. It will not
-download Milo, and it will not substitute Source Serif or Lexend.
+The loved-face print target fails closed if those fonts are missing. It will
+not download Milo, and it will not silently substitute Source Serif or Lexend.
+
+A separate metrics compile, watermarked `GRID PROOF — NOT FINAL FACE`, uses
+the OFL stand-in in `fonts/grid-proof/`. That PDF is not the loved face.
 
 ```bash
-make travel-john-typst   # markup only; no fonts required
+make travel-john-typst          # markup only; no fonts required
+make travel-john-grid-proof     # watermarked OFL metrics PDF; not Milo
 PYTHONPATH=src python -m bsb_pdf_toolkit.generate_travel_pdf --help
 ```
 

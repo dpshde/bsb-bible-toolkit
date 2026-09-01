@@ -49,6 +49,21 @@ Without Milo Text + Text Italic, `make travel-john` **fails** with:
 It will not fall back to Source Serif, Lexend, or system fonts
 (`--ignore-system-fonts`, `text.fallback: false`).
 
+## Grid proof (not the loved face)
+
+If Milo is not on the workstation, a **metrics-only** PDF can still be
+compiled so trim, grid, hyphenation, drop cap, WOC blue, and footnotes can
+be checked digitally. Every page is watermarked
+`GRID PROOF — NOT FINAL FACE`. The stand-in is Source Serif 4 (SIL OFL 1.1)
+from `fonts/grid-proof/`. It is never presented as FF Milo Serif Text.
+
+```bash
+make travel-john-grid-proof
+```
+
+Output: `drafts/travel/bsb-travel-john-grid-proof.pdf`.
+Typst source: `drafts/travel/work/john-grid-proof.typ`.
+
 ## BSB license
 
 The Berean Standard Bible text is public domain / CC0 (dedicated 30 April

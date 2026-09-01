@@ -57,17 +57,22 @@ Named families the composer asks for:
 - `"FF Milo Serif"` for heads
 
 `text.fallback` is **false**. `--ignore-system-fonts` is passed at compile.
-If the licensed desktop fonts are absent, the print target **fails** with:
+If the licensed desktop fonts are absent, the loved-face print target
+**fails** with:
 
 > Place licensed desktop OTFs from FontFont/MyFonts here (Text + Text Italic
 > minimum; Regular/Bold for heads). Desktop license, 1 workstation.
 
-Do not substitute Source Serif, Lexend, or any other face.
+Do not silently substitute Source Serif, Lexend, or any other face as Milo.
 
 Purchase/license: FontFont / MyFonts, desktop license, one workstation.
 Designer: Mike Abbink. See <https://mikeabbink.com/typefaces/milo-serif/>.
 Place files in `fonts/milo/` (gitignored). This repository does not ship the
 font.
+
+A separate **metrics-only** path exists for digital grid checks while Milo is
+absent. See §8. That PDF is watermarked `GRID PROOF — NOT FINAL FACE` and
+must never be presented as the loved face.
 
 ## 3. Composition
 
@@ -128,7 +133,29 @@ font.
   product assets.
 - Not a whole-canon pagination yet. John is the proof of the travel grammar.
 
-## 8. Rebuild
+## 8. Grid proof versus loved face
 
-See `drafts/travel/README.md`. The machine command is `make travel-john`
-(or `mise run travel-john`) after licensed Milo files are in `fonts/milo/`.
+Until licensed Milo Text + Text Italic sit in `fonts/milo/`, the loved-face
+PDF cannot be compiled. A metrics compile is allowed **only** as a labeled
+stand-in:
+
+| Item | Loved-face print | Grid proof |
+|------|------------------|------------|
+| Command | `make travel-john` | `make travel-john-grid-proof` |
+| Face | FF Milo Serif Text | Source Serif 4 (SIL OFL 1.1) |
+| Font dir | `fonts/milo/` | `fonts/grid-proof/` |
+| Output | `drafts/travel/bsb-travel-john.pdf` | `drafts/travel/bsb-travel-john-grid-proof.pdf` |
+| Watermark | none | `GRID PROOF — NOT FINAL FACE` on every page |
+| Overlay | none | 42-line baseline grid in the text block |
+
+The stand-in exists so trim, margins, 10.5 pt grid, hyphenation, drop cap,
+WOC blue, and footnote placement can be checked digitally. It is not Milo,
+not a candidate loved face, and not a FontFont/MyFonts specimen.
+
+## 9. Rebuild
+
+See `drafts/travel/README.md`.
+
+- Loved face (after Milo is dropped in): `make travel-john`
+- Metrics only (OFL stand-in): `make travel-john-grid-proof`
+- Markup only: `make travel-john-typst`

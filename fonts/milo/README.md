@@ -45,3 +45,7 @@ Until Text + Text Italic are present, `make travel-john` fails with:
 
 > Place licensed desktop OTFs from FontFont/MyFonts here (Text + Text Italic
 > minimum; Regular/Bold for heads). Desktop license, 1 workstation.
+
+A separate watermarked metrics compile (`make travel-john-grid-proof`) may
+use the OFL stand-in in `fonts/grid-proof/`. That PDF is labeled
+`GRID PROOF — NOT FINAL FACE` and is never the loved face.

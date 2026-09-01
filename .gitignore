@@ -19,6 +19,7 @@ dist/
 *.pdf
 !drafts/primary/bsb-primary-draft.pdf
 !drafts/primary/bsb-single-column-draft.pdf
+!drafts/travel/bsb-travel-john-grid-proof.pdf
 !examples/*.pdf
 *.epub
 *.zip

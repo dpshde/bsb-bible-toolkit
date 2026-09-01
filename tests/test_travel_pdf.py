@@ -15,9 +15,14 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     FONT_MISSING_MESSAGE,
+    GRID_PROOF_FAMILY,
+    GRID_PROOF_FONT_MISSING_MESSAGE,
+    GRID_PROOF_WATERMARK,
     MILO_TEXT_FAMILY,
     SPEC,
+    GridProofFontError,
     MiloFontError,
+    classify_grid_proof_fonts,
     classify_milo_fonts,
     footnote_markup,
     generate_travel_typst,
@@ -25,6 +30,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     main,
     measure_em,
     paragraph_markup,
+    require_grid_proof_fonts,
     require_milo_fonts,
     travel_preamble,
     verse_segments_travel,
@@ -260,3 +266,86 @@ def test_real_usfm_john_preserves_corpus_text(tmp_path):
     assert text.count("#chapter-drop(") == 21
     assert "Source Serif 4" not in text
     assert "Lexend" not in text
+    assert GRID_PROOF_WATERMARK not in text
+
+
+def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
+    preamble = travel_preamble(grid_proof=True)
+    assert GRID_PROOF_WATERMARK in preamble
+    assert GRID_PROOF_FAMILY in preamble
+    assert "grid-proof = true" in preamble
+    assert "Never present this stand-in as the loved face" in preamble
+    assert "proof-background" in preamble
+    assert MILO_TEXT_FAMILY in preamble
+    default = travel_preamble()
+    assert GRID_PROOF_WATERMARK not in default
+    assert "grid-proof = false" in default
+    assert 'body-font = "Source Serif 4"' not in default
+
+
+def test_require_grid_proof_fonts_rejects_milo_as_stand_in(tmp_path):
+    font_dir = tmp_path / "grid-proof"
+    font_dir.mkdir()
+    (font_dir / "MiloSerif-Text.otf").write_bytes(b"OTTO")
+    (font_dir / "MiloSerif-TextItalic.otf").write_bytes(b"OTTO")
+    found = classify_grid_proof_fonts(font_dir)
+    assert found["regular"] == []
+    assert found["italic"] == []
+    with pytest.raises(GridProofFontError) as exc:
+        require_grid_proof_fonts(font_dir)
+    assert GRID_PROOF_FONT_MISSING_MESSAGE in str(exc.value)
+
+
+def test_require_grid_proof_fonts_accepts_source_serif(tmp_path):
+    font_dir = tmp_path / "grid-proof"
+    font_dir.mkdir()
+    (font_dir / "SourceSerif4-Regular.otf").write_bytes(b"OTTO")
+    (font_dir / "SourceSerif4-It.otf").write_bytes(b"OTTO")
+    (font_dir / "SourceSerif4-Bold.otf").write_bytes(b"OTTO")
+    found = require_grid_proof_fonts(font_dir)
+    assert len(found["regular"]) == 1
+    assert len(found["italic"]) == 1
+    assert found["bold"]
+
+
+def test_grid_proof_writes_watermarked_typst_without_milo(tmp_path):
+    usfm = write_sample_zip(tmp_path / "sample.zip")
+    pdf = tmp_path / "out.pdf"
+    typ = tmp_path / "out.typ"
+    code = main([
+        str(usfm),
+        str(pdf),
+        "--typst-out",
+        str(typ),
+        "--font-dir",
+        str(tmp_path / "missing"),
+        "--grid-proof",
+        "--no-compile",
+    ])
+    assert code == 0
+    text = typ.read_text()
+    assert GRID_PROOF_WATERMARK in text
+    assert GRID_PROOF_FAMILY in text
+    assert "The Gospel According to John" in text
+    assert "#woc[" in text
+    assert "#chapter-drop(" in text
+    assert "grid-proof = true" in text
+
+
+def test_grid_proof_exits_2_without_stand_in_fonts(tmp_path, capsys):
+    usfm = write_sample_zip(tmp_path / "sample.zip")
+    pdf = tmp_path / "out.pdf"
+    typ = tmp_path / "out.typ"
+    code = main([
+        str(usfm),
+        str(pdf),
+        "--typst-out",
+        str(typ),
+        "--font-dir",
+        str(tmp_path / "missing"),
+        "--grid-proof",
+    ])
+    assert code == 2
+    err = capsys.readouterr().err
+    assert GRID_PROOF_FONT_MISSING_MESSAGE in err
+    assert typ.exists()

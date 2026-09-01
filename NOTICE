@@ -33,8 +33,17 @@ FF Milo Serif
 The compact travel edition is specified to compose against licensed
 FF Milo Serif Text desktop fonts (FontFont / MyFonts; designer Mike Abbink).
 Those files are not bundled. Place a desktop-licensed copy in fonts/milo/
-on one workstation. See fonts/milo/README.md. The toolkit will not download
-or substitute another face.
+on one workstation. See fonts/milo/README.md. The loved-face print target
+will not download or silently substitute another face.
+
+Source Serif 4 (grid proof only)
+--------------------------------
+
+`fonts/grid-proof/` vendors Source Serif 4 for a watermarked metrics
+compile (`GRID PROOF — NOT FINAL FACE`). Source Serif is a trademark of
+Adobe. The font software is licensed under the SIL Open Font License,
+Version 1.1. See `fonts/grid-proof/OFL.txt`. This stand-in is never the
+loved face.
 
 route.bible links
 -----------------

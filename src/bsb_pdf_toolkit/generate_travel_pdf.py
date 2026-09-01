@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Compose a compact travel BSB from this toolkit's USFM via Typst.
 
-The print target requires licensed FF Milo Serif Text desktop fonts in
-``fonts/milo/``. It will not download, scrape, subset, or silently substitute
-another face (including Source Serif or Lexend).
+The loved-face print target requires licensed FF Milo Serif Text desktop
+fonts in ``fonts/milo/``. It will not download, scrape, subset, or silently
+substitute another face (including Source Serif or Lexend).
+
+``--grid-proof`` is a separate, opt-in metrics compile. It uses a labeled
+OFL stand-in and watermarks every page ``GRID PROOF — NOT FINAL FACE``.
+That PDF is never the loved face.
 """
 
 from __future__ import annotations
@@ -30,16 +34,31 @@ DEFAULT_USFM = REPO_ROOT / "drafts" / "primary" / "source" / "engbsb_usfm.zip"
 DEFAULT_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john.pdf"
 DEFAULT_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "john.typ"
 DEFAULT_FONT_DIR = REPO_ROOT / "fonts" / "milo"
+DEFAULT_GRID_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john-grid-proof.pdf"
+DEFAULT_GRID_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "john-grid-proof.typ"
+DEFAULT_GRID_FONT_DIR = REPO_ROOT / "fonts" / "grid-proof"
 USFM_URL = "https://bereanbible.com/bsb_usfm.zip"
 
 MILO_TEXT_FAMILY = "FF Milo Serif Text"
 MILO_HEAD_FAMILY = "FF Milo Serif"
 MILO_TEXT_ALIAS = "MiloSerif-Text"
 
+GRID_PROOF_WATERMARK = "GRID PROOF — NOT FINAL FACE"
+GRID_PROOF_FAMILY = "Source Serif 4"
+GRID_PROOF_NOTE = (
+    "Stand-in face: Source Serif 4 (SIL OFL 1.1). "
+    "Loved face: FF Milo Serif Text."
+)
+
 FONT_MISSING_MESSAGE = (
     "Place licensed desktop OTFs from FontFont/MyFonts here "
     "(Text + Text Italic minimum; Regular/Bold for heads). "
     "Desktop license, 1 workstation."
+)
+
+GRID_PROOF_FONT_MISSING_MESSAGE = (
+    "Place SIL OFL Source Serif 4 Regular + Italic in fonts/grid-proof/ "
+    "for a watermarked metrics compile. This stand-in is never the loved face."
 )
 
 WJ_TOKEN_RE = re.compile(
@@ -107,6 +126,16 @@ class MiloFontError(Exception):
         super().__init__(f"{font_dir}: {FONT_MISSING_MESSAGE}")
 
 
+class GridProofFontError(Exception):
+    """Raised when the labeled OFL stand-in for a grid proof is missing."""
+
+    exit_code = 2
+
+    def __init__(self, font_dir: Path):
+        self.font_dir = font_dir
+        super().__init__(f"{font_dir}: {GRID_PROOF_FONT_MISSING_MESSAGE}")
+
+
 def _norm_name(path: Path) -> str:
     return re.sub(r"[^a-z0-9]+", "", path.name.lower())
 
@@ -149,6 +178,48 @@ def require_milo_fonts(font_dir: Path) -> dict[str, list[Path]]:
     found = classify_milo_fonts(font_dir)
     if not found["text"] or not found["text-italic"]:
         raise MiloFontError(font_dir)
+    return found
+
+
+def _is_source_serif_file(path: Path) -> bool:
+    token = _norm_name(path)
+    return "sourceserif" in token
+
+
+def classify_grid_proof_fonts(font_dir: Path) -> dict[str, list[Path]]:
+    """Classify the labeled OFL stand-in. Never accept Milo as that stand-in."""
+    found = {"regular": [], "italic": [], "bold": [], "other": []}
+    if not font_dir.is_dir():
+        return found
+    for path in sorted(font_dir.iterdir()):
+        if not path.is_file() or not _is_font_file(path):
+            continue
+        token = _norm_name(path)
+        if "milo" in token or not _is_source_serif_file(path):
+            continue
+        stem = path.stem.lower()
+        italic = (
+            "italic" in token
+            or "oblique" in token
+            or stem.endswith("-it")
+            or stem.endswith("it")
+        )
+        if italic:
+            found["italic"].append(path)
+        elif "bold" in token:
+            found["bold"].append(path)
+        elif "regular" in token or "roman" in token:
+            found["regular"].append(path)
+        else:
+            found["other"].append(path)
+    return found
+
+
+def require_grid_proof_fonts(font_dir: Path) -> dict[str, list[Path]]:
+    """Fail unless Source Serif 4 Regular + Italic are present for a grid proof."""
+    found = classify_grid_proof_fonts(font_dir)
+    if not found["regular"] or not found["italic"]:
+        raise GridProofFontError(font_dir)
     return found
 
 
@@ -368,12 +439,82 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
     return [line] if line else []
 
 
-def travel_preamble(spec: TravelSpec = SPEC) -> str:
+def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str:
     leading = leading_gap_pt(spec)
     r, g, b = spec.woc_rgb
     ir, ig, ib = spec.ink_rgb
+    if grid_proof:
+        body_font = GRID_PROOF_FAMILY
+        head_font = GRID_PROOF_FAMILY
+        body_alias = GRID_PROOF_FAMILY
+        face_comment = (
+            f"GRID PROOF stand-in: {GRID_PROOF_FAMILY} (SIL OFL). "
+            f"Loved face is {spec.body_font} (Text optical). "
+            "Never present this stand-in as the loved face."
+        )
+        proof_lets = f'''#let grid-proof = true
+#let proof-mark = "{GRID_PROOF_WATERMARK}"
+
+#let proof-background() = context {{
+  let left = if calc.odd(here().page()) {{ margin-inside }} else {{ margin-outside }}
+  let width = trim-width - margin-inside - margin-outside
+  let line-stroke = 0.25pt + luma(0).transparentize(88%)
+  for i in range(lines-per-page + 1) {{
+    place(dx: left, dy: margin-head + i * baseline-skip, line(
+      length: width,
+      stroke: line-stroke,
+    ))
+  }}
+  place(center + horizon, rotate(-50deg)[
+    #text(
+      font: head-font,
+      size: 17pt,
+      fill: rgb({r}, {g}, {b}).transparentize(80%),
+      weight: 700,
+      tracking: 0.08em,
+    )[#proof-mark]
+  ])
+}}
+'''
+        page_background = "if grid-proof { proof-background() } else { none }"
+        title_proof = f'''    #if grid-proof {{
+      v(baseline-skip)
+      text(font: head-font, size: 9pt, weight: 700, fill: woc-blue)[#proof-mark]
+      v(leading-gap)
+      text(font: body-font, size: 7pt)[{GRID_PROOF_NOTE}]
+    }}
+'''
+        footer_block = f'''    if grid-proof {{
+      if here().page() == 1 {{
+        align(center)[#text(size: 6pt, tracking: 0.08em)[#smallcaps[#proof-mark]]]
+      }} else {{
+        grid(
+          columns: (1fr, auto, 1fr),
+          align(left)[#text(size: 5.5pt, tracking: 0.04em)[#proof-mark]],
+          align(center)[#counter(page).display()],
+          [],
+        )
+      }}
+    }} else if here().page() == 1 {{
+      none
+    }} else {{
+      align(center, counter(page).display())
+    }}'''
+    else:
+        body_font = spec.body_font
+        head_font = spec.head_font
+        body_alias = spec.body_font_alias
+        face_comment = f"Face: {spec.body_font} (Text optical). Do not substitute Source Serif."
+        proof_lets = "#let grid-proof = false\n"
+        page_background = "none"
+        title_proof = ""
+        footer_block = '''    if here().page() == 1 {
+      none
+    } else {
+      align(center, counter(page).display())
+    }'''
     return f'''// BSB travel composition — generated from this toolkit's USFM.
-// Face: {spec.body_font} (Text optical). Do not substitute Source Serif.
+// {face_comment}
 #let trim-width = {spec.trim_width_in}in
 #let trim-height = {spec.trim_height_in}in
 #let margin-inside = {spec.margin_inside_in}in
@@ -385,11 +526,11 @@ def travel_preamble(spec: TravelSpec = SPEC) -> str:
 #let leading-gap = {leading}pt
 #let lines-per-page = {spec.lines_per_page}
 #let drop-lines = {spec.drop_lines}
-#let body-font = "{spec.body_font}"
-#let head-font = "{spec.head_font}"
+#let body-font = "{body_font}"
+#let head-font = "{head_font}"
 #let ink = rgb({ir}, {ig}, {ib})
 #let woc-blue = rgb({r}, {g}, {b})
-
+{proof_lets}
 #set page(
   width: trim-width,
   height: trim-height,
@@ -400,6 +541,7 @@ def travel_preamble(spec: TravelSpec = SPEC) -> str:
     bottom: margin-foot,
   ),
   numbering: "1",
+  background: {page_background},
   header: context {{
     if here().page() == 1 {{
       none
@@ -414,17 +556,13 @@ def travel_preamble(spec: TravelSpec = SPEC) -> str:
     }}
   }},
   footer: context {{
-    if here().page() == 1 {{
-      none
-    }} else {{
-      set text(font: head-font, size: {spec.folio_pt}pt, fill: ink)
-      align(center, counter(page).display())
-    }}
+    set text(font: head-font, size: {spec.folio_pt}pt, fill: ink)
+{footer_block}
   }},
 )
 
 #set text(
-  font: (body-font, "{spec.body_font_alias}"),
+  font: (body-font, "{body_alias}"),
   size: body-size,
   fill: ink,
   lang: "{spec.hyphen_lang}",
@@ -458,7 +596,7 @@ def travel_preamble(spec: TravelSpec = SPEC) -> str:
 
 #let chapter-label = state("chapter-label", "JOHN")
 
-#let woc(body) = text(fill: woc-blue, font: (body-font, "{spec.body_font_alias}"))[#body]
+#let woc(body) = text(fill: woc-blue, font: (body-font, "{body_alias}"))[#body]
 
 #let vnum(n) = text(
   font: head-font,
@@ -532,17 +670,24 @@ def travel_preamble(spec: TravelSpec = SPEC) -> str:
     #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
     #v(baseline-skip)
     #text(font: body-font, size: 8pt)[Travel print sample · 4.75 × 7 in]
-  ]
+{title_proof}  ]
   v(2 * baseline-skip)
 }}
 '''
 
 
-def generate_travel_typst(usfm_zip: Path, output_typ: Path, books=("John",), spec: TravelSpec = SPEC):
+def generate_travel_typst(
+    usfm_zip: Path,
+    output_typ: Path,
+    books=("John",),
+    spec: TravelSpec = SPEC,
+    *,
+    grid_proof: bool = False,
+):
     parsed = parse_usfm_zip(usfm_zip, book_names=list(books))
     if not parsed:
         raise ValueError(f"No BSB books matched {books!r} in {usfm_zip}")
-    lines = [travel_preamble(spec)]
+    lines = [travel_preamble(spec, grid_proof=grid_proof)]
     for book_index, book in enumerate(parsed):
         if book_index:
             lines.append("#pagebreak()")
@@ -607,13 +752,29 @@ def main(argv=None):
         description="Generate the compact travel BSB (John sample) from toolkit USFM"
     )
     parser.add_argument("input_usfm_zip", type=Path, nargs="?", default=DEFAULT_USFM)
-    parser.add_argument("output_pdf", type=Path, nargs="?", default=DEFAULT_PDF)
-    parser.add_argument("--typst-out", type=Path, default=DEFAULT_TYPST)
-    parser.add_argument("--font-dir", type=Path, default=DEFAULT_FONT_DIR)
+    parser.add_argument("output_pdf", type=Path, nargs="?", default=None)
+    parser.add_argument("--typst-out", type=Path, default=None)
+    parser.add_argument("--font-dir", type=Path, default=None)
     parser.add_argument("--book", action="append", default=None, help="Book name or USFM code (default: John)")
     parser.add_argument("--no-compile", action="store_true", help="Write Typst only; skip the print target")
     parser.add_argument("--download-usfm", action="store_true", help="Fetch official BSB USFM if missing")
+    parser.add_argument(
+        "--grid-proof",
+        action="store_true",
+        help=(
+            "Metrics-only compile with the labeled OFL stand-in. "
+            "Watermarks every page 'GRID PROOF — NOT FINAL FACE'. "
+            "Never the loved face."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    if args.output_pdf is None:
+        args.output_pdf = DEFAULT_GRID_PDF if args.grid_proof else DEFAULT_PDF
+    if args.typst_out is None:
+        args.typst_out = DEFAULT_GRID_TYPST if args.grid_proof else DEFAULT_TYPST
+    if args.font_dir is None:
+        args.font_dir = DEFAULT_GRID_FONT_DIR if args.grid_proof else DEFAULT_FONT_DIR
 
     books = args.book or ["John"]
     try:
@@ -622,15 +783,18 @@ def main(argv=None):
         print(exc, file=sys.stderr)
         return 1
 
-    generate_travel_typst(usfm_zip, args.typst_out, books=books)
+    generate_travel_typst(usfm_zip, args.typst_out, books=books, grid_proof=args.grid_proof)
     print(f"Wrote Typst source: {args.typst_out}")
 
     if args.no_compile:
         return 0
 
     try:
-        require_milo_fonts(args.font_dir)
-    except MiloFontError as exc:
+        if args.grid_proof:
+            require_grid_proof_fonts(args.font_dir)
+        else:
+            require_milo_fonts(args.font_dir)
+    except (MiloFontError, GridProofFontError) as exc:
         print(str(exc), file=sys.stderr)
         return exc.exit_code
 
@@ -639,6 +803,8 @@ def main(argv=None):
         print("Typst compile failed. Source was still generated.", file=sys.stderr)
         return result.returncode
     print(f"Wrote PDF: {args.output_pdf}")
+    if args.grid_proof:
+        print(f"{GRID_PROOF_WATERMARK}. {GRID_PROOF_NOTE}", file=sys.stderr)
     return 0
 
 
