@@ -18,6 +18,10 @@ run = "make travel-john"
 description = "Watermarked OFL metrics PDF (GRID PROOF — NOT FINAL FACE; not Milo)"
 run = "make travel-john-grid-proof"
 
+[tasks.travel-bible-grid-proof]
+description = "Full 66-book watermarked OFL metrics PDF (not the loved face; do not commit)"
+run = "make travel-bible-grid-proof"
+
 [tasks.test-travel]
 description = "Unit tests for the travel composer"
 run = "make test-travel"

@@ -225,9 +225,21 @@ def parse_usfm_zip(usfm_zip, book_names=None):
                     flush()
                     if current["paras"] and current["paras"][-1]["kind"] == "heading":
                         current["paras"][-1]["refs"] = rest
-                elif marker in {"p", "m", "pmo", "pm", "pi", "pc", "q1", "q2", "q3", "qc", "li1", "li2"}:
+                elif marker in {"p", "m", "pmo", "pm", "pi", "pc", "q", "q1", "q2", "q3", "qc", "qr", "li1", "li2"}:
                     flush()
                     pending = {"kind": "body", "marker": marker, "raw": [rest], "refs": ""}
+                elif marker == "ms":
+                    flush()
+                    pending = {"kind": "heading", "marker": marker, "raw": [rest], "refs": ""}
+                elif marker == "d":
+                    flush()
+                    if re.search(r"\\v\s+\d+", rest):
+                        pending = {"kind": "body", "marker": "d", "raw": [rest], "refs": ""}
+                    else:
+                        pending = {"kind": "superscription", "marker": marker, "raw": [rest], "refs": ""}
+                elif marker == "qa":
+                    flush()
+                    pending = {"kind": "acrostic", "marker": marker, "raw": [rest], "refs": ""}
                 elif marker == "v":
                     if pending is None or pending["kind"] != "body":
                         flush()
@@ -329,6 +341,17 @@ def generate_typst(usfm_zip, output_typ, testament="all"):
                         f"{typst_string(heading_url)}"
                         f"{refs_arg})"
                     )
+                elif para["kind"] == "superscription":
+                    text = clean_spaces(para["raw"])
+                    if text:
+                        lines.append(f"#para[{typst_escape(text)}]")
+                elif para["kind"] == "acrostic":
+                    title = clean_spaces(para["raw"])
+                    if title:
+                        heading_url = f"https://route.bible/{book['osis']}.{chapter['chapter']}"
+                        lines.append(
+                            f"#section({typst_string(title)}, {typst_string(heading_url)})"
+                        )
                 elif para["kind"] == "blank":
                     lines.append("#v(0.24em)")
                 else:

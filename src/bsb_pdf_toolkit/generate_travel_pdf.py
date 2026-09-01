@@ -16,18 +16,24 @@ import argparse
 import re
 import subprocess
 import sys
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
 from .add_route_links import build_url
+from .download_bsb import BOOK_NAMES
 from .generate_typst_pdf import (
+    BOOK_ORDER,
+    NEW_TESTAMENT_START,
     clean_spaces,
     heading_ranges,
     parse_ref_runs,
     parse_usfm_zip,
     typst_escape,
     typst_string,
+    usfm_code_from_name,
 )
+from .generate_reflow_pdf import USFM_TO_BOOK
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_USFM = REPO_ROOT / "drafts" / "primary" / "source" / "engbsb_usfm.zip"
@@ -37,7 +43,13 @@ DEFAULT_FONT_DIR = REPO_ROOT / "fonts" / "milo"
 DEFAULT_GRID_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john-grid-proof.pdf"
 DEFAULT_GRID_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "john-grid-proof.typ"
 DEFAULT_GRID_FONT_DIR = REPO_ROOT / "fonts" / "grid-proof"
+DEFAULT_BIBLE_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-bible.pdf"
+DEFAULT_BIBLE_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "bible.typ"
+DEFAULT_BIBLE_GRID_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-bible-grid-proof.pdf"
+DEFAULT_BIBLE_GRID_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "bible-grid-proof.typ"
 USFM_URL = "https://bereanbible.com/bsb_usfm.zip"
+PROTESTANT_CANON = tuple(BOOK_NAMES[number] for number in range(1, 67))
+SAMPLE_SUBTITLE = "Travel print sample · 4.75 × 7 in"
 
 MILO_TEXT_FAMILY = "FF Milo Serif Text"
 MILO_HEAD_FAMILY = "FF Milo Serif"
@@ -66,7 +78,7 @@ WJ_TOKEN_RE = re.compile(
     re.S,
 )
 WORD_MARKER_RE = re.compile(r"\\w\s+([^|\\]+)(?:\|[^\\]*)?\\w\*")
-ND_MARKER_RE = re.compile(r"\\nd\s*(.+?)\\nd\*", re.S)
+NAMED_SPAN_RE = re.compile(r"\\(nd|qs)\s*(.+?)\\\1\*", re.S)
 RESIDUAL_MARKER_RE = re.compile(r"\\(?!ref\b|f\b|f\*|wj\b)[a-z0-9]+\*?\s*")
 FOOTNOTE_RE = re.compile(r"\\f\s+(.*?)\\f\*", re.S)
 
@@ -105,6 +117,59 @@ class TravelSpec:
 
 
 SPEC = TravelSpec()
+
+
+def select_travel_books(*, all_books: bool = False, book_args=None, testament: str = "all") -> list[str]:
+    """Choose John, explicit ``--book`` values, or the 66-book Protestant canon."""
+    if all_books and book_args:
+        raise ValueError("use --all-books or --book, not both")
+    if all_books:
+        names = list(PROTESTANT_CANON)
+    elif book_args:
+        names = list(book_args)
+    else:
+        names = ["John"]
+    if testament == "all":
+        return names
+    if testament == "ot":
+        return [name for name in names if BOOK_ORDER.get(name, 999) < NEW_TESTAMENT_START]
+    if testament == "nt":
+        return [name for name in names if BOOK_ORDER.get(name, 0) >= NEW_TESTAMENT_START]
+    raise ValueError(f"Unknown testament: {testament}")
+
+
+def usfm_zip_book_count(usfm_zip: Path) -> int:
+    with zipfile.ZipFile(usfm_zip) as archive:
+        return sum(
+            1
+            for name in archive.namelist()
+            if name.lower().endswith(".usfm") and USFM_TO_BOOK.get(usfm_code_from_name(name))
+        )
+
+
+def default_output_paths(*, grid_proof: bool, all_books: bool, testament: str = "all"):
+    """John defaults stay put; full-Bible / testament compiles use distinct paths."""
+    testament_suffix = ""
+    if testament == "ot":
+        testament_suffix = "-ot"
+    elif testament == "nt":
+        testament_suffix = "-nt"
+    if all_books or testament != "all":
+        stem = f"bible{testament_suffix}"
+        if grid_proof:
+            return (
+                REPO_ROOT / "drafts" / "travel" / f"bsb-travel-{stem}-grid-proof.pdf",
+                REPO_ROOT / "drafts" / "travel" / "work" / f"{stem}-grid-proof.typ",
+                DEFAULT_GRID_FONT_DIR,
+            )
+        return (
+            REPO_ROOT / "drafts" / "travel" / f"bsb-travel-{stem}.pdf",
+            REPO_ROOT / "drafts" / "travel" / "work" / f"{stem}.typ",
+            DEFAULT_FONT_DIR,
+        )
+    if grid_proof:
+        return DEFAULT_GRID_PDF, DEFAULT_GRID_TYPST, DEFAULT_GRID_FONT_DIR
+    return DEFAULT_PDF, DEFAULT_TYPST, DEFAULT_FONT_DIR
 
 
 def leading_gap_pt(spec: TravelSpec = SPEC) -> float:
@@ -275,12 +340,16 @@ def render_text_chunk(raw: str) -> str:
     text = strip_word_markers(raw)
     pieces = []
     pos = 0
-    for match in ND_MARKER_RE.finditer(text):
+    for match in NAMED_SPAN_RE.finditer(text):
         if match.start() > pos:
             pieces.append(parse_ref_runs(_plain_chunk(text[pos:match.start()])))
-        name = clean_spaces(match.group(1))
-        if name:
-            pieces.append(f"#smallcaps[{typst_escape(name)}]")
+        inner = clean_spaces(match.group(2))
+        if inner:
+            escaped = typst_escape(inner)
+            if match.group(1) == "nd":
+                pieces.append(f"#smallcaps[{escaped}]")
+            else:
+                pieces.append(f"#emph[{escaped}]")
         pos = match.end()
     if pos < len(text):
         pieces.append(parse_ref_runs(_plain_chunk(text[pos:])))
@@ -410,10 +479,14 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
             return ""
         if drop:
             return content
+        if marker == "d":
+            return content if drop else f"#superscription[{content}]"
         if marker == "pc":
             return f"#inscription[{content}]"
         if marker.startswith("q") or marker in {"li1", "li2"}:
             level = 1
+            if marker == "qr" or marker == "qc":
+                return f"#inscription[{content}]"
             if marker.startswith("q") and marker[1:].isdigit():
                 level = int(marker[1:])
             elif marker == "li2":
@@ -661,17 +734,30 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   #set par(justify: true, leading: leading-gap, hanging-indent: 0.75em)
   #body
 ]
-#let book-title(name) = {{
-  align(center)[
-    #v(3 * baseline-skip)
-    #text(font: head-font, size: 8pt, tracking: 0.18em)[#smallcaps[Berean Standard Bible]]
-    #v(baseline-skip)
-    #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
-    #v(baseline-skip)
-    #text(font: body-font, size: 8pt)[Travel print sample · 4.75 × 7 in]
-{title_proof}  ]
-  v(2 * baseline-skip)
+#let book-title(name, sample: false) = {{
+  if sample {{
+    align(center)[
+      #v(3 * baseline-skip)
+      #text(font: head-font, size: 8pt, tracking: 0.18em)[#smallcaps[Berean Standard Bible]]
+      #v(baseline-skip)
+      #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
+      #v(baseline-skip)
+      #text(font: body-font, size: 8pt)[{SAMPLE_SUBTITLE}]
+{title_proof}    ]
+    v(2 * baseline-skip)
+  }} else {{
+    align(center)[
+      #v(baseline-skip)
+      #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
+    ]
+    v(baseline-skip)
+  }}
 }}
+#let superscription(body) = block(above: leading-gap, below: leading-gap)[
+  #set text(font: body-font, size: body-size, style: "italic", fill: ink)
+  #set par(justify: true, first-line-indent: 0pt)
+  #body
+]
 '''
 
 
@@ -692,7 +778,8 @@ def generate_travel_typst(
             lines.append("#pagebreak()")
         display = book.get("title") or book["book"]
         running = (book.get("heading") or book["book"]).upper()
-        lines.append(f"#book-title({typst_string(display)})")
+        sample = "true" if book_index == 0 else "false"
+        lines.append(f"#book-title({typst_string(display)}, sample: {sample})")
         for chapter in book["chapters"]:
             heading_ranges(chapter, book["osis"])
             running_chapter = f"{running} · {chapter['chapter']}"
@@ -718,6 +805,14 @@ def generate_travel_typst(
                         refs = xref_markup(refs_raw)
                         if refs:
                             lines.append(f"#chapter-xrefs[{refs}]")
+                elif para["kind"] == "superscription":
+                    body = render_text_chunk(para["raw"])
+                    if body:
+                        lines.append(f"#superscription[{body}]")
+                elif para["kind"] == "acrostic":
+                    title = clean_spaces(para["raw"])
+                    if title:
+                        lines.append(f"#section({typst_string(title)})")
                 elif para["kind"] == "blank":
                     lines.append("#v(baseline-skip)")
                 else:
@@ -748,13 +843,24 @@ def compile_typst(input_typ: Path, output_pdf: Path, font_dir: Path):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Generate the compact travel BSB (John sample) from toolkit USFM"
+        description="Generate the compact travel BSB from toolkit USFM (John sample or full canon)"
     )
     parser.add_argument("input_usfm_zip", type=Path, nargs="?", default=DEFAULT_USFM)
     parser.add_argument("output_pdf", type=Path, nargs="?", default=None)
     parser.add_argument("--typst-out", type=Path, default=None)
     parser.add_argument("--font-dir", type=Path, default=None)
     parser.add_argument("--book", action="append", default=None, help="Book name or USFM code (default: John)")
+    parser.add_argument(
+        "--all-books",
+        action="store_true",
+        help="Compose the 66-book Protestant canon in canonical order (not John-only)",
+    )
+    parser.add_argument(
+        "--testament",
+        choices=("all", "ot", "nt"),
+        default="all",
+        help="Limit --all-books (or an explicit book list) to OT or NT",
+    )
     parser.add_argument("--no-compile", action="store_true", help="Write Typst only; skip the print target")
     parser.add_argument("--download-usfm", action="store_true", help="Fetch official BSB USFM if missing")
     parser.add_argument(
@@ -768,22 +874,46 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
 
+    default_pdf, default_typ, default_fonts = default_output_paths(
+        grid_proof=args.grid_proof,
+        all_books=args.all_books,
+        testament=args.testament,
+    )
     if args.output_pdf is None:
-        args.output_pdf = DEFAULT_GRID_PDF if args.grid_proof else DEFAULT_PDF
+        args.output_pdf = default_pdf
     if args.typst_out is None:
-        args.typst_out = DEFAULT_GRID_TYPST if args.grid_proof else DEFAULT_TYPST
+        args.typst_out = default_typ
     if args.font_dir is None:
-        args.font_dir = DEFAULT_GRID_FONT_DIR if args.grid_proof else DEFAULT_FONT_DIR
+        args.font_dir = default_fonts
 
-    books = args.book or ["John"]
+    try:
+        books = select_travel_books(
+            all_books=args.all_books,
+            book_args=args.book,
+            testament=args.testament,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     try:
         usfm_zip = ensure_usfm_zip(args.input_usfm_zip, download=args.download_usfm)
     except FileNotFoundError as exc:
         print(exc, file=sys.stderr)
         return 1
 
-    generate_travel_typst(usfm_zip, args.typst_out, books=books, grid_proof=args.grid_proof)
-    print(f"Wrote Typst source: {args.typst_out}")
+    parsed = generate_travel_typst(
+        usfm_zip, args.typst_out, books=books, grid_proof=args.grid_proof
+    )
+    got = [book["book"] for book in parsed]
+    archive_books = usfm_zip_book_count(usfm_zip)
+    if args.all_books and archive_books >= len(books) and got != books:
+        print(
+            "USFM did not yield the requested books in Protestant canon order.\n"
+            f"expected {len(books)}: {books}\n"
+            f"got {len(got)}: {got}",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Wrote Typst source: {args.typst_out} ({len(got)} books)")
 
     if args.no_compile:
         return 0

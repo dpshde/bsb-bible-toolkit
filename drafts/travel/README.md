@@ -113,7 +113,29 @@ as FF Milo Serif Text.
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.
 
+## Full Protestant canon (grid proof only)
+
+`make travel-bible-grid-proof` composes all 66 Protestant books in canonical
+order at the same travel spec. Later books get a compact book title — the
+“Travel print sample · 4.75 × 7 in” line stays on the first book only
+(Genesis). Loved-face Milo compile remains fail-closed without `fonts/milo/`.
+
+This is still **not** the loved face. The stand-in is Source Serif 4, watermarked
+`GRID PROOF — NOT FINAL FACE` on every page. Do not commit the full-Bible PDF
+(it will be thousands of pages). John-only targets are unchanged:
+
+```bash
+make travel-john-grid-proof     # John sample; may be committed
+make travel-bible-grid-proof    # 66-book metrics PDF; do not git-add
+```
+
+Output: `drafts/travel/bsb-travel-bible-grid-proof.pdf` (gitignored).
+Typst source: `drafts/travel/work/bible-grid-proof.typ` (gitignored).
+
+If a single compile runs out of memory, `make travel-bible-ot-grid-proof` and
+`make travel-bible-nt-grid-proof` build the testaments separately.
+
 ## Scope
 
-John only. Whole-canon travel typesetting is later work. Audio/TTS pipelines
+John sample **and** an optional 66-book grid-proof target. Audio/TTS pipelines
 are untouched.

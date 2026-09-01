@@ -147,7 +147,8 @@ the OFL stand-in in `fonts/grid-proof/`. That PDF is not the loved face.
 
 ```bash
 make travel-john-typst          # markup only; no fonts required
-make travel-john-grid-proof     # watermarked OFL metrics PDF; not Milo
+make travel-john-grid-proof     # watermarked John OFL metrics PDF; not Milo
+make travel-bible-grid-proof    # watermarked 66-book OFL metrics PDF; not Milo; do not commit
 PYTHONPATH=src python -m bsb_pdf_toolkit.generate_travel_pdf --help
 ```
 

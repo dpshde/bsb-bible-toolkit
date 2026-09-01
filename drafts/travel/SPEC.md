@@ -2,7 +2,8 @@
 
 A compact print specification for a pocket/travel Berean Standard Bible.
 This sheet is written so a human typesetter could recreate the book without
-reading the generator. The first composed artifact is **John only**.
+reading the generator. John remains the grammar sample; a 66-book grid-proof
+compile uses this same spec and is still not the loved face.
 
 Engine: Typst 0.14+ (paragraph composer, `linebreaks: "optimized"`,
 `par.justification-limits`). Not WeasyPrint, paged.js, or browser print CSS.
@@ -95,7 +96,9 @@ must never be presented as the loved face.
 
 - **Single column.**
 - **Book opening:** small-cap “Berean Standard Bible”, then the USFM title
-  (`\toc1` / `\mt1`, for John: *The Gospel According to John*).
+  (`\toc1` / `\mt1`, for John: *The Gospel According to John*). The first
+  book may add “Travel print sample · 4.75 × 7 in”. Later books in a
+  full-canon compile keep the book name only (no repeated “sample”).
 - **Chapter drop cap:** original geometric construction — double-ruled square
   the height of 3 baselines (31.5 pt), hairline mid-edge ticks, chapter
   numeral centered. Sits on the grid beside verse 1. Not a decorated letter,
@@ -131,7 +134,9 @@ must never be presented as the loved face.
 - Not Humble Lamb BSB Maker’s 6×9 desk size or 10 pt setting.
 - Not a copy of Maker fonts, Doré illustrations, drop-cap artwork, or
   product assets.
-- Not a whole-canon pagination yet. John is the proof of the travel grammar.
+- John remains the grammar proof. A 66-book Protestant-canon grid-proof
+  compile exists (`make travel-bible-grid-proof`) at this same trim and type
+  spec. That PDF is still a labeled stand-in, not the loved face.
 
 ## 8. Grid proof versus loved face
 
@@ -141,10 +146,10 @@ stand-in:
 
 | Item | Loved-face print | Grid proof |
 |------|------------------|------------|
-| Command | `make travel-john` | `make travel-john-grid-proof` |
+| Command | `make travel-john` | `make travel-john-grid-proof` / `make travel-bible-grid-proof` |
 | Face | FF Milo Serif Text | Source Serif 4 (SIL OFL 1.1) |
 | Font dir | `fonts/milo/` | `fonts/grid-proof/` |
-| Output | `drafts/travel/bsb-travel-john.pdf` | `drafts/travel/bsb-travel-john-grid-proof.pdf` |
+| Output | `drafts/travel/bsb-travel-john.pdf` | `bsb-travel-john-grid-proof.pdf` or `bsb-travel-bible-grid-proof.pdf` |
 | Watermark | none | `GRID PROOF — NOT FINAL FACE` on every page |
 | Overlay | none | 42-line baseline grid in the text block |
 
@@ -157,5 +162,6 @@ not a candidate loved face, and not a FontFont/MyFonts specimen.
 See `drafts/travel/README.md`.
 
 - Loved face (after Milo is dropped in): `make travel-john`
-- Metrics only (OFL stand-in): `make travel-john-grid-proof`
+- Metrics only, John (OFL stand-in): `make travel-john-grid-proof`
+- Metrics only, 66-book canon (OFL stand-in; do not commit): `make travel-bible-grid-proof`
 - Markup only: `make travel-john-typst`

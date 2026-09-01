@@ -10,17 +10,28 @@ TRAVEL_PDF := drafts/travel/bsb-travel-john.pdf
 TRAVEL_TYP := drafts/travel/work/john.typ
 TRAVEL_GRID_PDF := drafts/travel/bsb-travel-john-grid-proof.pdf
 TRAVEL_GRID_TYP := drafts/travel/work/john-grid-proof.typ
+TRAVEL_BIBLE_GRID_PDF := drafts/travel/bsb-travel-bible-grid-proof.pdf
+TRAVEL_BIBLE_GRID_TYP := drafts/travel/work/bible-grid-proof.typ
+TRAVEL_BIBLE_OT_GRID_PDF := drafts/travel/bsb-travel-bible-ot-grid-proof.pdf
+TRAVEL_BIBLE_OT_GRID_TYP := drafts/travel/work/bible-ot-grid-proof.typ
+TRAVEL_BIBLE_NT_GRID_PDF := drafts/travel/bsb-travel-bible-nt-grid-proof.pdf
+TRAVEL_BIBLE_NT_GRID_TYP := drafts/travel/work/bible-nt-grid-proof.typ
 MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
 
-.PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof test-travel test-travel-unit
+.PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
+	travel-bible-grid-proof travel-bible-ot-grid-proof travel-bible-nt-grid-proof \
+	test-travel test-travel-unit
 
 help:
-	@echo "usfm-source              Download official BSB USFM if missing"
-	@echo "travel-john-typst        Compose John Typst (no fonts required)"
-	@echo "travel-john              Compile the travel John PDF (requires Milo)"
-	@echo "travel-john-grid-proof   Watermarked OFL metrics PDF (not the loved face)"
-	@echo "test-travel              Unit tests for the travel composer"
+	@echo "usfm-source                 Download official BSB USFM if missing"
+	@echo "travel-john-typst           Compose John Typst (no fonts required)"
+	@echo "travel-john                 Compile the travel John PDF (requires Milo)"
+	@echo "travel-john-grid-proof      Watermarked John OFL metrics PDF (not the loved face)"
+	@echo "travel-bible-grid-proof     Watermarked 66-book OFL metrics PDF (not the loved face)"
+	@echo "travel-bible-ot-grid-proof  OT-only fallback of the grid-proof compile"
+	@echo "travel-bible-nt-grid-proof  NT-only fallback of the grid-proof compile"
+	@echo "test-travel                 Unit tests for the travel composer"
 
 usfm-source:
 	@mkdir -p drafts/primary/source
@@ -48,6 +59,32 @@ travel-john-grid-proof: usfm-source
 		--typst-out $(TRAVEL_GRID_TYP) \
 		--font-dir $(GRID_DIR) \
 		--grid-proof
+
+travel-bible-grid-proof: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_BIBLE_GRID_PDF) \
+		--typst-out $(TRAVEL_BIBLE_GRID_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--all-books
+
+travel-bible-ot-grid-proof: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_BIBLE_OT_GRID_PDF) \
+		--typst-out $(TRAVEL_BIBLE_OT_GRID_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--all-books \
+		--testament ot
+
+travel-bible-nt-grid-proof: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_BIBLE_NT_GRID_PDF) \
+		--typst-out $(TRAVEL_BIBLE_NT_GRID_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--all-books \
+		--testament nt
 
 test-travel test-travel-unit:
 	$(PYTHON) -m pytest tests/test_travel_pdf.py -q
