@@ -24,7 +24,13 @@ dist/
 *.zip
 *.png
 bsb-*.typ
+drafts/travel/work/
 .DS_Store
+
+# Licensed FF Milo Serif desktop fonts — never commit
+fonts/milo/*
+!fonts/milo/README.md
+!fonts/milo/.gitignore
 
 # Audio generated output and local venvs
 output/audio/

@@ -16,7 +16,7 @@ from pathlib import Path, PurePosixPath
 from .add_route_links import build_url
 from .customize_epub import OSIS_BOOKS
 from .download_bsb import BOOK_NAMES
-from .generate_reflow_pdf import USFM_TO_BOOK, usfm_ref_to_route
+from .generate_reflow_pdf import USFM_TO_BOOK, usfm_ref_to_url as usfm_ref_to_route
 
 
 BOOK_ORDER = {name: num for num, name in BOOK_NAMES.items()}
@@ -166,7 +166,10 @@ def paragraph_markup(para, osis, chapter):
     return f"#para[{content}]"
 
 
-def parse_usfm_zip(usfm_zip):
+def parse_usfm_zip(usfm_zip, book_names=None):
+    wanted = None
+    if book_names:
+        wanted = {str(name).lower() for name in book_names}
     books = []
     with zipfile.ZipFile(usfm_zip) as zf:
         names = [name for name in zf.namelist() if name.lower().endswith(".usfm")]
@@ -176,10 +179,14 @@ def parse_usfm_zip(usfm_zip):
             book = USFM_TO_BOOK.get(code)
             if not book:
                 continue
+            if wanted and book.lower() not in wanted and code.lower() not in wanted:
+                continue
             osis = OSIS_BOOKS[book]
             chapters = []
             current = None
             pending = None
+            title = book
+            heading = book
 
             def flush():
                 nonlocal pending
@@ -204,6 +211,10 @@ def parse_usfm_zip(usfm_zip):
                     current = {"chapter": int(rest), "paras": []}
                     chapters.append(current)
                 elif current is None:
+                    if marker in {"toc1", "mt1"}:
+                        title = rest.strip() or title
+                    elif marker == "h":
+                        heading = rest.strip() or heading
                     continue
                 elif marker in {"s1", "s2", "s3"}:
                     flush()
@@ -212,7 +223,7 @@ def parse_usfm_zip(usfm_zip):
                     flush()
                     if current["paras"] and current["paras"][-1]["kind"] == "heading":
                         current["paras"][-1]["refs"] = rest
-                elif marker in {"p", "m", "pmo", "pm", "pi", "q1", "q2", "q3", "qc", "li1", "li2"}:
+                elif marker in {"p", "m", "pmo", "pm", "pi", "pc", "q1", "q2", "q3", "qc", "li1", "li2"}:
                     flush()
                     pending = {"kind": "body", "marker": marker, "raw": [rest], "refs": ""}
                 elif marker == "v":
@@ -226,7 +237,13 @@ def parse_usfm_zip(usfm_zip):
                 elif pending:
                     pending["raw"].append(rest)
             flush()
-            books.append({"book": book, "osis": osis, "chapters": chapters})
+            books.append({
+                "book": book,
+                "osis": osis,
+                "title": title,
+                "heading": heading,
+                "chapters": chapters,
+            })
     return books
 
 
