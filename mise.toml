@@ -1,0 +1,23 @@
+[tools]
+python = "3.12"
+typst = "0.14.2"
+
+[tasks.usfm-source]
+description = "Download official BSB USFM if the toolkit archive is missing"
+run = "make usfm-source"
+
+[tasks.travel-john-typst]
+description = "Compose John Typst from toolkit USFM (no Milo required)"
+run = "make travel-john-typst"
+
+[tasks.travel-john]
+description = "Compile the compact travel John PDF (licensed FF Milo Serif required)"
+run = "make travel-john"
+
+[tasks.travel-john-grid-proof]
+description = "Watermarked OFL metrics PDF (GRID PROOF — NOT FINAL FACE; not Milo)"
+run = "make travel-john-grid-proof"
+
+[tasks.test-travel]
+description = "Unit tests for the travel composer"
+run = "make test-travel"

@@ -119,6 +119,38 @@ PYTHONPATH=src python -m bsb_pdf_toolkit.generate_reflow_pdf \
     --font-dir fonts --columns 1
 ```
 
+### Travel print sample (John)
+
+A compact **4.75 × 7 in** single-column sample of John, composed in Typst
+from this toolkit’s BSB USFM. It follows a travel Bible spec (8.5 pt
+FF Milo Serif **Text**, 10.5 pt baseline grid, footnotes, chapter-start
+cross-references, words of Christ in blue). It is not Humble Lamb Maker’s
+6×9 10 pt desk setting, and it does not copy Maker fonts, Doré art, or
+drop-cap artwork.
+
+How to build, the BSB license notice, and an explicit “what was not copied
+from Humble Lamb” list: [`drafts/travel/README.md`](drafts/travel/README.md).
+The typesetting spec a human typesetter can follow:
+[`drafts/travel/SPEC.md`](drafts/travel/SPEC.md).
+
+```bash
+# Licensed FF Milo Serif Text + Text Italic must already be in fonts/milo/
+make travel-john
+# or: mise run travel-john
+```
+
+The loved-face print target fails closed if those fonts are missing. It will
+not download Milo, and it will not silently substitute Source Serif or Lexend.
+
+A separate metrics compile, watermarked `GRID PROOF — NOT FINAL FACE`, uses
+the OFL stand-in in `fonts/grid-proof/`. That PDF is not the loved face.
+
+```bash
+make travel-john-typst          # markup only; no fonts required
+make travel-john-grid-proof     # watermarked OFL metrics PDF; not Milo
+PYTHONPATH=src python -m bsb_pdf_toolkit.generate_travel_pdf --help
+```
+
 Common single-column tuning flags include `--single-margin-x`,
 `--single-body-size`, `--single-body-leading`, `--single-book-title-font`,
 `--single-dropcap-size`, `--single-dropcap-padding`,
@@ -435,6 +467,8 @@ permitted; attribution is appreciated but not required. See
 Toolkit source code is MIT licensed; see [`LICENSE`](LICENSE). Bundled Lexend
 font files are distributed under the SIL Open Font License 1.1; see
 [`fonts/OFL.txt`](fonts/OFL.txt). Generated documents may embed the fonts under
-the OFL, but the font files must not be sold by themselves.
+the OFL, but the font files must not be sold by themselves. FF Milo Serif is
+not bundled; the travel edition expects a desktop-licensed copy in
+`fonts/milo/`. See [`fonts/milo/README.md`](fonts/milo/README.md).
 
 Additional attribution and project notices are collected in [`NOTICE`](NOTICE).
