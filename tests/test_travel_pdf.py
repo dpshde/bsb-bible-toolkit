@@ -95,8 +95,9 @@ def test_preamble_is_milo_text_not_a_substitute():
 def test_require_milo_fonts_fails_closed_on_empty_dir(tmp_path):
     empty = tmp_path / "milo"
     empty.mkdir()
-    with pytest.raises(MiloFontError, match=FONT_MISSING_MESSAGE):
+    with pytest.raises(MiloFontError) as exc:
         require_milo_fonts(empty)
+    assert FONT_MISSING_MESSAGE in str(exc.value)
 
 
 def test_require_milo_fonts_rejects_source_serif_substitute(tmp_path):
@@ -106,8 +107,9 @@ def test_require_milo_fonts_rejects_source_serif_substitute(tmp_path):
     (font_dir / "SourceSerif4-It.otf").write_bytes(b"OTTO")
     found = classify_milo_fonts(font_dir)
     assert found["text"] == []
-    with pytest.raises(MiloFontError, match=FONT_MISSING_MESSAGE):
+    with pytest.raises(MiloFontError) as exc:
         require_milo_fonts(font_dir)
+    assert FONT_MISSING_MESSAGE in str(exc.value)
 
 
 def test_require_milo_fonts_accepts_documented_names(tmp_path):

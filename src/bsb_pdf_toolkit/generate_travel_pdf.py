@@ -230,7 +230,9 @@ def xref_markup(raw: str) -> str:
 
 
 def wrap_woc(inner: str, woc: bool) -> str:
-    if not inner or not woc:
+    if not inner or not inner.strip():
+        return ""
+    if not woc:
         return inner
     return f"#woc[{inner}]"
 
@@ -282,12 +284,11 @@ def verse_segments_travel(raw: str, osis: str, chapter: int):
 
     def flush():
         nonlocal buf
-        if current_verse is None and not any(buf):
-            buf = []
-            return
         body = "".join(buf).strip()
-        segments.append((current_verse, current_url, body))
         buf = []
+        if current_verse is None and not body:
+            return
+        segments.append((current_verse, current_url, body))
 
     for kind, value in tokens:
         if kind == "wj-open":

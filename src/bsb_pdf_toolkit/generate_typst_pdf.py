@@ -211,7 +211,9 @@ def parse_usfm_zip(usfm_zip, book_names=None):
                     current = {"chapter": int(rest), "paras": []}
                     chapters.append(current)
                 elif current is None:
-                    if marker in {"toc1", "mt1"}:
+                    if marker == "toc1":
+                        title = rest.strip() or title
+                    elif marker == "mt1" and title == book:
                         title = rest.strip() or title
                     elif marker == "h":
                         heading = rest.strip() or heading
