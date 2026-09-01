@@ -530,6 +530,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let head-font = "{head_font}"
 #let ink = rgb({ir}, {ig}, {ib})
 #let woc-blue = rgb({r}, {g}, {b})
+#let chapter-label = state("chapter-label", "JOHN")
 {proof_lets}
 #set page(
   width: trim-width,
@@ -594,8 +595,6 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   it
 }}
 
-#let chapter-label = state("chapter-label", "JOHN")
-
 #let woc(body) = text(fill: woc-blue, font: (body-font, "{body_alias}"))[#body]
 
 #let vnum(n) = text(
@@ -613,7 +612,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let geometric-cap(n) = {{
   let s = drop-lines * baseline-skip
   box(width: s, height: s, {{
-    rect(width: s, height: s, stroke: 0.45pt + ink)
+    place(rect(width: s, height: s, stroke: 0.45pt + ink))
     place(dx: 2.1pt, dy: 2.1pt, rect(
       width: s - 4.2pt,
       height: s - 4.2pt,
@@ -623,7 +622,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
     place(line(start: (s - 3.2pt, s / 2), end: (s, s / 2), stroke: 0.45pt + ink))
     place(line(start: (s / 2, 0pt), end: (s / 2, 3.2pt), stroke: 0.45pt + ink))
     place(line(start: (s / 2, s - 3.2pt), end: (s / 2, s), stroke: 0.45pt + ink))
-    align(center + horizon)[
+    place(center + horizon)[
       #text(font: head-font, size: 15pt, weight: 700, fill: ink)[#n]
     ]
   }})

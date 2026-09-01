@@ -7,7 +7,8 @@ The typesetting spec a human could follow is [`SPEC.md`](SPEC.md).
 
 ## How to build
 
-1. Install Typst 0.13+ (`mise install` if you use mise, or the official Typst installer).
+1. Install Typst 0.14+ (`mise install` if you use mise, or the official Typst installer).
+   `par.justification-limits` needs 0.14; 0.13.1 will not compile this sample.
 2. Place **licensed** FF Milo Serif desktop OTFs in `fonts/milo/`. See
    [`fonts/milo/README.md`](../../fonts/milo/README.md). The print target
    will not download or substitute a face.
@@ -86,8 +87,31 @@ words of Christ in blue). It does **not** copy:
 - Pagination, line breaks, or ornament from a Maker PDF
 
 The drop cap here is an original geometric double-ruled square on the
-baseline grid. The face is FF Milo Serif Text, licensed separately by the
-workstation owner.
+baseline grid. The loved face is FF Milo Serif Text, licensed separately by
+the workstation owner. The committed PDF in this folder is a watermarked
+grid proof only.
+
+## Current grid-proof artifact
+
+This file is a **metrics proof**, not the loved-face print. Do not treat it
+as FF Milo Serif Text.
+
+| Item | Value |
+|------|-------|
+| File | `bsb-travel-john-grid-proof.pdf` |
+| Label | `GRID PROOF — NOT FINAL FACE` |
+| Stand-in | Source Serif 4 Regular/Italic/Bold (SIL OFL 1.1) |
+| Loved face | FF Milo Serif Text (not in this PDF) |
+| Source | `drafts/primary/source/engbsb_usfm.zip` |
+| Engine | Typst 0.14.2 |
+| Trim | 4.75 in × 7.00 in |
+| Pages | 49 |
+| Links | 3372 |
+| Size | 2,033,576 bytes |
+| SHA-256 | `5db8eedc02e68394b11c3971336f1ddeb3a93f397f0f1c57329e088252b5fdc7` |
+
+Re-hash after any recompile. The loved-face PDF is not committed until
+licensed Milo OTFs are present.
 
 ## Scope
 

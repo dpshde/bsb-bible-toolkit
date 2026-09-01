@@ -4,8 +4,8 @@ A compact print specification for a pocket/travel Berean Standard Bible.
 This sheet is written so a human typesetter could recreate the book without
 reading the generator. The first composed artifact is **John only**.
 
-Engine: Typst (paragraph composer, `linebreaks: "optimized"`).
-Not WeasyPrint, paged.js, or browser print CSS.
+Engine: Typst 0.14+ (paragraph composer, `linebreaks: "optimized"`,
+`par.justification-limits`). Not WeasyPrint, paged.js, or browser print CSS.
 
 Text source: this toolkit’s official BSB USFM
 (`drafts/primary/source/engbsb_usfm.zip`, from

@@ -238,6 +238,12 @@ def test_chapter_open_drop_uses_only_first_verse():
 def test_verse_number_is_boxed_in_preamble():
     preamble = travel_preamble()
     assert "#box[#vnum(n)#h(0.12em)]" in preamble
+    assert "place(center + horizon)" in preamble
+
+
+def test_preamble_defines_chapter_state_before_page_header():
+    preamble = travel_preamble()
+    assert preamble.index('#let chapter-label = state("chapter-label"') < preamble.index("#set page(")
 
 
 def test_generate_travel_typst_john_sample(tmp_path):
