@@ -135,6 +135,11 @@ Typst source: `drafts/travel/work/bible-grid-proof.typ` (gitignored).
 If a single compile runs out of memory, `make travel-bible-ot-grid-proof` and
 `make travel-bible-nt-grid-proof` build the testaments separately.
 
+Raster QA of typesetting hotspots (Genesis 1, Exodus 20, Psalms, Matthew,
+John → Acts, Revelation 22, tiny books) lives in [`HOTSPOTS.md`](HOTSPOTS.md).
+That note records page counts for a local compile; the PDF itself is not
+committed.
+
 ## Scope
 
 John sample **and** an optional 66-book grid-proof target. Audio/TTS pipelines

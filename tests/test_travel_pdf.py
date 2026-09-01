@@ -29,6 +29,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     default_output_paths,
     footnote_markup,
     generate_travel_typst,
+    is_hebrew_script,
     leading_gap_pt,
     main,
     measure_em,
@@ -278,6 +279,8 @@ def test_verse_number_is_boxed_in_preamble():
 def test_preamble_defines_chapter_state_before_page_header():
     preamble = travel_preamble()
     assert preamble.index('#let chapter-label = state("chapter-label"') < preamble.index("#set page(")
+    assert preamble.index("#let mark-run(label)") < preamble.index("#set page(")
+    assert "query(<run-head>)" in preamble
 
 
 def test_generate_travel_typst_john_sample(tmp_path):
@@ -445,6 +448,8 @@ def test_all_books_typst_is_canon_order_and_sample_only_on_first(tmp_path):
     assert text.count("#pagebreak()") == 2
     assert text.count(SAMPLE_SUBTITLE) == 1
     assert '#book-title("Genesis", sample: true)' in text
+    assert "#mark-run(" in text
+    assert text.index("#mark-run(") < text.index('#book-title("Genesis"')
     assert '#book-title("Psalm", sample: false)' in text
     assert '#book-title("The Gospel According to John", sample: false)' in text
     assert "#superscription[Psalms 1–41]" in text
@@ -452,6 +457,15 @@ def test_all_books_typst_is_canon_order_and_sample_only_on_first(tmp_path):
     assert "#inscription[Selah]" in text
     assert "ALEPH" in text
     assert "BOOK I" in text
+    assert "#counter(footnote).update(0)" in text
+    assert "א" not in text
+
+
+def test_hebrew_script_detection():
+    assert is_hebrew_script("א")
+    assert is_hebrew_script(" ב ")
+    assert not is_hebrew_script("ALEPH")
+    assert not is_hebrew_script("Psalm")
 
 
 def test_cli_all_books_no_compile_does_not_need_fonts(tmp_path):

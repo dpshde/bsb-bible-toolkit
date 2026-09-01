@@ -307,6 +307,12 @@ def ensure_usfm_zip(path: Path, download: bool = False) -> Path:
     return path
 
 
+def is_hebrew_script(text: str) -> bool:
+    """True when visible letters are Hebrew (Psalm 119 ``\\qa א`` stand-ins)."""
+    letters = [char for char in text if char.isalpha()]
+    return bool(letters) and all("\u0590" <= char <= "\u05FF" for char in letters)
+
+
 def strip_word_markers(text: str) -> str:
     return WORD_MARKER_RE.sub(r"\1", text)
 
@@ -604,6 +610,10 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let ink = rgb({ir}, {ig}, {ib})
 #let woc-blue = rgb({r}, {g}, {b})
 #let chapter-label = state("chapter-label", "JOHN")
+#let mark-run(label) = {{
+  chapter-label.update(label)
+  [#metadata(label)<run-head>]
+}}
 {proof_lets}
 #set page(
   width: trim-width,
@@ -621,8 +631,17 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
       none
     }} else {{
       set text(font: head-font, size: {spec.running_head_pt}pt, fill: ink, tracking: 0.12em)
-      let label = smallcaps(chapter-label.get())
-      if calc.odd(here().page()) {{
+      let page-num = here().page()
+      let marks = query(<run-head>)
+      let on-page = marks.filter(it => it.location().page() == page-num)
+      let label-text = if on-page.len() > 0 {{
+        on-page.first().value
+      }} else {{
+        let before = marks.filter(it => it.location().page() < page-num)
+        if before.len() > 0 {{ before.last().value }} else {{ chapter-label.get() }}
+      }}
+      let label = smallcaps(label-text)
+      if calc.odd(page-num) {{
         align(right, label)
       }} else {{
         align(left, label)
@@ -776,14 +795,17 @@ def generate_travel_typst(
     for book_index, book in enumerate(parsed):
         if book_index:
             lines.append("#pagebreak()")
+            lines.append("#counter(footnote).update(0)")
         display = book.get("title") or book["book"]
         running = (book.get("heading") or book["book"]).upper()
         sample = "true" if book_index == 0 else "false"
+        first_chapter = book["chapters"][0]["chapter"] if book["chapters"] else 1
+        lines.append(f"#mark-run({typst_string(f'{running} · {first_chapter}')})")
         lines.append(f"#book-title({typst_string(display)}, sample: {sample})")
         for chapter in book["chapters"]:
             heading_ranges(chapter, book["osis"])
             running_chapter = f"{running} · {chapter['chapter']}"
-            lines.append(f"#chapter-label.update({typst_string(running_chapter)})")
+            lines.append(f"#mark-run({typst_string(running_chapter)})")
             chapter_open = True
             chapter_xrefs_emitted = False
             first_heading_refs = ""
@@ -811,7 +833,7 @@ def generate_travel_typst(
                         lines.append(f"#superscription[{body}]")
                 elif para["kind"] == "acrostic":
                     title = clean_spaces(para["raw"])
-                    if title:
+                    if title and not is_hebrew_script(title):
                         lines.append(f"#section({typst_string(title)})")
                 elif para["kind"] == "blank":
                     lines.append("#v(baseline-skip)")
