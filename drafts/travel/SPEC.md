@@ -108,8 +108,12 @@ must never be presented as the loved face.
   is set as a 7 pt italic justified line under that opening heading. Later
   `\r` blocks stay with their section headings. If a chapter has no `\r`,
   none are invented.
-- **Translator notes:** USFM `\f` → footnotes (letter markers). `\fqa`
-  alternate readings in italic. Notes are not moved into the side margin.
+- **Translator notes:** USFM `\f` → footnotes (letter markers). Numbering is
+  alphabetic (`a`, `b`, `c` …) and **resets at the start of every page**
+  (the page header zeros `counter(footnote)`). A book pagebreak also resets
+  the counter as a safety net. Long books such as Psalms therefore stay on
+  short markers instead of running into `aa` / `cdh`. `\fqa` alternate
+  readings in italic. Notes are not moved into the side margin.
 - **Words of Christ:** USFM `\wj` … `\wj*` in the travel cobalt, same Text
   face. Verse numbers stay ink even when a speech wraps a `\v` marker.
 

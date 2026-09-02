@@ -627,6 +627,8 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   numbering: "1",
   background: {page_background},
   header: context {{
+    // Per-page letter numbering (Typst docs: reset counter(footnote) in the header).
+    counter(footnote).update(0)
     if here().page() == 1 {{
       none
     }} else {{
@@ -680,6 +682,8 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   ),
 )
 
+// Letter markers. The page header resets counter(footnote) so each page
+// starts at "a" again. Book pagebreaks also reset as a safety net.
 #set footnote(numbering: "a")
 #show footnote.entry: set text(font: body-font, size: {spec.footnote_pt}pt, fallback: false)
 #show link: it => {{

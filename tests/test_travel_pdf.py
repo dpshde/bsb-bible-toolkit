@@ -283,6 +283,20 @@ def test_preamble_defines_chapter_state_before_page_header():
     assert "query(<run-head>)" in preamble
 
 
+def test_preamble_resets_footnote_letters_in_page_header():
+    preamble = travel_preamble()
+    header_at = preamble.index("header: context")
+    footer_at = preamble.index("footer: context")
+    reset_at = preamble.index("counter(footnote).update(0)", header_at)
+    assert reset_at < footer_at
+    assert '#set footnote(numbering: "a")' in preamble
+    assert "starts at \"a\" again" in preamble
+    grid = travel_preamble(grid_proof=True)
+    assert grid.index("counter(footnote).update(0)", grid.index("header: context")) < grid.index(
+        "footer: context"
+    )
+
+
 def test_generate_travel_typst_john_sample(tmp_path):
     usfm = write_sample_zip(tmp_path / "sample.zip")
     out = tmp_path / "john.typ"

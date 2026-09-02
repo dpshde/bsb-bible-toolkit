@@ -21,7 +21,7 @@ Compile: `make travel-bible-grid-proof`
 
 - Running heads on the first page of a book still showed the previous book (`MALACHI · 4` on Matthew, `JOHN · 21` on Acts, etc.). Headers now query a per-page `<run-head>` mark.
 - Psalm 119 `\qa א` rendered as a missing-glyph box in the OFL stand-in. Hebrew-only acrostic lines are omitted; the Latin `ALEPH` / `BETH` labels remain.
-- Translator-note letters ran into three-character markers (`cdh`, `gdp`) across the canon. The footnote counter now resets at each book pagebreak.
+- Translator-note letters ran into three-character markers (`cdh`, `gdp`) across the canon. The footnote counter now resets **on every page** (header) and still at each book pagebreak.
 
 ## Checks
 
@@ -47,7 +47,15 @@ Compile: `make travel-bible-grid-proof`
 | Grid watermark | interior pages | Pass | `GRID PROOF — NOT FINAL FACE` on sampled pages. |
 | Overflow / overlapping text | sampled hotspots | Pass | No text outside trim on inspected pages. |
 
+## Footnote numbering (2026-09-02)
+
+Letter markers reset at the start of each page via `counter(footnote).update(0)`
+in the Typst page header (the documented Typst pattern). Book pagebreaks still
+reset as a safety net. Verify with `make travel-john-grid-proof` and, for a
+heavier stretch, `--book Psalms`. Do not treat two-letter markers inside a
+single page as a regression unless that page has more than 26 notes.
+
 ## Known leftovers (not chased)
 
-- Footnote letters still grow inside a long book (Psalms reaches two letters). Per-page numbering is later work.
 - Loved-face Milo compile is unchanged and still fail-closed without `fonts/milo/`.
+- Typst can fail to converge if a footnote sits exactly at a page break when the counter resets (upstream issue). If a compile warns, re-check that page; do not widen the page spec to paper over it.
