@@ -51,9 +51,17 @@ Compile: `make travel-bible-grid-proof`
 
 Letter markers reset at the start of each page via `counter(footnote).update(0)`
 in the Typst page header (the documented Typst pattern). Book pagebreaks still
-reset as a safety net. Verify with `make travel-john-grid-proof` and, for a
-heavier stretch, `--book Psalms`. Do not treat two-letter markers inside a
-single page as a regression unless that page has more than 26 notes.
+reset as a safety net.
+
+John-only recompile (`--grid-proof --book John`, 49 pages): every sampled
+footnote listing starts at `a`. Page 2 carries notes **a–f**; page 3 starts
+again at **a**. No two-letter markers in the 49-page John PDF.
+
+Psalms-only targeted compile (`--book Psalms`, 197 pages): same reset. Page 2
+has **a–e**; page 3 starts at **a**. Zero two-letter markers across the book.
+
+Do not treat two-letter markers inside a single page as a regression unless
+that page has more than 26 notes.
 
 ## Known leftovers (not chased)
 
