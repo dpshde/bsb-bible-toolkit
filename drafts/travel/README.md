@@ -65,6 +65,17 @@ make travel-john-grid-proof
 Output: `drafts/travel/bsb-travel-john-grid-proof.pdf`.
 Typst source: `drafts/travel/work/john-grid-proof.typ`.
 
+Facing-page QA for John openings 2–3, 4–5, and the chapter-5 open at 10–11:
+
+```bash
+make travel-john-spreads
+```
+
+That recompiles the John grid-proof, then writes a 2-up PDF
+(`bsb-travel-john-spreads-grid-proof.pdf`) and 120 dpi PNGs under
+`spreads/`. Verso is left; recto is right; each leaf stays 4.75 × 7 in.
+Still not the loved face. Line-match notes live in [`HOTSPOTS.md`](HOTSPOTS.md).
+
 ## BSB license
 
 The Berean Standard Bible text is public domain / CC0 (dedicated 30 April

@@ -524,3 +524,55 @@ def test_selah_and_divine_name_spans():
     text = render_text_chunk(r"Wait on \nd the LORD\nd* . \qs Selah\qs*")
     assert "#smallcaps[the LORD]" in text
     assert "#emph[Selah]" in text
+
+
+def test_parse_facing_pairs_defaults_and_rejects_non_opening():
+    from bsb_pdf_toolkit.compose_travel_spreads import DEFAULT_PAIRS, parse_pairs
+
+    assert parse_pairs("2-3,4-5,10-11") == DEFAULT_PAIRS
+    with pytest.raises(ValueError, match="facing"):
+        parse_pairs("3-4")
+    with pytest.raises(ValueError, match="facing"):
+        parse_pairs("2-4")
+
+
+def test_compose_spread_is_two_up_verso_left(tmp_path):
+    import fitz
+
+    from bsb_pdf_toolkit.compose_travel_spreads import (
+        compose_spread_pdf,
+        line_match_report,
+        render_spread_pngs,
+    )
+
+    source = tmp_path / "john.pdf"
+    src = fitz.open()
+    for index in range(4):
+        page = src.new_page(width=342, height=504)
+        page.insert_text((40, 100), f"page-{index + 1}", fontsize=8.5)
+    src.save(source)
+    src.close()
+
+    output = tmp_path / "spreads.pdf"
+    pairs = compose_spread_pdf(source, output, ((2, 3),))
+    assert pairs == [(2, 3)]
+    with fitz.open(output) as doc:
+        assert len(doc) == 1
+        page = doc[0]
+        assert page.rect.width == pytest.approx(684)
+        assert page.rect.height == pytest.approx(504)
+        text = page.get_text()
+        assert "page-2" in text
+        assert "page-3" in text
+        hits = page.search_for("page-2")
+        assert hits and hits[0].x1 < 342
+
+    pngs = render_spread_pngs(output, tmp_path / "png", ((2, 3),), dpi=72)
+    assert pngs == [tmp_path / "png" / "john-spread-02-03.png"]
+    assert pngs[0].is_file()
+
+    aligned = line_match_report([100.0, 110.5, 121.0], [100.0, 121.0, 131.5])
+    assert aligned["pass"]
+    assert aligned["phase_delta_pt"] == 0
+    drifted = line_match_report([100.0, 110.5], [105.0, 115.5])
+    assert not drifted["pass"]
