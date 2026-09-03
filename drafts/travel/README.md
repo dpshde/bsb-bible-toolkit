@@ -117,9 +117,9 @@ as FF Milo Serif Text.
 | Engine | Typst 0.14.2 |
 | Trim | 4.75 in × 7.00 in |
 | Pages | 49 |
-| Links | 3372 |
-| Size | 2,033,576 bytes |
-| SHA-256 | `5db8eedc02e68394b11c3971336f1ddeb3a93f397f0f1c57329e088252b5fdc7` |
+| Links | 3370 |
+| Size | 2,029,571 bytes |
+| SHA-256 | `186c38b5d78ee2f72432e25e102ef15cb930ddbb25a94f6c18c92e905369825d` |
 
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.

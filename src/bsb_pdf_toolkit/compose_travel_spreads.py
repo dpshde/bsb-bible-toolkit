@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections import Counter
 from pathlib import Path
 
 import fitz
@@ -125,13 +124,16 @@ def body_baseline_ys(page: fitz.Page) -> list[float]:
     return ys
 
 
-def modal_grid_phase(ys: list[float], baseline_pt: float = SPEC.baseline_pt) -> float:
-    """Most common y modulo the 10.5 pt grid."""
-    if not ys:
-        raise ValueError("no body baselines")
-    # 0.25 pt bins keep the mode stable without over-fitting.
-    counts = Counter(round((y % baseline_pt) * 4) / 4 for y in ys)
-    return counts.most_common(1)[0][0]
+def unique_snapped(ys: list[float], quantum: float = 0.25) -> list[float]:
+    return sorted({round(y / quantum) * quantum for y in ys})
+
+
+def remainder_set(
+    ys: list[float],
+    baseline_pt: float = SPEC.baseline_pt,
+    quantum: float = 0.25,
+) -> set[float]:
+    return {round((y % baseline_pt) / quantum) * quantum for y in unique_snapped(ys, quantum)}
 
 
 def line_match_report(
@@ -141,31 +143,32 @@ def line_match_report(
     baseline_pt: float = SPEC.baseline_pt,
     tolerance_pt: float = LINE_MATCH_TOLERANCE_PT,
 ) -> dict:
-    """Do verso and recto body lines share the same 10.5 pt phase?"""
-    verso_phase = modal_grid_phase(verso_ys, baseline_pt)
-    recto_phase = modal_grid_phase(recto_ys, baseline_pt)
-    phase_delta = abs(verso_phase - recto_phase)
-    wrapped = min(phase_delta, baseline_pt - phase_delta)
-    verso_snapped = sum(
-        1 for y in verso_ys if abs((y % baseline_pt) - verso_phase) <= tolerance_pt
-        or abs((y % baseline_pt) - verso_phase) >= baseline_pt - tolerance_pt
-    )
-    recto_snapped = sum(
-        1 for y in recto_ys if abs((y % baseline_pt) - recto_phase) <= tolerance_pt
-        or abs((y % baseline_pt) - recto_phase) >= baseline_pt - tolerance_pt
-    )
-    shared_phase = wrapped <= tolerance_pt
-    verso_ratio = verso_snapped / len(verso_ys)
-    recto_ratio = recto_snapped / len(recto_ys)
-    passed = shared_phase and verso_ratio >= 0.85 and recto_ratio >= 0.85
+    """Do verso and recto body lines share the same 10.5 pt y lattice?"""
+    if not verso_ys or not recto_ys:
+        raise ValueError("no body baselines")
+    verso_unique = unique_snapped(verso_ys)
+    recto_unique = unique_snapped(recto_ys)
+    shared = [
+        y
+        for y in verso_unique
+        if any(abs(y - other) <= tolerance_pt for other in recto_unique)
+    ]
+    verso_rems = remainder_set(verso_ys, baseline_pt)
+    recto_rems = remainder_set(recto_ys, baseline_pt)
+    rem_overlap = verso_rems & recto_rems
+    phase_delta = 0.0
+    if verso_rems and recto_rems and not rem_overlap:
+        phase_delta = min(abs(v - r) for v in verso_rems for r in recto_rems)
+        phase_delta = min(phase_delta, baseline_pt - phase_delta)
+    passed = len(shared) >= 8 and (bool(rem_overlap) or phase_delta <= tolerance_pt)
     return {
         "verso_count": len(verso_ys),
         "recto_count": len(recto_ys),
-        "verso_phase_pt": verso_phase,
-        "recto_phase_pt": recto_phase,
-        "phase_delta_pt": round(wrapped, 3),
-        "verso_on_grid": round(verso_ratio, 3),
-        "recto_on_grid": round(recto_ratio, 3),
+        "verso_unique": len(verso_unique),
+        "recto_unique": len(recto_unique),
+        "shared_ys": len(shared),
+        "phase_delta_pt": round(phase_delta, 3),
+        "remainder_overlap": sorted(rem_overlap),
         "pass": passed,
     }
 
@@ -192,11 +195,10 @@ def format_line_match(reports: list[dict]) -> str:
         status = "pass" if report["pass"] else "fail"
         lines.append(
             f"  {report['pair']}: {status}; "
-            f"phase Δ {report['phase_delta_pt']} pt; "
-            f"verso {report['verso_on_grid']:.0%} of {report['verso_count']} "
-            f"on phase {report['verso_phase_pt']}; "
-            f"recto {report['recto_on_grid']:.0%} of {report['recto_count']} "
-            f"on phase {report['recto_phase_pt']}"
+            f"{report['shared_ys']} shared body y-slots "
+            f"(verso {report['verso_unique']} unique / {report['verso_count']} spans, "
+            f"recto {report['recto_unique']} unique / {report['recto_count']} spans); "
+            f"phase Δ {report['phase_delta_pt']} pt"
         )
     return "\n".join(lines)
 

@@ -571,8 +571,15 @@ def test_compose_spread_is_two_up_verso_left(tmp_path):
     assert pngs == [tmp_path / "png" / "john-spread-02-03.png"]
     assert pngs[0].is_file()
 
-    aligned = line_match_report([100.0, 110.5, 121.0], [100.0, 121.0, 131.5])
+    aligned = line_match_report(
+        [100.0 + 10.5 * i for i in range(12)],
+        [100.0 + 10.5 * i for i in range(12) if i != 1],
+    )
     assert aligned["pass"]
+    assert aligned["shared_ys"] >= 8
     assert aligned["phase_delta_pt"] == 0
-    drifted = line_match_report([100.0, 110.5], [105.0, 115.5])
+    drifted = line_match_report(
+        [100.0 + 10.5 * i for i in range(12)],
+        [105.0 + 10.5 * i for i in range(12)],
+    )
     assert not drifted["pass"]
