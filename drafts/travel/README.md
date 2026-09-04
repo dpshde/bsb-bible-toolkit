@@ -105,7 +105,10 @@ grid proof only.
 ## Current grid-proof artifact
 
 This file is a **metrics proof**, not the loved-face print. Do not treat it
-as FF Milo Serif Text.
+as FF Milo Serif Text. Recompiled 2026-09-04 with the current travel
+layout (WOC blue, boxed chapter drops, per-page footnote letters). It is
+not the 2026-09-01 compile. Licensed FF Milo Serif Text is still missing
+from `fonts/milo/`.
 
 | Item | Value |
 |------|-------|
@@ -115,11 +118,12 @@ as FF Milo Serif Text.
 | Loved face | FF Milo Serif Text (not in this PDF) |
 | Source | `drafts/primary/source/engbsb_usfm.zip` |
 | Engine | Typst 0.14.2 |
+| Compiled | 2026-09-04 |
 | Trim | 4.75 in × 7.00 in |
 | Pages | 49 |
 | Links | 3370 |
 | Size | 2,029,571 bytes |
-| SHA-256 | `186c38b5d78ee2f72432e25e102ef15cb930ddbb25a94f6c18c92e905369825d` |
+| SHA-256 | `0b005230c7fdaa30915078fee3ea115ba50a2d465302565808b1e34ca22ea82c` |
 
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.

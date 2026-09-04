@@ -73,7 +73,7 @@ QA sheet of three openings. Verso is left; recto is right; each leaf stays
 |------|-------|
 | Source | `drafts/travel/bsb-travel-john-grid-proof.pdf` |
 | Spread PDF | `drafts/travel/bsb-travel-john-spreads-grid-proof.pdf` (3 pages, 70,080 bytes) |
-| Spread SHA-256 | `c198ff76f26698ff60b9e26242b984417f7274cdac131af5727d50b180a18997` |
+| Spread SHA-256 | `8d3d1ff461f797d47a34bc228a8bcbb7ce85ac65ca067c164e6d0dfdd3114fb3` |
 | PNGs | `drafts/travel/spreads/john-spread-02-03.png`, `john-spread-04-05.png`, `john-spread-10-11.png` (120 dpi) |
 | Pairs | 2–3 (John 1), 4–5 (ch. 2 drop on 4, ch. 3 drop on 5), 10–11 (ch. 5 open on 10) |
 
@@ -85,10 +85,13 @@ same slot coordinates (phase Δ 0.0 pt). Shared body y-slots: **23** on 2–3,
 text lines meet across the gutter; drop-cap squares and footnotes do not
 break the body grid.
 
-Recompiled John PDF (Typst 0.14.2, per-page footnote reset in the file):
-49 pages, 2,029,571 bytes, SHA-256
-`186c38b5d78ee2f72432e25e102ef15cb930ddbb25a94f6c18c92e905369825d`.
-Page 2 notes **a–f**; page 3 starts at **a**.
+Recompiled John PDF 2026-09-04 (Typst 0.14.2, current layout, not the
+2026-09-01 file): 49 pages, 2,029,571 bytes, SHA-256
+`0b005230c7fdaa30915078fee3ea115ba50a2d465302565808b1e34ca22ea82c`.
+Page 2 notes **a–f**; page 3 starts at **a**. Spread PDF SHA-256
+`8d3d1ff461f797d47a34bc228a8bcbb7ce85ac65ca067c164e6d0dfdd3114fb3`
+(70,080 bytes). Facing PNGs are unchanged from the 2026-09-03 line-match
+pass.
 
 ## Known leftovers (not chased)
 
