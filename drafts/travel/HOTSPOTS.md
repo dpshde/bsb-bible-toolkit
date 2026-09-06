@@ -106,19 +106,29 @@ not the 2299-page file. Source Serif 4 stand-in. Watermark
 | Regen | `make travel-hotspot-sampler` |
 | Engine | Typst 0.14.2 |
 | Compiled | 2026-09-06 |
-| Pages | *(filled after compile)* |
-| Size | *(filled after compile)* |
-| SHA-256 | *(filled after compile)* |
+| Pages | 6 (native 4.75 × 7 in leaves) |
+| Size | 86,279 bytes |
+| SHA-256 | `a85c11a15610d4dce39c312dda6a6dc5461fab9f254de31f5be4087f827b6945` |
+| Source compile | `drafts/travel/work/hotspot-books-grid-proof.pdf` (335 pages, gitignored) |
 | PNGs | `drafts/travel/hotspots/*.png` (120 dpi) |
 
-| Leaf | Source book | What to check |
+| Leaf | Source page | What to check |
 |------|-------------|---------------|
-| `genesis-1` | Genesis | Title + drop 1 + early footnotes |
-| `psalm-1` | Psalms | `q1`/`q2` indent; BOOK I |
-| `psalm-119` | Psalms | ALEPH Latin label; no Hebrew tofu |
-| `obadiah` | Obadiah | Title + body on one opening; not exploded |
-| `1-john-3` | 1 John | Heavy NT notes; letters stay short |
-| `revelation-22` | Revelation | 22:18–21 including Amen |
+| `genesis-1` | 1 | Title + boxed drop 1 + footnotes a–c |
+| `psalm-1` | 96 | `q1`/`q2` indent; BOOK I; drop 1 |
+| `psalm-119` | 254 | ALEPH Latin label + boxed drop 119; no Hebrew tofu |
+| `obadiah` | 293 | Title + body on one opening; not exploded |
+| `1-john-3` | 298 | Ch. 3 open + notes a–e; letters stay short |
+| `revelation-22` | 335 | 22:18–21 including Amen |
+
+| PNG | Bytes | SHA-256 |
+|-----|-------|---------|
+| `hotspots/genesis-1.png` | 104,081 | `bef78cd1dc51babe2d9188e9752682f44646bf923e7f90db540ed636c5f2cb41` |
+| `hotspots/psalm-1.png` | 98,678 | `d82b83ce120c7e6c016cb8afb2eb95bc7c18b187db856ebb4b3d19e5744abdc9` |
+| `hotspots/psalm-119.png` | 125,274 | `e28e73343403103e960068d5680e8c07e405ee0bc474ab53d2a2fd0dcc6444c2` |
+| `hotspots/obadiah.png` | 102,471 | `62c224771c2e5d7544d827c6dcb52dcb303e01486a8c3aa39ccf130ae70305e5` |
+| `hotspots/1-john-3.png` | 155,867 | `05e622507ce9b41b400fcf767cb61c33eed426c3ebe81425b99c14eb6145e613` |
+| `hotspots/revelation-22.png` | 63,982 | `7229176492939b00306966188394730a5b7fb84348f25bc5db930de350e9563d` |
 
 ## Known leftovers (not chased)
 
