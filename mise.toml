@@ -18,6 +18,18 @@ run = "make travel-john"
 description = "Watermarked OFL metrics PDF (GRID PROOF — NOT FINAL FACE; not Milo)"
 run = "make travel-john-grid-proof"
 
+[tasks.travel-john-spreads]
+description = "2-up John grid-proof openings 2–3, 4–5, 10–11 (not Milo)"
+run = "make travel-john-spreads"
+
+[tasks.travel-hotspot-sampler]
+description = "Compact committed hotspot sampler PDF + 120 dpi PNGs (not Milo)"
+run = "make travel-hotspot-sampler"
+
+[tasks.travel-bible-grid-proof]
+description = "Full 66-book watermarked OFL metrics PDF (not the loved face; do not commit)"
+run = "make travel-bible-grid-proof"
+
 [tasks.test-travel]
 description = "Unit tests for the travel composer"
 run = "make test-travel"
