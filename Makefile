@@ -18,12 +18,15 @@ TRAVEL_BIBLE_NT_GRID_PDF := drafts/travel/bsb-travel-bible-nt-grid-proof.pdf
 TRAVEL_BIBLE_NT_GRID_TYP := drafts/travel/work/bible-nt-grid-proof.typ
 TRAVEL_SPREADS_PDF := drafts/travel/bsb-travel-john-spreads-grid-proof.pdf
 TRAVEL_SPREADS_DIR := drafts/travel/spreads
+TRAVEL_HOTSPOT_PDF := drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf
+TRAVEL_HOTSPOT_DIR := drafts/travel/hotspots
 MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
 
 .PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
-	travel-john-spreads travel-bible-grid-proof travel-bible-ot-grid-proof \
-	travel-bible-nt-grid-proof test-travel test-travel-unit
+	travel-john-spreads travel-hotspot-sampler travel-bible-grid-proof \
+	travel-bible-ot-grid-proof travel-bible-nt-grid-proof test-travel \
+	test-travel-unit
 
 help:
 	@echo "usfm-source                 Download official BSB USFM if missing"
@@ -31,6 +34,7 @@ help:
 	@echo "travel-john                 Compile the travel John PDF (requires Milo)"
 	@echo "travel-john-grid-proof      Watermarked John OFL metrics PDF (not the loved face)"
 	@echo "travel-john-spreads         2-up John openings 2–3, 4–5, 10–11 (grid proof)"
+	@echo "travel-hotspot-sampler      Compact committed hotspot leaves (grid proof)"
 	@echo "travel-bible-grid-proof     Watermarked 66-book OFL metrics PDF (not the loved face)"
 	@echo "travel-bible-ot-grid-proof  OT-only fallback of the grid-proof compile"
 	@echo "travel-bible-nt-grid-proof  NT-only fallback of the grid-proof compile"
@@ -67,6 +71,12 @@ travel-john-spreads: travel-john-grid-proof
 	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_spreads \
 		$(TRAVEL_GRID_PDF) $(TRAVEL_SPREADS_PDF) \
 		--png-dir $(TRAVEL_SPREADS_DIR)
+
+travel-hotspot-sampler: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_hotspots \
+		--usfm $(USFM) \
+		--output $(TRAVEL_HOTSPOT_PDF) \
+		--png-dir $(TRAVEL_HOTSPOT_DIR)
 
 travel-bible-grid-proof: usfm-source
 	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \

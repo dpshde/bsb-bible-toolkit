@@ -21,12 +21,15 @@ dist/
 !drafts/primary/bsb-single-column-draft.pdf
 !drafts/travel/bsb-travel-john-grid-proof.pdf
 !drafts/travel/bsb-travel-john-spreads-grid-proof.pdf
+!drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf
 !examples/*.pdf
 *.epub
 *.zip
 *.png
 !drafts/travel/spreads/
 !drafts/travel/spreads/*.png
+!drafts/travel/hotspots/
+!drafts/travel/hotspots/*.png
 bsb-*.typ
 drafts/travel/work/
 .DS_Store

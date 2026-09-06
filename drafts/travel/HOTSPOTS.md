@@ -93,6 +93,33 @@ Page 2 notes **a–f**; page 3 starts at **a**. Spread PDF SHA-256
 (70,080 bytes). Facing PNGs are unchanged from the 2026-09-03 line-match
 pass.
 
+## Compact sampler (2026-09-06)
+
+`make travel-hotspot-sampler` builds a committed multi-leaf PDF from a
+targeted book compile (Genesis, Psalms, Obadiah, 1 John, Revelation) —
+not the 2299-page file. Source Serif 4 stand-in. Watermark
+`GRID PROOF — NOT FINAL FACE`. Not Milo.
+
+| Item | Value |
+|------|-------|
+| File | `drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf` |
+| Regen | `make travel-hotspot-sampler` |
+| Engine | Typst 0.14.2 |
+| Compiled | 2026-09-06 |
+| Pages | *(filled after compile)* |
+| Size | *(filled after compile)* |
+| SHA-256 | *(filled after compile)* |
+| PNGs | `drafts/travel/hotspots/*.png` (120 dpi) |
+
+| Leaf | Source book | What to check |
+|------|-------------|---------------|
+| `genesis-1` | Genesis | Title + drop 1 + early footnotes |
+| `psalm-1` | Psalms | `q1`/`q2` indent; BOOK I |
+| `psalm-119` | Psalms | ALEPH Latin label; no Hebrew tofu |
+| `obadiah` | Obadiah | Title + body on one opening; not exploded |
+| `1-john-3` | 1 John | Heavy NT notes; letters stay short |
+| `revelation-22` | Revelation | 22:18–21 including Amen |
+
 ## Known leftovers (not chased)
 
 - Loved-face Milo compile is unchanged and still fail-closed without `fonts/milo/`.

@@ -76,6 +76,23 @@ That recompiles the John grid-proof, then writes a 2-up PDF
 `spreads/`. Verso is left; recto is right; each leaf stays 4.75 × 7 in.
 Still not the loved face. Line-match notes live in [`HOTSPOTS.md`](HOTSPOTS.md).
 
+## Hotspot sampler (committed, not the 66-book file)
+
+`make travel-hotspot-sampler` compiles only Genesis, Psalms, Obadiah,
+1 John, and Revelation, then extracts the QA leaves so Dylan can open
+them without the ~70 MiB full-canon PDF. Still Source Serif 4, still
+watermarked `GRID PROOF — NOT FINAL FACE`. Not Milo.
+
+```bash
+make travel-hotspot-sampler
+```
+
+Output: `drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf`.
+120 dpi PNG previews: `drafts/travel/hotspots/*.png`.
+Intermediate compile (gitignored): `drafts/travel/work/hotspot-books-grid-proof.pdf`.
+
+Leaf list, hashes, and page notes: [`HOTSPOTS.md`](HOTSPOTS.md).
+
 ## BSB license
 
 The Berean Standard Bible text is public domain / CC0 (dedicated 30 April

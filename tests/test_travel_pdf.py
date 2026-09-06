@@ -583,3 +583,121 @@ def test_compose_spread_is_two_up_verso_left(tmp_path):
         [105.0 + 10.5 * i for i in range(12)],
     )
     assert not drifted["pass"]
+
+
+def test_hotspot_books_and_required_leaves():
+    from bsb_pdf_toolkit.compose_travel_hotspots import DEFAULT_HOTSPOTS, HOTSPOT_BOOKS
+
+    assert HOTSPOT_BOOKS == ("Genesis", "Psalms", "Obadiah", "1 John", "Revelation")
+    slugs = [spec.slug for spec in DEFAULT_HOTSPOTS]
+    assert slugs == [
+        "genesis-1",
+        "psalm-1",
+        "psalm-119",
+        "obadiah",
+        "1-john-3",
+        "revelation-22",
+    ]
+    assert all(spec.book in HOTSPOT_BOOKS for spec in DEFAULT_HOTSPOTS)
+    aleph = next(spec for spec in DEFAULT_HOTSPOTS if spec.slug == "psalm-119")
+    assert "ALEPH" in aleph.needles
+    assert "א" in aleph.forbid
+
+
+def test_hotspot_page_selection_and_extract(tmp_path):
+    import fitz
+
+    from bsb_pdf_toolkit.compose_travel_hotspots import (
+        BookFace,
+        DEFAULT_OUTPUT,
+        extract_sampler_pdf,
+        render_hotspot_pngs,
+        select_hotspot_pages,
+    )
+
+    catalog = [
+        BookFace("Genesis", "Genesis", "Genesis"),
+        BookFace("Psalms", "Psalm", "Psalm"),
+        BookFace("Obadiah", "Obadiah", "Obadiah"),
+        BookFace("1 John", "The First Letter of John", "1 John"),
+        BookFace("Revelation", "The Revelation to John", "Revelation"),
+    ]
+    pages = [
+        "Genesis\nIn the beginning God created the heavens and the earth.",
+        "GENESIS · 2\nMore Genesis.",
+        "PSALM · 1\nBlessed is the man who does not walk.",
+        "PSALM · 118\nGive thanks.",
+        "PSALM · 119\nALEPH\nBlessed are those whose way is blameless.",
+        "Obadiah\nOBADIAH · 1\nThis is the vision of Obadiah:",
+        "1 JOHN · 2\nThe First Letter of John\nLittle children.",
+        "1 JOHN · 3\nBehold what manner of love the Father has given to us, that we should be called children of God.",
+        "REVELATION · 21\nThe Revelation to John\nA new heaven.",
+        "REVELATION · 22\nThe grace of the Lord Jesus be with all the saints. Amen.",
+    ]
+    chosen = select_hotspot_pages(pages, catalog)
+    assert [spec.slug for spec, _ in chosen] == [
+        "genesis-1",
+        "psalm-1",
+        "psalm-119",
+        "obadiah",
+        "1-john-3",
+        "revelation-22",
+    ]
+    assert [page_no for _, page_no in chosen] == [1, 3, 5, 6, 8, 10]
+
+    source = tmp_path / "hotspot-src.pdf"
+    src = fitz.open()
+    for index, text in enumerate(pages):
+        page = src.new_page(width=342, height=504)
+        page.insert_text((40, 80), text, fontsize=8.5)
+    src.save(source)
+    src.close()
+
+    output = tmp_path / "sampler.pdf"
+    extract_sampler_pdf(source, output, [page_no for _, page_no in chosen])
+    with fitz.open(output) as doc:
+        assert len(doc) == 6
+        assert doc[0].rect.width == pytest.approx(342)
+        assert "In the beginning" in doc[0].get_text()
+        assert "ALEPH" in doc[2].get_text()
+        assert "א" not in doc[2].get_text()
+        assert "Amen" in doc[-1].get_text()
+
+    pngs = render_hotspot_pngs(
+        output,
+        tmp_path / "hotspots",
+        [spec.slug for spec, _ in chosen],
+        dpi=72,
+    )
+    assert [path.name for path in pngs] == [
+        "genesis-1.png",
+        "psalm-1.png",
+        "psalm-119.png",
+        "obadiah.png",
+        "1-john-3.png",
+        "revelation-22.png",
+    ]
+    assert all(path.is_file() for path in pngs)
+    assert DEFAULT_OUTPUT.name == "bsb-travel-hotspot-sampler-grid-proof.pdf"
+
+
+def test_hotspot_rejects_hebrew_tofu_on_psalm_119():
+    from bsb_pdf_toolkit.compose_travel_hotspots import BookFace, select_hotspot_pages
+
+    catalog = [
+        BookFace("Genesis", "Genesis", "Genesis"),
+        BookFace("Psalms", "Psalm", "Psalm"),
+        BookFace("Obadiah", "Obadiah", "Obadiah"),
+        BookFace("1 John", "The First Letter of John", "1 John"),
+        BookFace("Revelation", "The Revelation to John", "Revelation"),
+    ]
+    pages = [
+        "Genesis\nIn the beginning God created.",
+        "PSALM · 1\nBlessed is the man",
+        "PSALM · 119\nALEPH א\nBlessed are those whose way is blameless.",
+        "OBADIAH · 1\nObadiah",
+        "1 JOHN · 3\nBehold what manner of love the Father has given to us, children of God",
+        "REVELATION · 22\nAmen",
+    ]
+    with pytest.raises(ValueError, match="forbidden"):
+        select_hotspot_pages(pages, catalog)
