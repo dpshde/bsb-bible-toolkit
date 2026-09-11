@@ -86,7 +86,10 @@ SAMPLE_PSA = r"""
 \d \v 1 A Psalm of David, when he fled from his son Absalom.
 \q1 O LORD, how my foes have increased!
 \qr Selah
+\c 118
+\q1 \v 29 Give thanks to the LORD, for He is good.
 \c 119
+\s1 Your Word Is a Lamp to My Feet
 \qa ALEPH
 \q1 \v 1 Blessed are those whose way is blameless.
 """.strip()
@@ -392,6 +395,22 @@ def test_generate_travel_typst_john_sample(tmp_path):
     assert "Travel print sample" not in text
 
 
+def test_psalm_lamp_title_breaks_from_prior_psalm_and_keeps_aleph(tmp_path):
+    usfm = write_sample_zip(tmp_path / "sample.zip")
+    out = tmp_path / "psalm.typ"
+    generate_travel_typst(usfm, out, books=("Psalms",), grid_proof=True)
+    text = out.read_text(encoding="utf-8")
+    lamp = text.index('#section("Your Word Is a Lamp to My Feet")')
+    aleph = text.index('#stanza("ALEPH")')
+    drop = text.index("#chapter-drop(", text.find('#mark-run("PSALM · 119")'))
+    keep = text.rfind("#keep-with-break[", 0, lamp)
+    assert keep != -1
+    assert keep < lamp < aleph < drop
+    assert text.find("]", drop) > drop
+    assert "#keep-with-break[" in text
+    assert text.index("Give thanks to the LORD") < keep
+
+
 @pytest.mark.skipif(not USFM_ZIP.exists(), reason="official BSB USFM zip not present")
 def test_real_usfm_john_preserves_corpus_text(tmp_path):
     out = tmp_path / "john.typ"
@@ -433,6 +452,21 @@ def test_real_usfm_matthew_drops_next_marker_and_osis_tails(tmp_path):
     assert "|ISA" not in text
     assert "1 Chronicles 2:9" in text
     assert "Abraham was the father of Isaac" in text
+
+
+@pytest.mark.skipif(not USFM_ZIP.exists(), reason="official BSB USFM zip not present")
+def test_real_usfm_psalm_119_lamp_title_keep_with_break(tmp_path):
+    out = tmp_path / "psalms.typ"
+    generate_travel_typst(USFM_ZIP, out, books=("Psalms",), grid_proof=True)
+    text = out.read_text(encoding="utf-8")
+    lamp = text.index('#section("Your Word Is a Lamp to My Feet")')
+    aleph = text.index('#stanza("ALEPH")')
+    mark = text.find('#mark-run("PSALM · 119")')
+    drop = text.index("#chapter-drop(", mark)
+    keep = text.rfind("#keep-with-break[", 0, lamp)
+    assert keep != -1
+    assert keep < lamp < aleph < drop
+    assert text.find("]", drop) > aleph
 
 
 def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
@@ -489,7 +523,15 @@ def test_preamble_section_heads_have_air_above_and_below():
     assert "above: 2 * baseline-skip" not in snippet
     assert "sticky: true" in snippet
     assert "#let keep-with(body)" in preamble
-    assert "breakable: false" in preamble[preamble.index("#let keep-with(body)") :]
+    keep_at = preamble.index("#let keep-with(body)")
+    keep_snippet = preamble[keep_at : keep_at + 180]
+    assert "breakable: false" in keep_snippet
+    assert "above: 1.5 * baseline-skip" in keep_snippet
+    assert "above: 0pt" not in keep_snippet
+    break_at = preamble.index("#let keep-with-break(body)")
+    assert "above: 2.5 * baseline-skip" in preamble[break_at : break_at + 180]
+    stanza_at = preamble.index("#let stanza(title)")
+    assert "above: 0.5 * baseline-skip" in preamble[stanza_at : stanza_at + 160]
     xrefs_at = preamble.index("#let chapter-xrefs(")
     xref_snippet = preamble[xrefs_at : xrefs_at + 220]
     assert "below: 0.5 * baseline-skip" in xref_snippet
@@ -497,12 +539,15 @@ def test_preamble_section_heads_have_air_above_and_below():
     grid = travel_preamble(grid_proof=True)
     assert "sticky: true" in grid[grid.index("#let section(title)") :]
     assert "#let keep-with(body)" in grid
+    assert "#let keep-with-break(body)" in grid
+    assert "#let stanza(title)" in grid
     book_at = preamble.index("#let book-title(name)")
     book_snippet = preamble[book_at : book_at + 280]
     assert "Berean Standard Bible" not in book_snippet
     assert "Travel print sample" not in book_snippet
     assert "sample:" not in book_snippet
-    assert "0.5 * baseline-skip" in book_snippet
+    assert "2 * baseline-skip" in book_snippet
+    assert "0.5 * baseline-skip" not in book_snippet
     assert "body-leading-gap" in preamble
     assert "leading: body-leading-gap" in preamble
     assert "hide-opening-chrome = true" in preamble

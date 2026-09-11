@@ -841,6 +841,14 @@ def travel_preamble(
 )[
   #text(font: head-font, size: {spec.section_pt}pt, weight: 700, fill: ink)[#title]
 ]
+// Stanza letters (ALEPH, BETH, …) sit tight with the pericope title + drop.
+#let stanza(title) = block(
+  above: 0.5 * baseline-skip,
+  below: 0.25 * baseline-skip,
+  sticky: true,
+)[
+  #text(font: head-font, size: {spec.section_pt}pt, weight: 700, fill: ink)[#title]
+]
 #let chapter-xrefs(body) = block(above: 0pt, below: 0.5 * baseline-skip, sticky: true)[
   #set text(font: body-font, size: {spec.xref_pt}pt, style: "italic", fill: ink)
   #set par(justify: true, leading: leading-gap, hanging-indent: 0.75em)
@@ -848,13 +856,15 @@ def travel_preamble(
 ]
 // Title + first verse/drop stay on the same page. sticky alone is not
 // enough when a zero-height bookmark heading sits between them.
-#let keep-with(body) = block(breakable: false, above: 0pt, below: 0pt)[#body]
+// above must live on this wrapper: a child's above is swallowed here.
+#let keep-with(body) = block(breakable: false, above: 1.5 * baseline-skip, below: 0pt)[#body]
+#let keep-with-break(body) = block(breakable: false, above: 2.5 * baseline-skip, below: 0pt)[#body]
 #let book-title(name) = {{
   align(center)[
-    #v(0.5 * baseline-skip)
+    #v(2 * baseline-skip)
     #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
   ]
-  v(0.5 * baseline-skip)
+  v(2 * baseline-skip)
 }}
 #let superscription(body) = block(above: leading-gap, below: leading-gap)[
   #set text(font: body-font, size: body-size, style: "italic", fill: ink)
@@ -908,7 +918,10 @@ def generate_travel_typst(
 
             def flush_keep(body_parts: list[str]) -> None:
                 if pending_head:
-                    lines.append("#keep-with[")
+                    has_section = any(line.startswith("#section(") for line in pending_head)
+                    has_stanza = any(line.startswith("#stanza(") for line in pending_head)
+                    wrapper = "#keep-with-break[" if has_section and has_stanza else "#keep-with["
+                    lines.append(wrapper)
                     lines.extend(pending_head)
                     pending_head.clear()
                     lines.extend(body_parts)
@@ -941,7 +954,7 @@ def generate_travel_typst(
                 elif para["kind"] == "acrostic":
                     title = clean_spaces(para["raw"])
                     if title and not is_hebrew_script(title):
-                        pending_head.append(f"#section({typst_string(title)})")
+                        pending_head.append(f"#stanza({typst_string(title)})")
                 elif para["kind"] == "blank":
                     if pending_head:
                         pending_head.append("#v(baseline-skip)")
