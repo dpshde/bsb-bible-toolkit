@@ -18,11 +18,11 @@ Text source: this toolkit’s official BSB USFM
 |------|-------|
 | Trim | 4.75 in × 7.00 in (portrait) |
 | Binding | Two-sided; inside/outside margins swap on verso/recto |
-| Inside (gutter) | 0.61 in |
-| Outside | 0.46 in |
+| Inside (gutter) | 0.70 in |
+| Outside | 0.55 in |
 | Head | 0.50 in |
 | Foot | 0.375 in |
-| Measure | 3.68 in (31.2 em at 8.5 pt) |
+| Measure | 3.50 in (29.6 em at 8.5 pt) |
 | Text-block height | 6.125 in |
 | Lines per page | 42 |
 | Baseline grid | 10.5 pt, shared by verso and recto |
@@ -31,10 +31,10 @@ Head + foot + 42 × 10.5 pt = 0.50 in + 0.375 in + 6.125 in = 7.00 in.
 Every body, heading, and xref interval is an integer multiple of 10.5 pt so
 facing pages line-match.
 
-Target characters per line: **60–70**. At 8.5 pt Text optical, 3.68 in is
-about 31 em ≈ 62–67 English characters (about 2–3 cpl shorter than the
-earlier 3.80 in brick). If a later proof runs outside 60–70,
-change measure or size — do not jump to a 6×9 10 pt desk spec.
+Target characters per line: **58–62**. At 8.5 pt Text optical, 3.50 in is
+about 29.6 em ≈ 58–62 English characters (about 0.18 in shorter than the
+3.68 in pass that still read as a brick). If a later proof runs outside
+58–62, change measure or size — do not jump to a 6×9 10 pt desk spec.
 
 ## 2. Type
 
@@ -79,7 +79,7 @@ as the loved face.
 ## 3. Composition
 
 - Language `en`, hyphenation on. Hyphenation cost is **80%** of Typst’s
-  default (the previous 120% left the 60–70 cpl travel measure almost
+  default (the previous 120% left the travel measure almost
   unhyphenated). Divine-name spans (`\nd` → `#divine`) set
   `hyphenate: false` so LORD / GOD do not break.
 - Justified body; Typst optimized paragraph line-breaks (whole-paragraph
@@ -91,9 +91,13 @@ as the loved face.
 - Structural grid stays 10.5 pt (drop-cap height, poetry, section math).
   Body prose leading is **+0.65 pt** (2.65 pt gap + 8.5 pt line box) so
   long narrative is less of a brick. Poetry keeps the 2 pt grid gap.
-- Prose paragraphs (`\p` and equivalents) take a **0.20 in** first-line
-  indent. The paragraph under a chapter drop stays flush; so does USFM
-  `\m`. Poetry (`\q*`) and lists (`\li*`) are not indented.
+- Later prose paragraphs (`\p` and equivalents) take a **0.35 in**
+  first-line indent (`par.first-line-indent` with `all: true`, because
+  each USFM `\p` is its own Typst block). They also take **0.55
+  baseline** extra space above so consecutive `\p` blocks cannot fuse
+  into one brick. The paragraph under a chapter drop stays flush; so
+  does USFM `\m`. Poetry (`\q*`) and lists (`\li*`) are not indented
+  and do not take the extra paragraph gap.
 - No orphan of a verse number: the verse numeral is boxed with a thin space
   so it cannot sit alone at the end of a line.
 - Widows/orphans of paragraph lines: Typst default costs (on).

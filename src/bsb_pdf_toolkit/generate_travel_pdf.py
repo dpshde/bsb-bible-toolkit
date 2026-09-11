@@ -92,17 +92,20 @@ class TravelSpec:
 
     trim_width_in: float = 4.75
     trim_height_in: float = 7.0
-    margin_inside_in: float = 0.61
-    margin_outside_in: float = 0.46
+    margin_inside_in: float = 0.70
+    margin_outside_in: float = 0.55
     margin_head_in: float = 0.50
     margin_foot_in: float = 0.375
     body_pt: float = 8.5
     baseline_pt: float = 10.5
     lines_per_page: int = 42
-    measure_in: float = 3.68
-    para_indent_in: float = 0.20
-    target_cpl_min: int = 60
-    target_cpl_max: int = 70
+    measure_in: float = 3.50
+    para_indent_in: float = 0.35
+    # Extra space above later #\p prose so 8–10 verses cannot fuse.
+    # Not applied to the flush remainder under a chapter drop.
+    para_above_baselines: float = 0.55
+    target_cpl_min: int = 58
+    target_cpl_max: int = 62
     drop_lines: int = 3
     footnote_pt: float = 7.0
     footnote_baseline_pt: float = 8.5
@@ -192,6 +195,11 @@ def leading_gap_pt(spec: TravelSpec = SPEC) -> float:
 def body_leading_gap_pt(spec: TravelSpec = SPEC) -> float:
     """Body-prose leading. Slightly looser than the 10.5 pt structural grid."""
     return leading_gap_pt(spec) + spec.body_leading_extra_pt
+
+
+def para_above_pt(spec: TravelSpec = SPEC) -> float:
+    """Extra space above later prose paragraphs (USFM \\p), in points."""
+    return spec.para_above_baselines * spec.baseline_pt
 
 
 def measure_em(spec: TravelSpec = SPEC) -> float:
@@ -827,12 +835,15 @@ def travel_preamble(
 }}
 
 #let para-indent = {spec.para_indent_in}in
-#let para(body) = block(spacing: body-leading-gap)[
-  #set par(first-line-indent: para-indent)
+#let para-above = {spec.para_above_baselines} * baseline-skip
+#let para(body) = block(above: para-above, below: 0pt, spacing: body-leading-gap)[
+  // Typst skips first-line indent on the first para of a container unless
+  // `all` is true. Each USFM \\p is its own block, so `all` must be on.
+  #set par(first-line-indent: (amount: para-indent, all: true))
   #body
 ]
-#let para-flush(body) = block(spacing: body-leading-gap)[
-  #set par(first-line-indent: 0pt)
+#let para-flush(body) = block(above: 0pt, below: 0pt, spacing: body-leading-gap)[
+  #set par(first-line-indent: (amount: 0pt, all: true))
   #body
 ]
 #let poetry(level, body) = block(

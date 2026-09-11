@@ -37,6 +37,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     leading_gap_pt,
     main,
     measure_em,
+    para_above_pt,
     paragraph_markup,
     render_text_chunk,
     require_grid_proof_fonts,
@@ -110,21 +111,25 @@ def test_spec_line_matches_page():
     assert SPEC.body_pt == 8.5
     assert SPEC.baseline_pt == 10.5
     assert SPEC.margin_inside_in + SPEC.margin_outside_in + SPEC.measure_in == pytest.approx(4.75)
-    assert SPEC.margin_inside_in == pytest.approx(0.61)
-    assert SPEC.margin_outside_in == pytest.approx(0.46)
-    assert SPEC.measure_in == pytest.approx(3.68)
-    assert SPEC.para_indent_in == pytest.approx(0.20)
+    assert SPEC.margin_inside_in == pytest.approx(0.70)
+    assert SPEC.margin_outside_in == pytest.approx(0.55)
+    assert SPEC.measure_in == pytest.approx(3.50)
+    assert SPEC.para_indent_in == pytest.approx(0.35)
+    assert SPEC.para_above_baselines == pytest.approx(0.55)
     assert SPEC.margin_head_in + SPEC.margin_foot_in + text_block_in == pytest.approx(7.0)
-    assert SPEC.target_cpl_min == 60
-    assert SPEC.target_cpl_max == 70
+    assert SPEC.target_cpl_min == 58
+    assert SPEC.target_cpl_max == 62
     em = measure_em()
-    assert 30 <= em <= 34
+    assert 28.5 <= em <= 31
     assert leading_gap_pt() == 2.0
     assert SPEC.body_leading_extra_pt == 0.65
     assert body_leading_gap_pt() == pytest.approx(2.65)
+    assert para_above_pt() == pytest.approx(5.775)
     preamble = travel_preamble()
-    assert "#let para-indent = 0.2in" in preamble or "#let para-indent = 0.20in" in preamble
-    assert "first-line-indent: para-indent" in preamble
+    assert "#let para-indent = 0.35in" in preamble
+    assert "first-line-indent: (amount: para-indent, all: true)" in preamble
+    assert "#let para-above =" in preamble
+    assert "above: para-above" in preamble
     assert "#let para-flush(body)" in preamble
     assert "leading: body-leading-gap" in preamble
     poetry_at = preamble.index("#let poetry(")
