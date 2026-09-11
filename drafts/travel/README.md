@@ -157,9 +157,9 @@ make travel-woc-qa
 ```
 
 Output: `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf`
-(4 leaves, 92,979 bytes, SHA-256
-`c8667ae0cf36a50b4dfcb18736b5c20c061482fc6c5f25cc469cc58d4c550335`).
-PDF outline: Matthew → 4, 5; John → 3, 14.
+(4 leaves, 101,655 bytes, SHA-256
+`32c268e297f0707626513b9fc81ae3d0a2797152350f7b8b3ccc1c1aaa066dcb`).
+PDF outline: Matthew → 3, 4; John → 3, 14.
 120 dpi PNG previews: `drafts/travel/woc/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
@@ -210,10 +210,10 @@ Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 | Engine | Typst 0.14.2 |
 | Compiled | 2026-09-11 |
 | Trim | 4.75 in × 7.00 in |
-| Pages | 52 |
-| Links | 3260 |
-| Size | 1,950,662 bytes |
-| SHA-256 | `1dc572a5c920dbd8618300e3430bc95c4859adff177516387a9b3500081cc077` |
+| Pages | 48 |
+| Links | 3263 |
+| Size | 1,977,058 bytes |
+| SHA-256 | `a7adcc9d9d568a8ab723b25db2741759d1cfe0a26712215b7b805471db0ad961` |
 
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.
@@ -226,16 +226,19 @@ no “Berean Standard Bible” line and no travel-sample metadata.
 Loved-face Milo compile remains fail-closed without `fonts/milo/`.
 
 This is still **not** the loved face. The stand-in is Source Serif 4.
-Do not commit the full-Bible PDF (it will be thousands of pages).
-John-only targets are unchanged:
+A single 66-book Typst compile can run out of memory; the committed
+preview is one book at a time, then merged, with continuous folios and
+a Book → Chapter outline.
 
 ```bash
-make travel-john-grid-proof     # John sample; may be committed
-make travel-bible-grid-proof    # 66-book metrics PDF; do not git-add
+make travel-john-grid-proof     # John sample
+make travel-bible-grid-proof    # 66-book metrics preview
 ```
 
-Output: `drafts/travel/bsb-travel-bible-grid-proof.pdf` (gitignored).
-Typst source: `drafts/travel/work/bible-grid-proof.typ` (gitignored).
+Output: `drafts/travel/bsb-travel-bible-grid-proof.pdf`
+(2,264 pages, 31,133,152 bytes, SHA-256
+`9cda5e658216d63e6db2ad32995ad61de2028998adb124f2289ab30885cc9264`).
+Per-book Typst/PDF intermediates stay in `drafts/travel/work/` (gitignored).
 
 If a single compile runs out of memory, `make travel-bible-ot-grid-proof` and
 `make travel-bible-nt-grid-proof` build the testaments separately.

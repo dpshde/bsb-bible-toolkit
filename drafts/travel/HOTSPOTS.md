@@ -7,15 +7,14 @@ Compile: `make travel-bible-grid-proof`
 
 | Item | Value |
 |------|-------|
-| File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (gitignored; do not commit) |
-| Engine | Typst 0.14.2 |
-| Pages | 2299 |
-| Bytes | 73,809,442 (~70.4 MiB) |
-| SHA-256 | `c25c46e86d845840aac7abf08ab779b57bb1cc86938f53f0c44c83df5ad8cf19` |
-| Wall time | 62.86 s |
-| Peak RSS | ~10.3 GiB |
+| File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` |
+| Engine | Typst 0.14.2 (per-book compile + merge; one-shot canon OOMs here) |
+| Pages | 2264 |
+| Bytes | 31,133,152 (~29.7 MiB) |
+| SHA-256 | `9cda5e658216d63e6db2ad32995ad61de2028998adb124f2289ab30885cc9264` |
 | Trim | 4.75 in × 7.00 in (342 × 504 pt) |
-| Books | 66, Protestant canon order, `#pagebreak()` between books |
+| Books | 66, Protestant canon order |
+| Outline | Book → Chapter (66 books, 1,189 chapter dests) |
 
 ## Fixes from this QA pass
 
@@ -53,10 +52,10 @@ Letter markers reset at the start of each page via `counter(footnote).update(0)`
 in the Typst page header (the documented Typst pattern). Book pagebreaks still
 reset as a safety net.
 
-John-only recompile (`--grid-proof --book John`, 52 pages): every sampled
+John-only recompile (`--grid-proof --book John`, 48 pages): every sampled
 footnote listing starts at `a` and the notes on a page run in as one
 wrapping paragraph. Page 2 carries notes **a–d**. No two-letter markers
-in the 52-page John PDF.
+in the 48-page John PDF.
 
 Psalms-only targeted compile (`--book Psalms`, 197 pages): same reset. Page 2
 has **a–e**; page 3 starts at **a**. Zero two-letter markers across the book.
@@ -87,9 +86,10 @@ text lines meet across the gutter; drop-cap squares and footnotes do not
 break the body grid.
 
 Recompiled John PDF 2026-09-11 (Typst 0.14.2, run-in grey notes, Book →
-Chapter PDF outline, extra air around pericope titles, no ruled
-background, no footer watermark): 52 pages, 1,950,662 bytes, SHA-256
-`1dc572a5c920dbd8618300e3430bc95c4859adff177516387a9b3500081cc077`.
+Chapter PDF outline, 1.5 / 0.5 baseline section air, keep-with heads,
++0.35 pt body leading, no ruled background, no footer watermark):
+48 pages, 1,977,058 bytes, SHA-256
+`a7adcc9d9d568a8ab723b25db2741759d1cfe0a26712215b7b805471db0ad961`.
 Page 2 notes **a–d** run in as one wrapping paragraph. Outline is
 `John` → `1`…`21`. The 2-up spread PDF above is the earlier line-match
 sheet and was not rebuilt in this pass.
@@ -100,12 +100,10 @@ sheet and was not rebuilt in this pass.
 4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
 `#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Not Milo.
 Run-in footnotes in grey `rgb(76, 76, 76)`, no ruled background, no
-`GRID PROOF` / `NOT FINAL FACE`. PDF outline: Matthew → 4, 5; John → 3, 14.
+`GRID PROOF` / `NOT FINAL FACE`. PDF outline: Matthew → 3, 4; John → 3, 14.
 
-After the extra pericope air, baptism and the start of the temptation
-share source p.6 (Matthew 3:8–4:4). The sheet keeps that leaf, the
-Matthew 5 Beatitudes, John 3:16, and the John 14 farewell (title +
-drop 14 on the same page).
+Baptism and temptation are distinct leaves again. John 14 keeps the
+pericope title with drop 14 and with “The Way, the Truth, and the Life”.
 
 | Item | Value |
 |------|-------|
@@ -114,24 +112,24 @@ drop 14 on the same page).
 | Engine | Typst 0.14.2 |
 | Compiled | 2026-09-11 |
 | Pages | 4 (native 4.75 × 7 in leaves) |
-| Size | 92,979 bytes |
-| SHA-256 | `c8667ae0cf36a50b4dfcb18736b5c20c061482fc6c5f25cc469cc58d4c550335` |
+| Size | 101,655 bytes |
+| SHA-256 | `32c268e297f0707626513b9fc81ae3d0a2797152350f7b8b3ccc1c1aaa066dcb` |
 | Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (gitignored) |
 | PNGs | `drafts/travel/woc/*.png` (120 dpi) |
 
 | Leaf | Source page | Header | What to check |
 |------|-------------|--------|---------------|
-| `matthew-baptism` | 6 | `MATTHEW · 3:8–4:4` | “Let it be so now”; temptation speech starts; boxed drop 4 |
-| `matthew-sermon` | 8 | `MATTHEW · 4:18–5:3` | “Blessed are the poor in spirit”; boxed drop 5 |
-| `john-loved` | 81 | `JOHN · 3:3–22` | 3:16–17 speech in cobalt; notes wrap |
-| `john-farewell` | 110 | `JOHN · 13:33–14:5` | “In My Father’s House Are Many Rooms” with air above/below; boxed drop 14 |
+| `matthew-baptism` | 5 | `MATTHEW · 3:1–16` | “Let it be so now”; notes wrap |
+| `matthew-temptation` | 6 | `MATTHEW · 3:17–4:15` | “Man shall not live on bread alone”; boxed drop 4 |
+| `john-loved` | 73 | `JOHN · 3:15–34` | 3:16–17 speech in cobalt; notes wrap |
+| `john-farewell` | 100 | `JOHN · 13:36–14:13` | Title + drop 14 + “The Way, the Truth, and the Life” stay with their verses |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `woc/matthew-baptism.png` | 134,890 | `3fe4cdfa2840277e35607e5dca38bd301232f2be23b3d62cdf01f66877960748` |
-| `woc/matthew-sermon.png` | 108,320 | `7604ce531ffcdc736e78e11c6be4b08bc2fa141ab31eb52aabda07c862f168b7` |
-| `woc/john-loved.png` | 157,903 | `e752c3c2922f357f9bcda4ea29463a7f7451d66a2bebe9e452902739a520a6ff` |
-| `woc/john-farewell.png` | 126,153 | `88a17a096c2c1d73c6b41186ff5435b611327d1bff79b750bfb31c4f8a989e93` |
+| `woc/matthew-baptism.png` | 154,196 | `e5d46eb06070834d1c282725bd7433e629cc9e0ca27f834beea411e985851e53` |
+| `woc/matthew-temptation.png` | 138,947 | `83db73c88c3510d8708b7cc9af250b08073499387b4c49cb5edf5c028c7276cc` |
+| `woc/john-loved.png` | 160,193 | `64cde80e4bff605cb4146775e6cc8441e9d3dc4cf573da8aae92f8b7dfdbaa1f` |
+| `woc/john-farewell.png` | 158,925 | `bad1eba8ce19b4167e95241b3a66f95863480981da405f2b791e9263c77fd084` |
 
 ## Running-header QA (2026-09-09)
 

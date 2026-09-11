@@ -1029,7 +1029,8 @@ def merge_travel_pdfs(sources: list[Path], output: Path) -> Path:
             offset = out.page_count
     if outline:
         out.set_toc(outline)
-    out.save(output, deflate=True, garbage=4)
+    # Incremental save; garbage collection on 2k+ pages can stall for minutes.
+    out.save(output, deflate=True)
     out.close()
     return output
 
