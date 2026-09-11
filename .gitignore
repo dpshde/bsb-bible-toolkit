@@ -43,6 +43,9 @@ dist/
 !drafts/travel/headers/*.png
 !drafts/travel/woc/
 !drafts/travel/woc/*.png
+!drafts/travel/qa-random/
+!drafts/travel/qa-random/*.png
+!drafts/travel/qa-random/*.md
 bsb-*.typ
 drafts/travel/work/
 .DS_Store

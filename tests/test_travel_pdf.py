@@ -691,6 +691,49 @@ def test_merge_travel_pdfs_offsets_outline(tmp_path):
         ]
 
 
+def test_random_qa_selection_is_seeded_and_mixed():
+    from bsb_pdf_toolkit.compose_travel_random_qa import (
+        RANDOM_QA_SEED,
+        book_ranges_from_toc,
+        page_chrome_failures,
+        select_random_qa_leaves,
+    )
+
+    toc = [
+        [1, "Genesis", 1],
+        [2, "1", 1],
+        [1, "Psalm", 20],
+        [2, "1", 20],
+        [2, "119", 30],
+        [1, "Isaiah", 40],
+        [1, "Obadiah", 50],
+        [1, "Matthew", 52],
+        [1, "John", 70],
+        [1, "2 John", 80],
+        [1, "Revelation", 81],
+        [2, "22", 88],
+    ]
+    ranges = book_ranges_from_toc(toc, 90)
+    assert ranges[0].name == "Genesis"
+    assert ranges[0].start == 1 and ranges[0].end == 19
+    assert ranges[-1].name == "Revelation" and ranges[-1].end == 90
+    first = select_random_qa_leaves(ranges, toc, seed=RANDOM_QA_SEED, page_count=90)
+    again = select_random_qa_leaves(ranges, toc, seed=RANDOM_QA_SEED, page_count=90)
+    assert [leaf.page for leaf in first] == [leaf.page for leaf in again]
+    pages = {leaf.page for leaf in first}
+    assert 1 in pages
+    assert 30 in pages
+    assert 90 in pages
+    roles = {leaf.role for leaf in first}
+    assert {"opener", "poetry", "prose", "tiny", "ending", "uniform"} <= roles
+    assert any(leaf.book == "Genesis" for leaf in first)
+    assert any(leaf.book in {"Obadiah", "2 John"} for leaf in first if leaf.role == "tiny")
+    assert any(leaf.book == "Matthew" or leaf.book == "John" for leaf in first if leaf.role == "opener")
+    assert 14 <= len(first) <= 16
+    assert page_chrome_failures("plain verse") == []
+    assert "Berean Standard Bible" in page_chrome_failures("The Berean Standard Bible opens")
+
+
 def test_selah_and_divine_name_spans():
     text = render_text_chunk(r"Wait on \nd the LORD\nd* . \qs Selah\qs*")
     assert "#divine[the LORD]" in text
