@@ -803,3 +803,128 @@ def test_header_qa_paths_and_range_detection():
     assert page_has_verse_header("JOHN · 3:31–4:2\nHe must increase")
     assert not page_has_verse_header("JOHN · 4\nThe woman said")
     assert not page_has_verse_header("The Gospel According to John")
+
+
+def test_woc_qa_paths_and_required_leaves():
+    from bsb_pdf_toolkit.compose_travel_woc import (
+        DEFAULT_OUTPUT,
+        WOC_QA_BOOKS,
+        WOC_QA_LEAVES,
+        WOC_REQUIRED_SLUGS,
+    )
+
+    assert WOC_QA_BOOKS == ("Matthew", "John")
+    assert DEFAULT_OUTPUT.name == "bsb-travel-woc-qa-grid-proof.pdf"
+    slugs = [spec.slug for spec in WOC_QA_LEAVES]
+    assert slugs[:3] == ["matthew-baptism", "matthew-temptation", "john-farewell"]
+    assert WOC_REQUIRED_SLUGS == {"matthew-baptism", "john-farewell"}
+    assert all(spec.book in WOC_QA_BOOKS for spec in WOC_QA_LEAVES)
+
+
+def test_woc_page_selection_skips_duplicate_matthew_leaf():
+    from bsb_pdf_toolkit.compose_travel_hotspots import BookFace
+    from bsb_pdf_toolkit.compose_travel_woc import select_woc_pages
+
+    catalog = [
+        BookFace("Matthew", "Matthew", "Matthew"),
+        BookFace("John", "The Gospel According to John", "John"),
+    ]
+    pages = [
+        "MATTHEW · 3\nLet it be so now. Man shall not live on bread alone.",
+        "MATTHEW · 5\nBlessed are the poor in spirit, for theirs is the kingdom of heaven.",
+        "JOHN · 3\nFor God so loved the world that He gave His one and only Son.",
+        "JOHN · 14\nDo not let your hearts be troubled. You believe in God.",
+    ]
+    chosen = select_woc_pages(pages, catalog)
+    assert [spec.slug for spec, _ in chosen] == [
+        "matthew-baptism",
+        "john-farewell",
+        "john-loved",
+        "matthew-sermon",
+    ]
+    assert [page_no for _, page_no in chosen] == [1, 4, 3, 2]
+
+
+def test_woc_page_selection_keeps_four_when_distinct():
+    from bsb_pdf_toolkit.compose_travel_hotspots import BookFace
+    from bsb_pdf_toolkit.compose_travel_woc import select_woc_pages
+
+    catalog = [
+        BookFace("Matthew", "Matthew", "Matthew"),
+        BookFace("John", "The Gospel According to John", "John"),
+    ]
+    pages = [
+        "MATTHEW · 3\nLet it be so now, Jesus replied.",
+        "MATTHEW · 4\nMan shall not live on bread alone, but on every word.",
+        "JOHN · 3\nFor God so loved the world that He gave His one and only Son.",
+        "JOHN · 14\nDo not let your hearts be troubled. You believe in God.",
+    ]
+    chosen = select_woc_pages(pages, catalog)
+    assert [spec.slug for spec, _ in chosen] == [
+        "matthew-baptism",
+        "matthew-temptation",
+        "john-farewell",
+        "john-loved",
+    ]
+    assert [page_no for _, page_no in chosen] == [1, 2, 4, 3]
+
+
+def test_woc_speech_and_typst_helpers():
+    from bsb_pdf_toolkit.compose_travel_woc import (
+        page_has_woc_speech,
+        speech_wrapped_in_woc,
+        typst_exercises_woc,
+        validate_woc_pages,
+        validate_woc_typst,
+    )
+    from bsb_pdf_toolkit.compose_travel_hotspots import HotspotSpec
+
+    assert page_has_woc_speech("Let it be so now, Jesus replied.")
+    assert page_has_woc_speech("Do not let your hearts be trou- bled.")
+    assert not page_has_woc_speech("In the beginning was the Word.")
+
+    typst = (
+        "#let woc-blue = rgb(28, 56, 110)\n"
+        "#let woc(body) = text(fill: woc-blue)[#body]\n"
+        "#woc[Let it be so now]\n"
+        "#woc[Do not let your hearts be troubled]\n"
+    )
+    assert typst_exercises_woc(typst)
+    assert speech_wrapped_in_woc(typst, "Let it be so now")
+    validate_woc_typst(typst, ("Let it be so now", "Do not let your hearts be troubled"))
+
+    baptism = HotspotSpec(
+        slug="matthew-baptism",
+        label="Matthew 3 baptism",
+        book="Matthew",
+        pick="contains",
+        needles=("Let it be so now",),
+        require=("Let it be so now",),
+    )
+    farewell = HotspotSpec(
+        slug="john-farewell",
+        label="John 14 farewell",
+        book="John",
+        pick="contains",
+        needles=("Do not let your hearts be troubled",),
+        require=("Do not let your hearts be troubled",),
+    )
+    loved = HotspotSpec(
+        slug="john-loved",
+        label="John 3 loved the world",
+        book="John",
+        pick="contains",
+        needles=("For God so loved the world",),
+        require=("For God so loved the world",),
+    )
+    with pytest.raises(ValueError, match="missing required text"):
+        validate_woc_pages(
+            [(baptism, 1), (farewell, 2), (loved, 3)],
+            [
+                "In the beginning was the Word.",
+                "Do not let your hearts be troubled.",
+                "For God so loved the world.",
+            ],
+        )
+    with pytest.raises(ValueError, match="does not exercise"):
+        validate_woc_typst("no cobalt here", ("Let it be so now",))

@@ -38,6 +38,10 @@ run = "make travel-poetry-qa"
 description = "John verso/recto running-header QA leaves (not Milo)"
 run = "make travel-running-headers-qa"
 
+[tasks.travel-woc-qa]
+description = "Matthew/John Words of Christ blue QA leaves (not Milo)"
+run = "make travel-woc-qa"
+
 [tasks.travel-bible-grid-proof]
 description = "Full 66-book watermarked OFL metrics PDF (not the loved face; do not commit)"
 run = "make travel-bible-grid-proof"

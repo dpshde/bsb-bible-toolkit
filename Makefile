@@ -26,12 +26,15 @@ TRAVEL_POETRY_PDF := drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf
 TRAVEL_POETRY_DIR := drafts/travel/poetry
 TRAVEL_HEADERS_PDF := drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf
 TRAVEL_HEADERS_DIR := drafts/travel/headers
+TRAVEL_WOC_PDF := drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
+TRAVEL_WOC_DIR := drafts/travel/woc
 MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
 
 .PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
 	travel-john-spreads travel-hotspot-sampler travel-hyphenation-qa \
-	travel-poetry-qa travel-running-headers-qa travel-bible-grid-proof \
+	travel-poetry-qa travel-running-headers-qa travel-woc-qa \
+	travel-bible-grid-proof \
 	travel-bible-ot-grid-proof travel-bible-nt-grid-proof test-travel \
 	test-travel-unit
 
@@ -45,6 +48,7 @@ help:
 	@echo "travel-hyphenation-qa       John/poetry/Genesis hyphenation leaves (grid proof)"
 	@echo "travel-poetry-qa            Psalm 1 + Psalm 119 poetry leaves (grid proof)"
 	@echo "travel-running-headers-qa   John verso/recto running-header leaves (grid proof)"
+	@echo "travel-woc-qa               Matthew/John Words of Christ blue leaves (grid proof)"
 	@echo "travel-bible-grid-proof     Watermarked 66-book OFL metrics PDF (not the loved face)"
 	@echo "travel-bible-ot-grid-proof  OT-only fallback of the grid-proof compile"
 	@echo "travel-bible-nt-grid-proof  NT-only fallback of the grid-proof compile"
@@ -105,6 +109,12 @@ travel-running-headers-qa: usfm-source
 		--usfm $(USFM) \
 		--output $(TRAVEL_HEADERS_PDF) \
 		--png-dir $(TRAVEL_HEADERS_DIR)
+
+travel-woc-qa: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_woc \
+		--usfm $(USFM) \
+		--output $(TRAVEL_WOC_PDF) \
+		--png-dir $(TRAVEL_WOC_DIR)
 
 travel-bible-grid-proof: usfm-source
 	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \

@@ -25,6 +25,7 @@ dist/
 !drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf
 !drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf
 !drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf
+!drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
 !examples/*.pdf
 *.epub
 *.zip
@@ -39,6 +40,8 @@ dist/
 !drafts/travel/poetry/*.png
 !drafts/travel/headers/
 !drafts/travel/headers/*.png
+!drafts/travel/woc/
+!drafts/travel/woc/*.png
 bsb-*.typ
 drafts/travel/work/
 .DS_Store
