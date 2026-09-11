@@ -71,9 +71,9 @@ Designer: Mike Abbink. See <https://mikeabbink.com/typefaces/milo-serif/>.
 Place files in `fonts/milo/` (gitignored). This repository does not ship the
 font.
 
-A separate **metrics-only** path exists for digital grid checks while Milo is
-absent. See §8. That PDF is watermarked `GRID PROOF — NOT FINAL FACE` and
-must never be presented as the loved face.
+A separate **metrics-only** path exists for digital checks while Milo is
+absent. See §8. That PDF uses Source Serif 4 and must never be presented
+as the loved face.
 
 ## 3. Composition
 
@@ -119,7 +119,9 @@ must never be presented as the loved face.
   (the page header zeros `counter(footnote)`). A book pagebreak also resets
   the counter as a safety net. Long books such as Psalms therefore stay on
   short markers instead of running into `aa` / `cdh`. `\fqa` alternate
-  readings in italic. Notes are not moved into the side margin.
+  readings in italic. Notes **run in** as one wrapping paragraph at the
+  foot (not each letter on its own line). Notes are not moved into the
+  side margin.
 - **Words of Christ:** USFM `\wj` … `\wj*` in the travel cobalt, same Text
   face. Verse numbers stay ink even when a speech wraps a `\v` marker.
 
@@ -164,8 +166,8 @@ stand-in:
 | Face | FF Milo Serif Text | Source Serif 4 (SIL OFL 1.1) |
 | Font dir | `fonts/milo/` | `fonts/grid-proof/` |
 | Output | `drafts/travel/bsb-travel-john.pdf` | `bsb-travel-john-grid-proof.pdf` or `bsb-travel-bible-grid-proof.pdf` |
-| Watermark | none | `GRID PROOF — NOT FINAL FACE` on every page |
-| Overlay | none | 42-line baseline grid in the text block |
+| Watermark | none | none (folio only; no `GRID PROOF` / `NOT FINAL FACE` string) |
+| Overlay | none | none (no ruled background) |
 
 The stand-in exists so trim, margins, 10.5 pt grid, hyphenation, drop cap,
 WOC blue, and footnote placement can be checked digitally. It is not Milo,

@@ -27,7 +27,7 @@ Compile: `make travel-bible-grid-proof`
 
 | Check | Page | Result | Notes |
 |-------|------|--------|-------|
-| Genesis 1 title + drop cap 1 + first footnotes | 1 | Pass | Title page with sample line; drop 1; notes a–c at the foot; watermark + grid. |
+| Genesis 1 title + drop cap 1 + first footnotes | 1 | Pass | Title page with sample line; drop 1; notes a–c at the foot. |
 | Exodus 20 / Decalogue | 130–131 | Pass | Drop 20 on 130; `\li1` commandments on 131 with hanging indent; 7 notes at the foot of 131. |
 | Psalm 1 poetry indent | 960 | Pass | `q1`/`q2` indent; BOOK I + “Psalms 1–41”; drop 1. |
 | Psalm 119 longest chapter; acrostic | 1118+ | Pass after fix | ALEPH + drop 119; later stanzas BETH/GIMEL; no tofu. |
@@ -44,7 +44,7 @@ Compile: `make travel-bible-grid-proof`
 | Heavy NT footnotes | 2256 (1 John 3) | Pass | Five notes at the foot; none dropped. Book-level reset keeps markers short in NT. |
 | Malachi → Matthew | 1796 → 1797 | Pass after fix | Mal 4:6 on 1796; Matthew title on 1797 with `MATTHEW · 1` (not Malachi). |
 | John → Acts | 2024 → 2025 | Pass after fix | John 21:25 on 2024; Acts title on 2025 with `ACTS · 1`. |
-| Grid watermark | interior pages | Pass | `GRID PROOF — NOT FINAL FACE` on sampled pages. |
+| Page chrome | interior pages | Pass | Centered folio only; no ruled background; no `GRID PROOF` / `NOT FINAL FACE`. |
 | Overflow / overlapping text | sampled hotspots | Pass | No text outside trim on inspected pages. |
 
 ## Footnote numbering (2026-09-02)
@@ -67,7 +67,7 @@ that page has more than 26 notes.
 
 `make travel-john-spreads` recompiles the John grid-proof and writes a 2-up
 QA sheet of three openings. Verso is left; recto is right; each leaf stays
-4.75 × 7 in. Still watermarked `GRID PROOF — NOT FINAL FACE`. Not Milo.
+4.75 × 7 in. Source Serif 4 stand-in. Not Milo.
 
 | Item | Value |
 |------|-------|
@@ -97,8 +97,7 @@ pass.
 
 `make travel-woc-qa` compiles Matthew + John and extracts four native
 4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
-`#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Watermark
-`GRID PROOF — NOT FINAL FACE`. Not Milo.
+`#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Not Milo.
 
 Matthew 3 baptism and Matthew 4 temptation land on the same leaf; the
 sheet keeps that page once and adds the Beatitudes plus two John speech
@@ -137,7 +136,7 @@ leaves. Running heads now carry the page’s verse range:
 `JOHN · 4:17–38`, or `JOHN · 3:31–4:2` when a leaf crosses chapters.
 Page 1 still has no header. Verso left / recto right. Heads stay in the
 0.50 in head margin, not the 42-line text block. Source Serif 4 stand-in.
-Watermark `GRID PROOF — NOT FINAL FACE`. Not Milo.
+Not Milo.
 
 | Item | Value |
 |------|-------|
@@ -230,8 +229,7 @@ John-only probe at the old 120% cost had **2** line-end hyphens in 49 pages;
 
 `make travel-hotspot-sampler` builds a committed multi-leaf PDF from a
 targeted book compile (Genesis, Psalms, Obadiah, 1 John, Revelation) —
-not the 2299-page file. Source Serif 4 stand-in. Watermark
-`GRID PROOF — NOT FINAL FACE`. Not Milo.
+not the 2299-page file. Source Serif 4 stand-in. Not Milo.
 
 | Item | Value |
 |------|-------|

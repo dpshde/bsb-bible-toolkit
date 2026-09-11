@@ -53,10 +53,11 @@ It will not fall back to Source Serif, Lexend, or system fonts
 ## Grid proof (not the loved face)
 
 If Milo is not on the workstation, a **metrics-only** PDF can still be
-compiled so trim, grid, hyphenation, drop cap, WOC blue, and footnotes can
-be checked digitally. Every page is watermarked
-`GRID PROOF — NOT FINAL FACE`. The stand-in is Source Serif 4 (SIL OFL 1.1)
-from `fonts/grid-proof/`. It is never presented as FF Milo Serif Text.
+compiled so trim, hyphenation, drop cap, WOC blue, and footnotes can
+be checked digitally. The stand-in is Source Serif 4 (SIL OFL 1.1)
+from `fonts/grid-proof/`. Interior pages keep a centered folio and do
+not print `GRID PROOF — NOT FINAL FACE` or a ruled background. It is
+never presented as FF Milo Serif Text.
 
 ```bash
 make travel-john-grid-proof
@@ -80,8 +81,7 @@ Still not the loved face. Line-match notes live in [`HOTSPOTS.md`](HOTSPOTS.md).
 
 `make travel-hotspot-sampler` compiles only Genesis, Psalms, Obadiah,
 1 John, and Revelation, then extracts the QA leaves so Dylan can open
-them without the ~70 MiB full-canon PDF. Still Source Serif 4, still
-watermarked `GRID PROOF — NOT FINAL FACE`. Not Milo.
+them without the ~70 MiB full-canon PDF. Still Source Serif 4. Not Milo.
 
 ```bash
 make travel-hotspot-sampler
@@ -100,8 +100,8 @@ Leaf list and PNG hashes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 `make travel-hyphenation-qa` compiles Genesis, Psalms, and John with the
 current travel hyphen settings, then extracts three stress leaves: a dense
-John prose page, Psalm 119 poetry, and Genesis 1. Still Source Serif 4,
-still watermarked `GRID PROOF — NOT FINAL FACE`. Not Milo.
+John prose page, Psalm 119 poetry, and Genesis 1. Still Source Serif 4.
+Not Milo.
 
 ```bash
 make travel-hyphenation-qa
@@ -117,8 +117,7 @@ Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 `make travel-poetry-qa` compiles Genesis + Psalms and extracts Psalm 1 and
 Psalm 119 ALEPH so verse lines can be checked after the ragged-right,
-q1-on-measure / q2-step poetry change. Still Source Serif 4, still watermarked
-`GRID PROOF — NOT FINAL FACE`. Not Milo.
+q1-on-measure / q2-step poetry change. Still Source Serif 4. Not Milo.
 
 ```bash
 make travel-poetry-qa
@@ -134,8 +133,7 @@ Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 `make travel-running-headers-qa` compiles John and extracts four interior
 leaves so verso/recto running heads can be checked after the
-`JOHN · <chapter>:<first>–<last>` change. Still Source Serif 4, still
-watermarked `GRID PROOF — NOT FINAL FACE`. Not Milo.
+`JOHN · <chapter>:<first>–<last>` change. Still Source Serif 4. Not Milo.
 
 ```bash
 make travel-running-headers-qa
@@ -151,8 +149,7 @@ Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 `make travel-woc-qa` compiles Matthew + John and extracts four interior
 leaves so cobalt Words of Christ (`\wj` → `#woc`, `rgb(28, 56, 110)`)
-can be checked. Still Source Serif 4, still watermarked
-`GRID PROOF — NOT FINAL FACE`. Not Milo.
+can be checked. Still Source Serif 4. Not Milo.
 
 ```bash
 make travel-woc-qa
@@ -187,21 +184,20 @@ words of Christ in blue). It does **not** copy:
 
 The drop cap here is an original geometric double-ruled square on the
 baseline grid. The loved face is FF Milo Serif Text, licensed separately by
-the workstation owner. The committed PDF in this folder is a watermarked
-grid proof only.
+the workstation owner. The committed PDF in this folder is a Source Serif
+metrics proof only.
 
 ## Current grid-proof artifact
 
 This file is a **metrics proof**, not the loved-face print. Do not treat it
-as FF Milo Serif Text. Recompiled 2026-09-04 with the current travel
-layout (WOC blue, boxed chapter drops, per-page footnote letters). It is
-not the 2026-09-01 compile. Licensed FF Milo Serif Text is still missing
-from `fonts/milo/`.
+as FF Milo Serif Text. Notes run in as one wrapping paragraph; there is
+no ruled background and no `GRID PROOF` / `NOT FINAL FACE` footer string.
+Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
 | Item | Value |
 |------|-------|
 | File | `bsb-travel-john-grid-proof.pdf` |
-| Label | `GRID PROOF — NOT FINAL FACE` |
+| Label | none (centered folio only) |
 | Stand-in | Source Serif 4 Regular/Italic/Bold (SIL OFL 1.1) |
 | Loved face | FF Milo Serif Text (not in this PDF) |
 | Source | `drafts/primary/source/engbsb_usfm.zip` |
@@ -223,9 +219,9 @@ order at the same travel spec. Later books get a compact book title — the
 “Travel print sample · 4.75 × 7 in” line stays on the first book only
 (Genesis). Loved-face Milo compile remains fail-closed without `fonts/milo/`.
 
-This is still **not** the loved face. The stand-in is Source Serif 4, watermarked
-`GRID PROOF — NOT FINAL FACE` on every page. Do not commit the full-Bible PDF
-(it will be thousands of pages). John-only targets are unchanged:
+This is still **not** the loved face. The stand-in is Source Serif 4.
+Do not commit the full-Bible PDF (it will be thousands of pages).
+John-only targets are unchanged:
 
 ```bash
 make travel-john-grid-proof     # John sample; may be committed

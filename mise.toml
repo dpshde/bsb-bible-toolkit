@@ -15,7 +15,7 @@ description = "Compile the compact travel John PDF (licensed FF Milo Serif requi
 run = "make travel-john"
 
 [tasks.travel-john-grid-proof]
-description = "Watermarked OFL metrics PDF (GRID PROOF — NOT FINAL FACE; not Milo)"
+description = "OFL metrics PDF (Source Serif stand-in; not Milo)"
 run = "make travel-john-grid-proof"
 
 [tasks.travel-john-spreads]
@@ -43,7 +43,7 @@ description = "Matthew/John Words of Christ blue QA leaves (not Milo)"
 run = "make travel-woc-qa"
 
 [tasks.travel-bible-grid-proof]
-description = "Full 66-book watermarked OFL metrics PDF (not the loved face; do not commit)"
+description = "Full 66-book OFL metrics PDF (not the loved face; do not commit)"
 run = "make travel-bible-grid-proof"
 
 [tasks.test-travel]

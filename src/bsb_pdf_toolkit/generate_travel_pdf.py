@@ -6,8 +6,7 @@ fonts in ``fonts/milo/``. It will not download, scrape, subset, or silently
 substitute another face (including Source Serif or Lexend).
 
 ``--grid-proof`` is a separate, opt-in metrics compile. It uses a labeled
-OFL stand-in and watermarks every page ``GRID PROOF — NOT FINAL FACE``.
-That PDF is never the loved face.
+OFL stand-in (Source Serif 4). That PDF is never the loved face.
 """
 
 from __future__ import annotations
@@ -70,7 +69,7 @@ FONT_MISSING_MESSAGE = (
 
 GRID_PROOF_FONT_MISSING_MESSAGE = (
     "Place SIL OFL Source Serif 4 Regular + Italic in fonts/grid-proof/ "
-    "for a watermarked metrics compile. This stand-in is never the loved face."
+    "for a metrics compile. This stand-in is never the loved face."
 )
 
 WJ_TOKEN_RE = re.compile(
@@ -534,54 +533,16 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
             f"Loved face is {spec.body_font} (Text optical). "
             "Never present this stand-in as the loved face."
         )
-        proof_lets = f'''#let grid-proof = true
-#let proof-mark = "{GRID_PROOF_WATERMARK}"
-
-#let proof-background() = context {{
-  let left = if calc.odd(here().page()) {{ margin-inside }} else {{ margin-outside }}
-  let width = trim-width - margin-inside - margin-outside
-  let line-stroke = 0.25pt + luma(0).transparentize(88%)
-  for i in range(lines-per-page + 1) {{
-    place(dx: left, dy: margin-head + i * baseline-skip, line(
-      length: width,
-      stroke: line-stroke,
-    ))
-  }}
-  place(center + horizon, rotate(-50deg)[
-    #text(
-      font: head-font,
-      size: 17pt,
-      fill: rgb({r}, {g}, {b}).transparentize(80%),
-      weight: 700,
-      tracking: 0.08em,
-    )[#proof-mark]
-  ])
-}}
-'''
-        page_background = "if grid-proof { proof-background() } else { none }"
-        title_proof = f'''    #if grid-proof {{
-      v(baseline-skip)
-      text(font: head-font, size: 9pt, weight: 700, fill: woc-blue)[#proof-mark]
-      v(leading-gap)
+        proof_lets = "#let grid-proof = true\n"
+        page_background = "none"
+        title_proof = f'''      v(leading-gap)
       text(font: body-font, size: 7pt)[{GRID_PROOF_NOTE}]
-    }}
 '''
-        footer_block = f'''    if grid-proof {{
-      if here().page() == 1 {{
-        align(center)[#text(size: 6pt, tracking: 0.08em)[#smallcaps[#proof-mark]]]
-      }} else {{
-        grid(
-          columns: (1fr, auto, 1fr),
-          align(left)[#text(size: 5.5pt, tracking: 0.04em)[#proof-mark]],
-          align(center)[#counter(page).display()],
-          [],
-        )
-      }}
-    }} else if here().page() == 1 {{
+        footer_block = '''    if here().page() == 1 {
       none
-    }} else {{
+    } else {
       align(center, counter(page).display())
-    }}'''
+    }'''
     else:
         body_font = spec.body_font
         head_font = spec.head_font
@@ -714,8 +675,32 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 
 // Letter markers. The page header resets counter(footnote) so each page
 // starts at "a" again. Book pagebreaks also reset as a safety net.
+// Run-in notes: the first entry on the page draws every note as one
+// wrapping paragraph; later entries collapse so they do not stack.
 #set footnote(numbering: "a")
+#set footnote.entry(indent: 0pt, gap: 0pt)
 #show footnote.entry: set text(font: body-font, size: {spec.footnote_pt}pt, fallback: false)
+#show footnote.entry: it => context {{
+  let page-num = here().page()
+  let notes = query(footnote).filter(n => n.location().page() == page-num)
+  if notes.len() == 0 {{
+    let mark = numbering("a", ..counter(footnote).at(it.note.location()))
+    [#super(mark)#h(0.12em)#it.note.body]
+  }} else if it.note.location() != notes.first().location() {{
+    none
+  }} else {{
+    set par(
+      justify: true,
+      leading: {spec.footnote_baseline_pt - spec.footnote_pt}pt,
+      first-line-indent: 0pt,
+      hanging-indent: 0pt,
+    )
+    notes.map(n => {{
+      let mark = numbering("a", ..counter(footnote).at(n.location()))
+      [#super(mark)#h(0.12em)#n.body]
+    }}).join([#h(0.7em)])
+  }}
+}}
 #show link: it => {{
   set text(fill: ink)
   it
@@ -931,9 +916,8 @@ def main(argv=None):
         "--grid-proof",
         action="store_true",
         help=(
-            "Metrics-only compile with the labeled OFL stand-in. "
-            "Watermarks every page 'GRID PROOF — NOT FINAL FACE'. "
-            "Never the loved face."
+            "Metrics-only compile with the labeled OFL stand-in "
+            "(Source Serif 4). Never the loved face."
         ),
     )
     args = parser.parse_args(argv)
@@ -997,7 +981,7 @@ def main(argv=None):
         return result.returncode
     print(f"Wrote PDF: {args.output_pdf}")
     if args.grid_proof:
-        print(f"{GRID_PROOF_WATERMARK}. {GRID_PROOF_NOTE}", file=sys.stderr)
+        print(GRID_PROOF_NOTE, file=sys.stderr)
     return 0
 
 

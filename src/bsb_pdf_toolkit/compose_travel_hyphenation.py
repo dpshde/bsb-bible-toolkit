@@ -80,7 +80,6 @@ def select_hyphenation_pages(
         label="Dense John prose",
         book="John",
         pick="contains",
-        require=("GRID PROOF",),
     )
     psalm_page = None
     start, end = ranges["Psalms"]

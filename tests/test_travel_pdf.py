@@ -341,16 +341,32 @@ def test_real_usfm_john_preserves_corpus_text(tmp_path):
 
 def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
     preamble = travel_preamble(grid_proof=True)
-    assert GRID_PROOF_WATERMARK in preamble
+    assert GRID_PROOF_WATERMARK not in preamble
+    assert "NOT FINAL FACE" not in preamble
     assert GRID_PROOF_FAMILY in preamble
     assert "grid-proof = true" in preamble
     assert "Never present this stand-in as the loved face" in preamble
-    assert "proof-background" in preamble
+    assert "proof-background" not in preamble
+    assert "proof-mark" not in preamble
+    assert "align(center, counter(page).display())" in preamble
+    assert "columns: (1fr, auto, 1fr)" not in preamble
     assert MILO_TEXT_FAMILY in preamble
     default = travel_preamble()
     assert GRID_PROOF_WATERMARK not in default
     assert "grid-proof = false" in default
     assert 'body-font = "Source Serif 4"' not in default
+
+
+def test_preamble_footnotes_run_in_not_stacked():
+    preamble = travel_preamble()
+    assert "Run-in notes" in preamble
+    assert "query(footnote)" in preamble
+    assert "footnote.entry(indent: 0pt, gap: 0pt)" in preamble
+    assert ".join([#h(0.7em)])" in preamble
+    assert "notes.first().location()" in preamble
+    grid = travel_preamble(grid_proof=True)
+    assert "query(footnote)" in grid
+    assert GRID_PROOF_WATERMARK not in grid
 
 
 def test_require_grid_proof_fonts_rejects_milo_as_stand_in(tmp_path):
@@ -378,7 +394,7 @@ def test_require_grid_proof_fonts_accepts_source_serif(tmp_path):
     assert found["bold"]
 
 
-def test_grid_proof_writes_watermarked_typst_without_milo(tmp_path):
+def test_grid_proof_writes_stand_in_typst_without_milo(tmp_path):
     usfm = write_sample_zip(tmp_path / "sample.zip")
     pdf = tmp_path / "out.pdf"
     typ = tmp_path / "out.typ"
@@ -394,12 +410,15 @@ def test_grid_proof_writes_watermarked_typst_without_milo(tmp_path):
     ])
     assert code == 0
     text = typ.read_text()
-    assert GRID_PROOF_WATERMARK in text
+    assert GRID_PROOF_WATERMARK not in text
+    assert "NOT FINAL FACE" not in text
     assert GRID_PROOF_FAMILY in text
     assert "The Gospel According to John" in text
     assert "#woc[" in text
     assert "#chapter-drop(" in text
     assert "grid-proof = true" in text
+    assert "query(footnote)" in text
+    assert "proof-background" not in text
 
 
 def test_grid_proof_exits_2_without_stand_in_fonts(tmp_path, capsys):
@@ -514,7 +533,8 @@ def test_cli_all_books_no_compile_does_not_need_fonts(tmp_path):
     assert code == 0
     assert not pdf.exists()
     text = typ.read_text()
-    assert GRID_PROOF_WATERMARK in text
+    assert GRID_PROOF_WATERMARK not in text
+    assert GRID_PROOF_FAMILY in text
     assert '#book-title("Genesis", sample: true)' in text
     assert "Travel print sample" in text
     assert text.count("Travel print sample") == 1
@@ -741,15 +761,16 @@ def test_hyphenation_qa_picks_densest_john_page():
         BookFace("John", "The Gospel According to John", "John"),
     ]
     pages = [
-        "GENESIS · 1\nIn the beginning God created. GRID PROOF — NOT FINAL FACE",
-        "PSALM · 1\nBlessed is the man. GRID PROOF",
-        "PSALM · 119\nALEPH\nBlessed are those whose way is blameless. GRID PROOF",
-        "JOHN · 3\nFor God so loved the world. GRID PROOF",
-        "JOHN · 4\nsurprised that He was speak\u00ad\ning. GRID PROOF",
+        "GENESIS · 1\nIn the beginning God created.",
+        "PSALM · 1\nBlessed is the man.",
+        "PSALM · 119\nALEPH\nBlessed are those whose way is blameless.",
+        "JOHN · 3\nFor God so loved the world.",
+        "JOHN · 4\nsurprised that He was speak\u00ad\ning.",
     ]
     chosen = select_hyphenation_pages(pages, catalog)
     assert [spec.slug for spec, _ in chosen] == ["john-prose", "psalm-119", "genesis-1"]
     assert [page_no for _, page_no in chosen] == [5, 3, 1]
+    assert chosen[0][0].require == ()
 
 
 def test_poetry_lines_are_ragged_not_justified():
