@@ -193,9 +193,10 @@ metrics proof only.
 
 This file is a **metrics proof**, not the loved-face print. Do not treat it
 as FF Milo Serif Text. Notes run in as one wrapping paragraph in grey
-`rgb(76, 76, 76)`; section titles take two baselines above and one
-below, and stay sticky with the following verse or chapter drop.
-There is no ruled background and no `GRID PROOF` / `NOT FINAL
+`rgb(76, 76, 76)`; section titles take 1.5 baselines above and 0.5
+below, wrapped with the following verse or chapter drop so they cannot
+orphan. Book openers are the USFM title only. Body prose leading is
++0.35 pt. There is no ruled background and no `GRID PROOF` / `NOT FINAL
 FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
@@ -220,9 +221,9 @@ licensed Milo OTFs are present.
 ## Full Protestant canon (grid proof only)
 
 `make travel-bible-grid-proof` composes all 66 Protestant books in canonical
-order at the same travel spec. Later books get a compact book title — the
-“Travel print sample · 4.75 × 7 in” line stays on the first book only
-(Genesis). Loved-face Milo compile remains fail-closed without `fonts/milo/`.
+order at the same travel spec. Every book opener is the USFM title only —
+no “Berean Standard Bible” line and no travel-sample metadata.
+Loved-face Milo compile remains fail-closed without `fonts/milo/`.
 
 This is still **not** the loved face. The stand-in is Source Serif 4.
 Do not commit the full-Bible PDF (it will be thousands of pages).

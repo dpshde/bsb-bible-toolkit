@@ -20,7 +20,6 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     GRID_PROOF_WATERMARK,
     MILO_TEXT_FAMILY,
     PROTESTANT_CANON,
-    SAMPLE_SUBTITLE,
     SPEC,
     GridProofFontError,
     MiloFontError,
@@ -30,6 +29,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     footnote_markup,
     generate_travel_typst,
     is_hebrew_script,
+    body_leading_gap_pt,
     leading_gap_pt,
     main,
     measure_em,
@@ -106,6 +106,8 @@ def test_spec_line_matches_page():
     em = measure_em()
     assert 30 <= em <= 34
     assert leading_gap_pt() == 2.0
+    assert SPEC.body_leading_extra_pt == 0.35
+    assert body_leading_gap_pt() == pytest.approx(2.35)
 
 
 def test_preamble_is_milo_text_not_a_substitute():
@@ -324,6 +326,12 @@ def test_generate_travel_typst_john_sample(tmp_path):
     assert '#outline-book("John")' in text
     assert "#outline-chapter(1)" in text
     assert "#outline-chapter(2)" in text
+    assert "#keep-with[" in text
+    assert text.index("#keep-with[") < text.index('#section("The Beginning")')
+    assert text.index('#section("The Beginning")') < text.index("#outline-chapter(1)")
+    assert text.index("#outline-chapter(1)") < text.index("In the beginning was the Word")
+    assert "Berean Standard Bible" not in text
+    assert "Travel print sample" not in text
 
 
 @pytest.mark.skipif(not USFM_ZIP.exists(), reason="official BSB USFM zip not present")
@@ -346,6 +354,13 @@ def test_real_usfm_john_preserves_corpus_text(tmp_path):
     ch14 = text.index("#outline-chapter(14)")
     drop14 = text.find("#chapter-drop(", text.find("#mark-run(\"JOHN · 14\")"))
     assert rooms < ch14 < drop14 < way
+    rooms_keep = text.rfind("#keep-with[", 0, rooms)
+    assert rooms_keep != -1
+    rooms_end = text.find("]", drop14)
+    assert rooms_keep < rooms < ch14 < drop14 < rooms_end < way
+    way_keep = text.rfind("#keep-with[", 0, way)
+    assert way_keep != -1
+    assert way_keep < way
 
 
 def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
@@ -395,17 +410,28 @@ def test_preamble_footnotes_use_grey_ink():
 def test_preamble_section_heads_have_air_above_and_below():
     preamble = travel_preamble()
     section_at = preamble.index("#let section(title)")
-    snippet = preamble[section_at : section_at + 180]
-    assert "above: 2 * baseline-skip" in snippet
-    assert "below: baseline-skip" in snippet
+    snippet = preamble[section_at : section_at + 220]
+    assert "above: 1.5 * baseline-skip" in snippet
+    assert "below: 0.5 * baseline-skip" in snippet
+    assert "above: 2 * baseline-skip" not in snippet
     assert "sticky: true" in snippet
-    assert "below: leading-gap" not in snippet
+    assert "#let keep-with(body)" in preamble
+    assert "breakable: false" in preamble[preamble.index("#let keep-with(body)") :]
     xrefs_at = preamble.index("#let chapter-xrefs(")
-    xref_snippet = preamble[xrefs_at : xrefs_at + 200]
-    assert "below: baseline-skip" in xref_snippet
+    xref_snippet = preamble[xrefs_at : xrefs_at + 220]
+    assert "below: 0.5 * baseline-skip" in xref_snippet
     assert "sticky: true" in xref_snippet
     grid = travel_preamble(grid_proof=True)
     assert "sticky: true" in grid[grid.index("#let section(title)") :]
+    assert "#let keep-with(body)" in grid
+    book_at = preamble.index("#let book-title(name)")
+    book_snippet = preamble[book_at : book_at + 280]
+    assert "Berean Standard Bible" not in book_snippet
+    assert "Travel print sample" not in book_snippet
+    assert "sample:" not in book_snippet
+    assert "0.5 * baseline-skip" in book_snippet
+    assert "body-leading-gap" in preamble
+    assert "leading: body-leading-gap" in preamble
 
 
 def test_preamble_pdf_outline_is_heading_bookmarks():
@@ -545,12 +571,13 @@ def test_all_books_typst_is_canon_order_and_sample_only_on_first(tmp_path):
     assert text.index("In the beginning.") < text.index("Blessed is the man")
     assert text.index("Blessed is the man") < text.index("The Gospel According to John")
     assert text.count("#pagebreak()") == 2
-    assert text.count(SAMPLE_SUBTITLE) == 1
-    assert '#book-title("Genesis", sample: true)' in text
+    assert "Travel print sample" not in text
+    assert "Berean Standard Bible" not in text
+    assert '#book-title("Genesis")' in text
     assert "#mark-run(" in text
     assert text.index("#mark-run(") < text.index('#book-title("Genesis"')
-    assert '#book-title("Psalm", sample: false)' in text
-    assert '#book-title("The Gospel According to John", sample: false)' in text
+    assert '#book-title("Psalm")' in text
+    assert '#book-title("The Gospel According to John")' in text
     assert "#superscription[Psalms 1–41]" in text
     assert "A Psalm of David" in text
     assert "#inscription[Selah]" in text
@@ -593,9 +620,10 @@ def test_cli_all_books_no_compile_does_not_need_fonts(tmp_path):
     text = typ.read_text()
     assert GRID_PROOF_WATERMARK not in text
     assert GRID_PROOF_FAMILY in text
-    assert '#book-title("Genesis", sample: true)' in text
-    assert "Travel print sample" in text
-    assert text.count("Travel print sample") == 1
+    assert '#book-title("Genesis")' in text
+    assert "Travel print sample" not in text
+    assert "Berean Standard Bible" not in text
+    assert "Stand-in face:" not in text
 
 
 def test_cli_all_books_and_book_exits_2(tmp_path):
@@ -865,8 +893,10 @@ def test_poetry_lines_are_ragged_not_justified():
     assert "justify: false" in snippet
     assert "hanging-indent: 0.18in" in snippet
     assert "0.18in * calc.max(0, level - 1)" in snippet
+    assert "leading: leading-gap" in snippet
     global_par = preamble[preamble.index("#set par(") : preamble.index("#let poetry(")]
     assert "justify: true" in global_par
+    assert "leading: body-leading-gap" in global_par
 
 
 def test_poetry_qa_paths_and_leaf_order():

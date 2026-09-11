@@ -117,6 +117,9 @@ class TravelSpec:
     # 120% left the 60–70 cpl travel measure almost unhyphenated (2 breaks
     # in 49 John pages). 80% is still conservative vs Typst's 50% eagerness.
     hyphenation_cost_pct: int = 80
+    # Tiny extra leading on body prose only. Poetry / drop geometry stay
+    # on the 10.5 pt structural grid (leading-gap = baseline − body).
+    body_leading_extra_pt: float = 0.35
 
 
 SPEC = TravelSpec()
@@ -178,6 +181,11 @@ def default_output_paths(*, grid_proof: bool, all_books: bool, testament: str = 
 def leading_gap_pt(spec: TravelSpec = SPEC) -> float:
     """Typst ``par.leading`` is the gap between line boxes, not baselineskip."""
     return spec.baseline_pt - spec.body_pt
+
+
+def body_leading_gap_pt(spec: TravelSpec = SPEC) -> float:
+    """Body-prose leading. Slightly looser than the 10.5 pt structural grid."""
+    return leading_gap_pt(spec) + spec.body_leading_extra_pt
 
 
 def measure_em(spec: TravelSpec = SPEC) -> float:
@@ -523,6 +531,7 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
 
 def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str:
     leading = leading_gap_pt(spec)
+    body_leading = body_leading_gap_pt(spec)
     r, g, b = spec.woc_rgb
     ir, ig, ib = spec.ink_rgb
     fr, fg, fb = spec.footnote_ink_rgb
@@ -537,9 +546,6 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
         )
         proof_lets = "#let grid-proof = true\n"
         page_background = "none"
-        title_proof = f'''      v(leading-gap)
-      text(font: body-font, size: 7pt)[{GRID_PROOF_NOTE}]
-'''
         footer_block = '''    if here().page() == 1 {
       none
     } else {
@@ -552,7 +558,6 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
         face_comment = f"Face: {spec.body_font} (Text optical). Do not substitute Source Serif."
         proof_lets = "#let grid-proof = false\n"
         page_background = "none"
-        title_proof = ""
         footer_block = '''    if here().page() == 1 {
       none
     } else {
@@ -569,6 +574,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let body-size = {spec.body_pt}pt
 #let baseline-skip = {spec.baseline_pt}pt
 #let leading-gap = {leading}pt
+#let body-leading-gap = {body_leading}pt
 #let lines-per-page = {spec.lines_per_page}
 #let drop-lines = {spec.drop_lines}
 #let body-font = "{body_font}"
@@ -666,8 +672,8 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #set par(
   justify: true,
   linebreaks: "optimized",
-  leading: leading-gap,
-  spacing: leading-gap,
+  leading: body-leading-gap,
+  spacing: body-leading-gap,
   first-line-indent: 0pt,
   hanging-indent: 0pt,
   justification-limits: (
@@ -762,7 +768,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   [#metadata((n, verse-n))<run-verse>]
   let gap = 0.08in
   let cap = geometric-cap(n)
-  block(breakable: false, spacing: leading-gap)[
+  block(breakable: false, spacing: body-leading-gap)[
     #grid(
       columns: (drop-lines * baseline-skip, 1fr),
       column-gutter: gap,
@@ -776,49 +782,40 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   ]
 }}
 
-#let para(body) = block(spacing: leading-gap)[#body]
+#let para(body) = block(spacing: body-leading-gap)[#body]
 #let poetry(level, body) = block(
   spacing: leading-gap,
   // q1 sits on the measure; each further q-level steps 0.18 in (parallelism).
   inset: (left: 0.18in * calc.max(0, level - 1)),
 )[
   // Verse lines, not justified prose. Hanging wrap stays in the indent column.
-  #set par(justify: false, hanging-indent: 0.18in)
+  #set par(justify: false, leading: leading-gap, hanging-indent: 0.18in)
   #body
 ]
 #let inscription(body) = block(spacing: baseline-skip)[
   #align(center)[#text(font: head-font, size: body-size, tracking: 0.08em)[#smallcaps(body)]]
 ]
 #let section(title) = block(
-  above: 2 * baseline-skip,
-  below: baseline-skip,
+  above: 1.5 * baseline-skip,
+  below: 0.5 * baseline-skip,
   sticky: true,
 )[
   #text(font: head-font, size: {spec.section_pt}pt, weight: 700, fill: ink)[#title]
 ]
-#let chapter-xrefs(body) = block(above: 0pt, below: baseline-skip, sticky: true)[
+#let chapter-xrefs(body) = block(above: 0pt, below: 0.5 * baseline-skip, sticky: true)[
   #set text(font: body-font, size: {spec.xref_pt}pt, style: "italic", fill: ink)
   #set par(justify: true, leading: leading-gap, hanging-indent: 0.75em)
   #body
 ]
-#let book-title(name, sample: false) = {{
-  if sample {{
-    align(center)[
-      #v(3 * baseline-skip)
-      #text(font: head-font, size: 8pt, tracking: 0.18em)[#smallcaps[Berean Standard Bible]]
-      #v(baseline-skip)
-      #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
-      #v(baseline-skip)
-      #text(font: body-font, size: 8pt)[{SAMPLE_SUBTITLE}]
-{title_proof}    ]
-    v(2 * baseline-skip)
-  }} else {{
-    align(center)[
-      #v(baseline-skip)
-      #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
-    ]
-    v(baseline-skip)
-  }}
+// Title + first verse/drop stay on the same page. sticky alone is not
+// enough when a zero-height bookmark heading sits between them.
+#let keep-with(body) = block(breakable: false, above: 0pt, below: 0pt)[#body]
+#let book-title(name) = {{
+  align(center)[
+    #v(0.5 * baseline-skip)
+    #text(font: head-font, size: {spec.title_pt}pt, weight: 700)[#name]
+  ]
+  v(0.5 * baseline-skip)
 }}
 #let superscription(body) = block(above: leading-gap, below: leading-gap)[
   #set text(font: body-font, size: body-size, style: "italic", fill: ink)
@@ -846,12 +843,11 @@ def generate_travel_typst(
             lines.append("#counter(footnote).update(0)")
         display = book.get("title") or book["book"]
         running = (book.get("heading") or book["book"]).upper()
-        sample = "true" if book_index == 0 else "false"
         first_chapter = book["chapters"][0]["chapter"] if book["chapters"] else 1
         outline_name = book.get("heading") or book["book"]
         lines.append(f"#outline-book({typst_string(outline_name)})")
         lines.append(f"#mark-run({typst_string(f'{running} · {first_chapter}')})")
-        lines.append(f"#book-title({typst_string(display)}, sample: {sample})")
+        lines.append(f"#book-title({typst_string(display)})")
         for chapter in book["chapters"]:
             heading_ranges(chapter, book["osis"])
             running_chapter = f"{running} · {chapter['chapter']}"
@@ -860,6 +856,18 @@ def generate_travel_typst(
             chapter_xrefs_emitted = False
             chapter_outlined = False
             first_heading_refs = ""
+            pending_head: list[str] = []
+
+            def flush_keep(body_parts: list[str]) -> None:
+                if pending_head:
+                    lines.append("#keep-with[")
+                    lines.extend(pending_head)
+                    pending_head.clear()
+                    lines.extend(body_parts)
+                    lines.append("]")
+                else:
+                    lines.extend(body_parts)
+
             for para in chapter["paras"]:
                 if para["kind"] == "heading" and para.get("refs") and not first_heading_refs:
                     first_heading_refs = para["refs"]
@@ -867,38 +875,46 @@ def generate_travel_typst(
             for para in chapter["paras"]:
                 if para["kind"] == "heading":
                     title = clean_spaces(para["raw"])
-                    lines.append(f"#section({typst_string(title)})")
+                    pending_head.append(f"#section({typst_string(title)})")
                     refs_raw = para.get("refs") or ""
                     if refs_raw and refs_raw == first_heading_refs and not chapter_xrefs_emitted:
                         refs = xref_markup(refs_raw)
                         if refs:
-                            lines.append(f"#chapter-xrefs[{refs}]")
+                            pending_head.append(f"#chapter-xrefs[{refs}]")
                             chapter_xrefs_emitted = True
                     elif refs_raw and refs_raw != first_heading_refs:
                         refs = xref_markup(refs_raw)
                         if refs:
-                            lines.append(f"#chapter-xrefs[{refs}]")
+                            pending_head.append(f"#chapter-xrefs[{refs}]")
                 elif para["kind"] == "superscription":
                     body = render_text_chunk(para["raw"])
                     if body:
-                        lines.append(f"#superscription[{body}]")
+                        pending_head.append(f"#superscription[{body}]")
                 elif para["kind"] == "acrostic":
                     title = clean_spaces(para["raw"])
                     if title and not is_hebrew_script(title):
-                        lines.append(f"#section({typst_string(title)})")
+                        pending_head.append(f"#section({typst_string(title)})")
                 elif para["kind"] == "blank":
-                    lines.append("#v(baseline-skip)")
+                    if pending_head:
+                        pending_head.append("#v(baseline-skip)")
+                    else:
+                        lines.append("#v(baseline-skip)")
                 else:
+                    body_parts: list[str] = []
                     if not chapter_outlined:
-                        lines.append(f"#outline-chapter({int(chapter['chapter'])})")
+                        body_parts.append(f"#outline-chapter({int(chapter['chapter'])})")
                         chapter_outlined = True
-                    for markup in paragraph_markup(
-                        para, book["osis"], chapter["chapter"], chapter_open=chapter_open
-                    ):
-                        lines.append(markup)
+                    body_parts.extend(
+                        paragraph_markup(
+                            para, book["osis"], chapter["chapter"], chapter_open=chapter_open
+                        )
+                    )
+                    flush_keep(body_parts)
                     chapter_open = False
             if not chapter_outlined:
-                lines.append(f"#outline-chapter({int(chapter['chapter'])})")
+                flush_keep([f"#outline-chapter({int(chapter['chapter'])})"])
+            elif pending_head:
+                flush_keep([])
         lines.append("")
     output_typ.parent.mkdir(parents=True, exist_ok=True)
     output_typ.write_text("\n\n".join(lines) + "\n", encoding="utf-8")

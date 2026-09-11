@@ -87,8 +87,9 @@ as the loved face.
   to limit rivers without obvious letterspacing.
 - Optical margin alignment: Typst `text.overhang: true` (hanging hyphen and
   punctuation into the margin when the engine supports it).
-- Paragraph spacing equals line leading (2 pt gap + 8.5 pt line box = 10.5 pt
-  baselineskip) so stacked paragraphs stay on the grid.
+- Structural grid stays 10.5 pt (drop-cap height, poetry, section math).
+  Body prose leading is **+0.35 pt** (2.35 pt gap + 8.5 pt line box) so
+  the travel measure is a hair more open. Poetry keeps the 2 pt grid gap.
 - No orphan of a verse number: the verse numeral is boxed with a thin space
   so it cannot sit alone at the end of a line.
 - Widows/orphans of paragraph lines: Typst default costs (on).
@@ -101,19 +102,19 @@ as the loved face.
 ## 4. Structure
 
 - **Single column.**
-- **Book opening:** small-cap “Berean Standard Bible”, then the USFM title
-  (`\toc1` / `\mt1`, for John: *The Gospel According to John*). The first
-  book may add “Travel print sample · 4.75 × 7 in”. Later books in a
-  full-canon compile keep the book name only (no repeated “sample”).
+- **Book opening:** the USFM title only (`\toc1` / `\mt1`, for John:
+  *The Gospel According to John*), with half a baseline above and below.
+  Do not repeat “Berean Standard Bible”, the travel-sample line, or a
+  stand-in-face note on book pages.
 - **Chapter drop cap:** original geometric construction — double-ruled square
   the height of 3 baselines (31.5 pt), hairline mid-edge ticks, chapter
   numeral centered. Sits on the grid beside verse 1. Not a decorated letter,
   not Humble Lamb drop-cap art, not Doré.
-- **Section headings:** BSB `\s1` titles in the head face, **two
-  baselines above** and **one baseline below** so a pericope title does
-  not sit on the chapter drop or the next verse. The title block (and
-  its `\r` line) is sticky so it stays with the following verse or
-  chapter drop instead of orphaning at the previous page foot.
+- **Section headings:** BSB `\s1` titles in the head face, **1.5
+  baselines above** and **0.5 baseline below**. The title, its `\r`
+  line, and the following verse or chapter drop are wrapped in an
+  unbreakable `#keep-with` block (sticky is a backup) so a pericope
+  header never sits alone at the page foot.
 - **Chapter-start cross-references:** the first USFM `\r` block in a chapter
   is set as a 7 pt italic justified line under that opening heading. Later
   `\r` blocks stay with their section headings. If a chapter has no `\r`,
