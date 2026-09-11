@@ -28,6 +28,7 @@ from .generate_typst_pdf import (
     heading_ranges,
     parse_ref_runs,
     parse_usfm_zip,
+    strip_osis_display_tails,
     typst_escape,
     typst_string,
     usfm_code_from_name,
@@ -80,6 +81,9 @@ WORD_MARKER_RE = re.compile(r"\\w\s+([^|\\]+)(?:\|[^\\]*)?\\w\*")
 NAMED_SPAN_RE = re.compile(r"\\(nd|qs)\s*(.+?)\\\1\*", re.S)
 RESIDUAL_MARKER_RE = re.compile(r"\\(?!ref\b|f\b|f\*|wj\b)[a-z0-9]+\*?\s*")
 FOOTNOTE_RE = re.compile(r"\\f\s+(.*?)\\f\*", re.S)
+# USFM sometimes inserts a one-word `\p Next:` genealogy break. Not body text.
+SOURCE_NAV_MARKER_RE = re.compile(r"^next\s*:\s*$", re.I)
+KEEP_REF_MARKER_RE = re.compile(r"\\(?!ref\b)[a-z0-9]+\*?")
 
 
 @dataclass(frozen=True)
@@ -328,23 +332,38 @@ def strip_word_markers(text: str) -> str:
     return WORD_MARKER_RE.sub(r"\1", text)
 
 
+def is_source_nav_marker(text: str) -> bool:
+    """True for leftover USFM `\p Next:` genealogy markers (not body text)."""
+    cleaned = clean_spaces(KEEP_REF_MARKER_RE.sub(" ", text or ""))
+    cleaned = strip_osis_display_tails(cleaned)
+    return bool(SOURCE_NAV_MARKER_RE.match(cleaned))
+
+
+def _footnote_plain(text: str) -> str:
+    text = re.sub(r"\\ft\s*", " ", text)
+    return clean_spaces(KEEP_REF_MARKER_RE.sub(" ", text))
+
+
 def footnote_markup(raw: str) -> str:
     raw = raw.strip()
     raw = re.sub(r"^\+\s*", "", raw)
     raw = re.sub(r"\\fr\s+\S+\s*", "", raw)
     parts = []
     pos = 0
-    pattern = re.compile(r"\\fqa\s+(.*?)(?=\\ft\b|\\fqa\b|$)", re.S)
-    working = re.sub(r"\\ft\s*", " ", raw)
-    for match in pattern.finditer(working):
+    # Keep `\\ft` in the working string so it still terminates `\\fqa`.
+    # Stripping it first lets the last italic gloss swallow `\\ref`.
+    pattern = re.compile(r"\\fqa\s+(.*?)(?=\\ft\b|\\fqa\b|\\ref\b|$)", re.S)
+    for match in pattern.finditer(raw):
         if match.start() > pos:
-            parts.append(parse_ref_runs(clean_spaces(re.sub(r"\\[a-z0-9]+\*?", " ", working[pos:match.start()]))))
-        emph = clean_spaces(re.sub(r"\\[a-z0-9]+\*?", " ", match.group(1)))
+            prefix = parse_ref_runs(_footnote_plain(raw[pos:match.start()]))
+            if prefix:
+                parts.append(prefix)
+        emph = strip_osis_display_tails(_footnote_plain(match.group(1)))
         if emph:
             parts.append(f"#emph[{typst_escape(emph)}]")
         pos = match.end()
-    if pos < len(working):
-        tail = parse_ref_runs(clean_spaces(re.sub(r"\\(?!ref\b)[a-z0-9]+\*?", " ", working[pos:])))
+    if pos < len(raw):
+        tail = parse_ref_runs(_footnote_plain(raw[pos:]))
         if tail:
             parts.append(tail)
     content = " ".join(part for part in parts if part).strip()
@@ -472,6 +491,8 @@ def verse_segments_travel(raw: str, osis: str, chapter: int):
 def paragraph_markup(para, osis, chapter, chapter_open=False):
     marker = para["marker"]
     raw = para["raw"]
+    if is_source_nav_marker(raw):
+        return []
     segments = verse_segments_travel(raw, osis, chapter)
     if not segments:
         return []
@@ -920,6 +941,8 @@ def generate_travel_typst(
                         pending_head.append("#v(baseline-skip)")
                     else:
                         lines.append("#v(baseline-skip)")
+                elif is_source_nav_marker(para.get("raw") or ""):
+                    continue
                 else:
                     body_parts: list[str] = []
                     if not chapter_outlined:

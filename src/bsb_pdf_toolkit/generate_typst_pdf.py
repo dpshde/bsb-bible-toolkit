@@ -49,8 +49,24 @@ def clean_spaces(text):
     return text
 
 
+# Leftover USFM machine slugs: `|1CH 2:9-10`, `|GEN`, `|RUT 4:18-22`.
+OSIS_DISPLAY_TAIL_RE = re.compile(
+    r"\|[1-3]?[A-Z]{2,3}(?:\s+\d+(?::[\d\-–]+)?)?(?=[\s,.;:)\]|\\]|$)"
+)
+
+
+def strip_osis_display_tails(text):
+    """Drop `|OSIS` / `|1CH 2:9-10` tails from footnote and xref display text."""
+    if not text or "|" not in text:
+        return text
+    return OSIS_DISPLAY_TAIL_RE.sub("", text)
+
+
 def plain_ref_text(text):
-    return re.sub(r"\\ref\s+([^\\]+?)\\ref\*", r"\1", text)
+    def _display(match):
+        return match.group(1).split("|", 1)[0]
+
+    return re.sub(r"\\ref\s+([^\\]+?)\\ref\*", _display, text)
 
 
 def escaped_chunk(text):
@@ -58,7 +74,7 @@ def escaped_chunk(text):
         return ""
     leading = " " if text[0].isspace() else ""
     trailing = " " if text[-1].isspace() else ""
-    value = clean_spaces(plain_ref_text(text))
+    value = clean_spaces(strip_osis_display_tails(plain_ref_text(text)))
     if not value:
         return leading or trailing
     return leading + typst_escape(value) + trailing

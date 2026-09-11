@@ -28,6 +28,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     default_output_paths,
     footnote_markup,
     generate_travel_typst,
+    is_source_nav_marker,
     merge_travel_pdfs,
     is_hebrew_script,
     body_leading_gap_pt,
@@ -44,7 +45,10 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     verse_segments_travel,
     xref_markup,
 )
-from bsb_pdf_toolkit.generate_typst_pdf import parse_usfm_zip  # noqa: E402
+from bsb_pdf_toolkit.generate_typst_pdf import (  # noqa: E402
+    parse_usfm_zip,
+    strip_osis_display_tails,
+)
 
 USFM_ZIP = REPO_ROOT / "drafts" / "primary" / "source" / "engbsb_usfm.zip"
 
@@ -250,11 +254,48 @@ def test_xref_markup_strips_wrapping_parens():
     assert text.startswith("#link(")
     assert "Genesis 1:1" in text
     assert not text.startswith("(")
+    assert "|GEN" not in text
+    assert "|HEB" not in text
 
 
 def test_fqa_becomes_italic():
     markup = footnote_markup(r"+ \fr 1:5 \ft Or \fqa comprehended")
     assert "#emph[comprehended]" in markup
+
+
+def test_strip_osis_display_tails_drops_book_slugs():
+    assert strip_osis_display_tails("see 1 Chronicles 2:9–10|1CH 2:9-10") == "see 1 Chronicles 2:9–10"
+    assert strip_osis_display_tails("Ruth 4:18–22|RUT 4:18-22") == "Ruth 4:18–22"
+    assert strip_osis_display_tails("Isaiah 7:14|ISA 7:14") == "Isaiah 7:14"
+    assert strip_osis_display_tails("plain text") == "plain text"
+
+
+def test_footnote_markup_strips_osis_tail_after_fqa():
+    markup = footnote_markup(
+        r"+ \fr 1:3 \ft Greek \fqa Aram\ft , a variant of \fqa Ram\ft ; "
+        r"also in verse 4; see \ref 1 Chronicles 2:9–10|1CH 2:9-10\ref*."
+    )
+    assert "#emph[Aram]" in markup
+    assert "#emph[Ram]" in markup
+    assert "1 Chronicles 2:9" in markup
+    assert "#link(" in markup
+    assert "|1CH" not in markup
+    assert "1CH 2:9" not in markup
+
+
+def test_footnote_markup_strips_bare_osis_slug():
+    markup = footnote_markup(r"+ \fr 1:3 \ft see 1 Chronicles 2:9–10|1CH 2:9-10")
+    assert "1 Chronicles 2:9" in markup
+    assert "|1CH" not in markup
+
+
+def test_paragraph_markup_drops_next_source_marker():
+    assert is_source_nav_marker("Next:")
+    assert is_source_nav_marker("next:")
+    assert not is_source_nav_marker("Next came the Magi.")
+    assert paragraph_markup({"marker": "p", "raw": "Next:"}, "Matt", 1) == []
+    kept = paragraph_markup({"marker": "p", "raw": r"\v 2 He was with God."}, "John", 1)
+    assert kept and "He was with God" in kept[0]
 
 
 def test_psalm_descriptive_title_with_verse_keeps_drop():
@@ -363,6 +404,20 @@ def test_real_usfm_john_preserves_corpus_text(tmp_path):
     way_keep = text.rfind("#keep-with[", 0, way)
     assert way_keep != -1
     assert way_keep < way
+
+
+@pytest.mark.skipif(not USFM_ZIP.exists(), reason="official BSB USFM zip not present")
+def test_real_usfm_matthew_drops_next_marker_and_osis_tails(tmp_path):
+    out = tmp_path / "matthew.typ"
+    books = generate_travel_typst(USFM_ZIP, out, books=("Matthew",), grid_proof=True)
+    assert [book["book"] for book in books] == ["Matthew"]
+    text = out.read_text(encoding="utf-8")
+    assert "Next:" not in text
+    assert "|1CH" not in text
+    assert "|RUT" not in text
+    assert "|ISA" not in text
+    assert "1 Chronicles 2:9" in text
+    assert "Abraham was the father of Isaac" in text
 
 
 def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
