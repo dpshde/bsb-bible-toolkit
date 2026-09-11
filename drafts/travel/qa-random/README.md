@@ -9,7 +9,7 @@ make travel-random-qa
 
 | Item | Value |
 |------|-------|
-| Source | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (2,365 pages) |
+| Source | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (2,433 pages) |
 | Seed | `20260911` |
 | Engine | Typst 0.14.2, 120 dpi PNG, native 4.75 × 7 in |
 | Forced hotspots | Genesis 1 (p.1), Psalm 119 (p.1145), Revelation 22 last leaf (p.2365) |
@@ -18,14 +18,13 @@ Machine scan: no page carries `Berean Standard Bible`, `Travel print sample`,
 `GRID PROOF`, or `NOT FINAL FACE`. No leftover `Next:` and no `|OSIS` /
 `|1CH` footnote tails.
 
-## Requested re-rasters
+## Requested re-rasters (prose-density pass)
 
 | Leaf | Page | PNG |
 |------|------|-----|
-| Genesis 1 opener | 1 | [`genesis-1-opener-p0001.png`](genesis-1-opener-p0001.png) |
-| Matthew 1 opener | 1836 | [`matthew-1-opener-p1836.png`](matthew-1-opener-p1836.png) |
-| Psalm 119 ALEPH / Lamp title | 1145 | [`psalm-119-aleph-p1145.png`](psalm-119-aleph-p1145.png) |
-| Philemon opener | 2273 | [`philemon-opener-p2273.png`](philemon-opener-p2273.png) |
+| Genesis 16 Hagar (crop match) | 27 | [`genesis-16-hagar-p0027.png`](genesis-16-hagar-p0027.png) |
+| Psalm 119 ALEPH / Lamp title | 1183 | [`psalm-119-aleph-p1183.png`](psalm-119-aleph-p1183.png) |
+| Matthew 1 opener | 1883 | [`matthew-1-opener-p1883.png`](matthew-1-opener-p1883.png) |
 
 ## Sample (pass/fail)
 

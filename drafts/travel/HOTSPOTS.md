@@ -14,9 +14,9 @@ Lamp title have more air.
 |------|-------|
 | File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` |
 | Engine | Typst 0.14.2 (per-book compile + merge; one-shot canon OOMs here) |
-| Pages | 2365 |
-| Bytes | 31,625,618 (~30.2 MiB) |
-| SHA-256 | `128fe796c1f5ff3eb574ab9490c8d933278cef47de190612134cced72341242b` |
+| Pages | 2433 |
+| Bytes | 32,150,589 (~30.7 MiB) |
+| SHA-256 | `43c389f0f0c5b08df9cde98dbe9f4fa877d3d6e7f44367f6020a86e7e5a50548` |
 | Trim | 4.75 in × 7.00 in (342 × 504 pt) |
 | Books | 66, Protestant canon order |
 | Outline | Book → Chapter (66 books, 1,189 chapter dests) |
@@ -30,6 +30,7 @@ Lamp title have more air.
 - Footnote *a* on Matthew 1 showed `1 Chronicles 2:9–10|1CH 2:9-10`. Display text now strips leftover `|OSIS` tails across the canon.
 - “Your Word Is a Lamp to My Feet” sat crushed between Psalm 118:29 and ALEPH / drop 119. Pericope titles before a stanza letter + chapter drop now use `keep-with-break`.
 - Book openers were tight against the running head and first section. Display titles now have two baselines of air above and below.
+- Genesis 16 narrative read as a wall of text. Later `\p` blocks now take a 0.20 in first-line indent, body leading is +0.65 pt, and the measure is 3.68 in. Poetry and the drop paragraph stay flush. Single column kept.
 
 ## Checks
 
