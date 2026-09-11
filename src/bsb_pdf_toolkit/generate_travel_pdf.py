@@ -333,7 +333,7 @@ def strip_word_markers(text: str) -> str:
 
 
 def is_source_nav_marker(text: str) -> bool:
-    """True for leftover USFM `\p Next:` genealogy markers (not body text)."""
+    r"""True for leftover USFM `\p Next:` genealogy markers (not body text)."""
     cleaned = clean_spaces(KEEP_REF_MARKER_RE.sub(" ", text or ""))
     cleaned = strip_osis_display_tails(cleaned)
     return bool(SOURCE_NAV_MARKER_RE.match(cleaned))
@@ -367,6 +367,9 @@ def footnote_markup(raw: str) -> str:
         if tail:
             parts.append(tail)
     content = " ".join(part for part in parts if part).strip()
+    # Close the space before commas. Keep a space before ";" after `#emph[...]`
+    # so Typst does not treat the semicolon as a statement terminator.
+    content = re.sub(r"\s+,", ",", content)
     return content
 
 
@@ -555,6 +558,7 @@ def travel_preamble(
     *,
     grid_proof: bool = False,
     hide_opening_chrome: bool = True,
+    page_start: int = 1,
 ) -> str:
     leading = leading_gap_pt(spec)
     body_leading = body_leading_gap_pt(spec)
@@ -573,12 +577,13 @@ def travel_preamble(
         proof_lets = (
             "#let grid-proof = true\n"
             f"#let hide-opening-chrome = {'true' if hide_opening_chrome else 'false'}\n"
+            f"#let folio-offset = {int(page_start) - 1}\n"
         )
         page_background = "none"
         footer_block = '''    if here().page() == 1 and hide-opening-chrome {
       none
     } else {
-      align(center, counter(page).display())
+      align(center, str(here().page() + folio-offset))
     }'''
     else:
         body_font = spec.body_font
@@ -588,12 +593,13 @@ def travel_preamble(
         proof_lets = (
             "#let grid-proof = false\n"
             f"#let hide-opening-chrome = {'true' if hide_opening_chrome else 'false'}\n"
+            f"#let folio-offset = {int(page_start) - 1}\n"
         )
         page_background = "none"
         footer_block = '''    if here().page() == 1 and hide-opening-chrome {
       none
     } else {
-      align(center, counter(page).display())
+      align(center, str(here().page() + folio-offset))
     }'''
     return f'''// BSB travel composition — generated from this toolkit's USFM.
 // {face_comment}
@@ -657,6 +663,7 @@ def travel_preamble(
     }} else {{
       set text(font: head-font, size: {spec.running_head_pt}pt, fill: ink, tracking: 0.12em)
       let page-num = here().page()
+      let folio-num = page-num + folio-offset
       let marks = query(<run-head>)
       let on-page = marks.filter(it => it.location().page() == page-num)
       let label-text = if on-page.len() > 0 {{
@@ -675,7 +682,7 @@ def travel_preamble(
         label-text
       }}
       let label = smallcaps(display)
-      if calc.odd(page-num) {{
+      if calc.odd(folio-num) {{
         align(right, label)
       }} else {{
         align(left, label)
@@ -875,10 +882,9 @@ def generate_travel_typst(
             spec,
             grid_proof=grid_proof,
             hide_opening_chrome=hide_opening_chrome,
+            page_start=page_start,
         )
     ]
-    if page_start != 1:
-        lines.append(f"#counter(page).update({int(page_start)})")
     for book_index, book in enumerate(parsed):
         if book_index:
             lines.append("#pagebreak()")
@@ -992,6 +998,127 @@ def book_part_slug(index: int, name: str) -> str:
     return f"{index:02d}-{safe}"
 
 
+RUN_HEAD_RE = re.compile(
+    r"^([A-Z0-9][A-Z0-9 ]*?)\s+·\s+(\d+):(\d+)(?:–(?:(\d+):)?(\d+))?$"
+)
+LAST_PAGE_VERSE_RE = re.compile(r"(?:(?<=^)|(?<=\s))(\d{1,3})(?:\s|(?=[A-Z“\"‘]))")
+
+
+def parse_run_head(text: str):
+    match = RUN_HEAD_RE.match((text or "").strip())
+    if not match:
+        return None
+    book, start_ch, start_v, end_ch, end_v = match.groups()
+    return {
+        "book": book.strip(),
+        "start_ch": int(start_ch),
+        "start_v": int(start_v),
+        "end_ch": int(end_ch or start_ch),
+        "end_v": int(end_v or start_v),
+    }
+
+
+def infer_last_page_run_head(prev_head: str, last_text: str) -> str | None:
+    """Rebuild a running head when Typst copies page-1 chrome onto the last leaf."""
+    parsed = parse_run_head(prev_head)
+    if not parsed:
+        return None
+    body = (last_text or "").split("\n")
+    # Skip a stale copied head / folio when present.
+    useful = [line for line in body if line.strip() and not parse_run_head(line.strip())]
+    blob = "\n".join(useful)
+    verses = [int(num) for num in LAST_PAGE_VERSE_RE.findall(blob)]
+    if not verses:
+        return None
+    chapter = parsed["end_ch"]
+    start_v, end_v = verses[0], verses[-1]
+    book = parsed["book"]
+    if start_v == end_v:
+        return f"{book} · {chapter}:{start_v}"
+    return f"{book} · {chapter}:{start_v}–{end_v}"
+
+
+def _page_text_lines(page):
+    lines = []
+    for block in page.get_text("dict").get("blocks", []):
+        if block.get("type") != 0:
+            continue
+        for line in block.get("lines", []):
+            text = "".join(span.get("text", "") for span in line.get("spans", []))
+            if text.strip():
+                lines.append((text, line["bbox"], line.get("spans", [{}])[0]))
+    return lines
+
+
+def _grid_proof_regular_font(font_dir: Path) -> Path | None:
+    if not font_dir.is_dir():
+        return None
+    for path in sorted(font_dir.iterdir()):
+        token = _norm_name(path)
+        if "sourceserif" in token and "italic" not in token and "bold" not in token:
+            if path.suffix.lower() in {".otf", ".ttf"}:
+                return path
+    return None
+
+
+def repair_unconverged_last_page(pdf_path: Path, page_start: int, font_dir: Path) -> bool:
+    """Redraw last-page header/folio when Typst reuses page-1 chrome after a failed converge."""
+    import fitz
+
+    font_path = _grid_proof_regular_font(font_dir)
+    if font_path is None:
+        return False
+    with fitz.open(pdf_path) as doc:
+        if doc.page_count < 2:
+            return False
+        first_lines = _page_text_lines(doc[0])
+        last_lines = _page_text_lines(doc[-1])
+        prev_lines = _page_text_lines(doc[-2])
+        if not first_lines or not last_lines or not prev_lines:
+            return False
+        first_head, last_head = first_lines[0][0].strip(), last_lines[0][0].strip()
+        first_folio, last_folio = first_lines[-1][0].strip(), last_lines[-1][0].strip()
+        if last_head != first_head or last_folio != first_folio:
+            return False
+        rebuilt = infer_last_page_run_head(prev_lines[0][0], doc[-1].get_text())
+        if not rebuilt:
+            return False
+        folio = str(int(page_start) + doc.page_count - 1)
+        page = doc[-1]
+        head_bbox = fitz.Rect(last_lines[0][1])
+        folio_bbox = fitz.Rect(last_lines[-1][1])
+        # Match Typst running-head / folio bands (7pt at the spec margins).
+        header_band = fitz.Rect(0, 14.0, page.rect.width, 30.0)
+        folio_band = fitz.Rect(0, 482.0, page.rect.width, page.rect.height)
+        header_band.include_rect(head_bbox)
+        folio_band.include_rect(folio_bbox)
+        page.add_redact_annot(header_band, fill=(1, 1, 1))
+        page.add_redact_annot(folio_band, fill=(1, 1, 1))
+        page.apply_redactions()
+        fontname = "source-serif-repair"
+        page.insert_font(fontname=fontname, fontfile=str(font_path))
+        odd = int(folio) % 2 == 1
+        align = fitz.TEXT_ALIGN_RIGHT if odd else fitz.TEXT_ALIGN_LEFT
+        # Recto uses the inside margin on the left; verso uses the outside margin.
+        if odd:
+            box = fitz.Rect(39.6, header_band.y0, 313.2, header_band.y1)
+        else:
+            box = fitz.Rect(28.8, header_band.y0, 302.4, header_band.y1)
+        page.insert_textbox(box, rebuilt, fontname=fontname, fontsize=7, color=(20 / 255,) * 3, align=align)
+        page.insert_textbox(
+            fitz.Rect(0, folio_band.y0, page.rect.width, page.rect.height - 4),
+            folio,
+            fontname=fontname,
+            fontsize=7,
+            color=(20 / 255,) * 3,
+            align=fitz.TEXT_ALIGN_CENTER,
+        )
+        tmp = pdf_path.with_suffix(pdf_path.suffix + ".repaired")
+        doc.save(tmp, deflate=True)
+    tmp.replace(pdf_path)
+    return True
+
+
 def compile_canon_by_book(
     usfm_zip: Path,
     books: list[str],
@@ -1023,6 +1150,8 @@ def compile_canon_by_book(
         if result.returncode != 0:
             print(f"Typst compile failed for {book}.", file=sys.stderr)
             return result.returncode
+        if repair_unconverged_last_page(part_pdf, page_start, font_dir):
+            print(f"Repaired last-page chrome: {part_pdf}")
         count = pdf_page_count(part_pdf)
         print(f"Wrote PDF: {part_pdf} ({count} pages)")
         parts.append(part_pdf)

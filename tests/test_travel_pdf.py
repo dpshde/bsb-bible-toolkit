@@ -26,6 +26,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     classify_grid_proof_fonts,
     classify_milo_fonts,
     default_output_paths,
+    infer_last_page_run_head,
     footnote_markup,
     generate_travel_typst,
     is_source_nav_marker,
@@ -281,12 +282,26 @@ def test_footnote_markup_strips_osis_tail_after_fqa():
     assert "#link(" in markup
     assert "|1CH" not in markup
     assert "1CH 2:9" not in markup
+    assert "Aram]," in markup
+    assert "#emph[Ram] ;" in markup
 
 
 def test_footnote_markup_strips_bare_osis_slug():
     markup = footnote_markup(r"+ \fr 1:3 \ft see 1 Chronicles 2:9–10|1CH 2:9-10")
     assert "1 Chronicles 2:9" in markup
     assert "|1CH" not in markup
+
+
+def test_infer_last_page_run_head_from_prev_leaf():
+    last = (
+        "MATTHEW · 1:1–9\n"
+        "15So the guards took the money and did as they were instructed.\n"
+        "16Meanwhile, the eleven disciples went to Galilee.\n"
+        "19 Therefore go and make disciples of all nations,\n"
+        "20 and teaching them to obey all that I have commanded you.\n"
+        "1771\n"
+    )
+    assert infer_last_page_run_head("MATTHEW · 28:11–20", last) == "MATTHEW · 28:15–20"
 
 
 def test_paragraph_markup_drops_next_source_marker():
@@ -429,7 +444,8 @@ def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
     assert "Never present this stand-in as the loved face" in preamble
     assert "proof-background" not in preamble
     assert "proof-mark" not in preamble
-    assert "align(center, counter(page).display())" in preamble
+    assert "align(center, str(here().page() + folio-offset))" in preamble
+    assert "#let folio-offset = 0" in preamble
     assert "columns: (1fr, auto, 1fr)" not in preamble
     assert MILO_TEXT_FAMILY in preamble
     default = travel_preamble()
@@ -508,7 +524,9 @@ def test_book_part_slug_and_page_start(tmp_path):
     )
     text = out.read_text()
     assert "hide-opening-chrome = false" in text
-    assert "#counter(page).update(81)" in text
+    assert "#let folio-offset = 80" in text
+    assert "#counter(page).update(" not in text
+    assert "str(here().page() + folio-offset)" in text
 
 
 def test_preamble_pdf_outline_is_heading_bookmarks():
