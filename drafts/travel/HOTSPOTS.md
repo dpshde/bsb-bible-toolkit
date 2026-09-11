@@ -6,15 +6,17 @@ Watermarked metrics PDF only. Stand-in face is Source Serif 4 (SIL OFL).
 Compile: `make travel-bible-grid-proof`
 
 Seeded 16-page visual QA (2026-09-11): [`qa-random/README.md`](qa-random/README.md)
-(`make travel-random-qa`, seed `20260911`). All 16 leaves passed.
+(`make travel-random-qa`, seed `20260911`). Page numbers follow the 2,365-page
+compile. `Next:` and `|OSIS` leaks are gone. Book titles and the Psalm 119
+Lamp title have more air.
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` |
 | Engine | Typst 0.14.2 (per-book compile + merge; one-shot canon OOMs here) |
-| Pages | 2264 |
-| Bytes | 31,133,152 (~29.7 MiB) |
-| SHA-256 | `9cda5e658216d63e6db2ad32995ad61de2028998adb124f2289ab30885cc9264` |
+| Pages | 2365 |
+| Bytes | 31,625,618 (~30.2 MiB) |
+| SHA-256 | `128fe796c1f5ff3eb574ab9490c8d933278cef47de190612134cced72341242b` |
 | Trim | 4.75 in × 7.00 in (342 × 504 pt) |
 | Books | 66, Protestant canon order |
 | Outline | Book → Chapter (66 books, 1,189 chapter dests) |
@@ -24,6 +26,10 @@ Seeded 16-page visual QA (2026-09-11): [`qa-random/README.md`](qa-random/README.
 - Running heads on the first page of a book still showed the previous book (`MALACHI · 4` on Matthew, `JOHN · 21` on Acts, etc.). Headers now query a per-page `<run-head>` mark.
 - Psalm 119 `\qa א` rendered as a missing-glyph box in the OFL stand-in. Hebrew-only acrostic lines are omitted; the Latin `ALEPH` / `BETH` labels remain.
 - Translator-note letters ran into three-character markers (`cdh`, `gdp`) across the canon. The footnote counter now resets **on every page** (header) and still at each book pagebreak.
+- USFM `\p Next:` printed as body text in Matthew 1. Those source markers are dropped.
+- Footnote *a* on Matthew 1 showed `1 Chronicles 2:9–10|1CH 2:9-10`. Display text now strips leftover `|OSIS` tails across the canon.
+- “Your Word Is a Lamp to My Feet” sat crushed between Psalm 118:29 and ALEPH / drop 119. Pericope titles before a stanza letter + chapter drop now use `keep-with-break`.
+- Book openers were tight against the running head and first section. Display titles now have two baselines of air above and below.
 
 ## Checks
 
@@ -36,7 +42,7 @@ Seeded 16-page visual QA (2026-09-11): [`qa-random/README.md`](qa-random/README.
 | Selah | 962 (Ps 4) | Pass | `\qr Selah` as centered small-caps inscription. |
 | Proverbs 1 poetry | 1157 | Pass | Compact book title (no repeating “sample”); `q1`/`q2` indent. |
 | Isaiah 53 | 1369 | Pass | Poetry + drop 53; notes at the foot. |
-| Matthew 1 genealogy | 1797 | Pass | Poetry genealogy; drop 1. USFM `\p Next:` is a one-word paragraph (source). |
+| Matthew 1 genealogy | 1836 | Pass after fix | Poetry genealogy; drop 1. `\p Next:` dropped; notes have no `|1CH` tail. |
 | First WoC in Matthew | 1802 (Mt 3–4) | Pass | “Let it be so now” and temptation replies in `rgb(28,56,110)`. |
 | John 1 (parity with John sample) | 1976 | Pass | Same grammar: title, drop 1, xrefs, footnotes, WOC unused in 1:1–18 (narration). |
 | Obadiah | 1728 | Pass | Title + body on one opening page; not exploded. |
