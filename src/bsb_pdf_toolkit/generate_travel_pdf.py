@@ -685,7 +685,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   let notes = query(footnote).filter(n => n.location().page() == page-num)
   if notes.len() == 0 {{
     let mark = numbering("a", ..counter(footnote).at(it.note.location()))
-    [#super(mark)#h(0.12em)#it.note.body]
+    [#super(mark)#h(0.12em) #it.note.body]
   }} else if it.note.location() != notes.first().location() {{
     none
   }} else {{
@@ -697,7 +697,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
     )
     notes.map(n => {{
       let mark = numbering("a", ..counter(footnote).at(n.location()))
-      [#super(mark)#h(0.12em)#n.body]
+      [#super(mark)#h(0.12em) #n.body]
     }}).join([#h(0.7em)])
   }}
 }}

@@ -156,8 +156,8 @@ make travel-woc-qa
 ```
 
 Output: `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf`
-(4 leaves, 92,711 bytes, SHA-256
-`3a38e3dc224a7be08be77984d53b2c366ca0715af2986d732c7a09c17d937177`).
+(4 leaves, 102,248 bytes, SHA-256
+`c69fcc715221e69beafdde713fa2a9ab1edf64a3b630c09a5403ffddd1893311`).
 120 dpi PNG previews: `drafts/travel/woc/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
@@ -202,12 +202,12 @@ Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 | Loved face | FF Milo Serif Text (not in this PDF) |
 | Source | `drafts/primary/source/engbsb_usfm.zip` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-04 |
+| Compiled | 2026-09-11 |
 | Trim | 4.75 in × 7.00 in |
-| Pages | 49 |
-| Links | 3370 |
-| Size | 2,029,571 bytes |
-| SHA-256 | `0b005230c7fdaa30915078fee3ea115ba50a2d465302565808b1e34ca22ea82c` |
+| Pages | 47 |
+| Links | 3264 |
+| Size | 1,939,744 bytes |
+| SHA-256 | `42c7e1719fbc4bf5d05759fef2f34105ffa85eb6b6f99080eabdabba660c4d87` |
 
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.

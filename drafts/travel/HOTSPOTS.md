@@ -53,9 +53,10 @@ Letter markers reset at the start of each page via `counter(footnote).update(0)`
 in the Typst page header (the documented Typst pattern). Book pagebreaks still
 reset as a safety net.
 
-John-only recompile (`--grid-proof --book John`, 49 pages): every sampled
-footnote listing starts at `a`. Page 2 carries notes **a–f**; page 3 starts
-again at **a**. No two-letter markers in the 49-page John PDF.
+John-only recompile (`--grid-proof --book John`, 47 pages): every sampled
+footnote listing starts at `a` and the notes on a page run in as one
+wrapping paragraph. Page 2 carries notes **a–d**. No two-letter markers
+in the 47-page John PDF.
 
 Psalms-only targeted compile (`--book Psalms`, 197 pages): same reset. Page 2
 has **a–e**; page 3 starts at **a**. Zero two-letter markers across the book.
@@ -85,12 +86,11 @@ same slot coordinates (phase Δ 0.0 pt). Shared body y-slots: **23** on 2–3,
 text lines meet across the gutter; drop-cap squares and footnotes do not
 break the body grid.
 
-Recompiled John PDF 2026-09-04 (Typst 0.14.2, current layout, not the
-2026-09-01 file): 49 pages, 2,029,571 bytes, SHA-256
-`0b005230c7fdaa30915078fee3ea115ba50a2d465302565808b1e34ca22ea82c`.
-Page 2 notes **a–f**; page 3 starts at **a**. Spread PDF SHA-256
-`8d3d1ff461f797d47a34bc228a8bcbb7ce85ac65ca067c164e6d0dfdd3114fb3`
-(70,080 bytes). Facing PNGs are unchanged from the 2026-09-03 line-match
+Recompiled John PDF 2026-09-11 (Typst 0.14.2, run-in notes, no ruled
+background, no footer watermark): 47 pages, 1,939,744 bytes, SHA-256
+`42c7e1719fbc4bf5d05759fef2f34105ffa85eb6b6f99080eabdabba660c4d87`.
+Page 2 notes **a–d** run in as one wrapping paragraph. The 2-up spread
+PDF above is the earlier line-match sheet and was not rebuilt in this
 pass.
 
 ## Words of Christ blue QA (2026-09-11)
@@ -98,10 +98,10 @@ pass.
 `make travel-woc-qa` compiles Matthew + John and extracts four native
 4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
 `#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Not Milo.
+Run-in footnotes, no ruled background, no `GRID PROOF` / `NOT FINAL FACE`.
 
-Matthew 3 baptism and Matthew 4 temptation land on the same leaf; the
-sheet keeps that page once and adds the Beatitudes plus two John speech
-leaves (John 3:16 and John 14).
+After the footnote/chrome polish, baptism and temptation no longer share
+a leaf. The sheet keeps both, plus John 3:16 and John 14.
 
 | Item | Value |
 |------|-------|
@@ -110,24 +110,24 @@ leaves (John 3:16 and John 14).
 | Engine | Typst 0.14.2 |
 | Compiled | 2026-09-11 |
 | Pages | 4 (native 4.75 × 7 in leaves) |
-| Size | 92,711 bytes |
-| SHA-256 | `3a38e3dc224a7be08be77984d53b2c366ca0715af2986d732c7a09c17d937177` |
-| Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (117 pages, gitignored) |
+| Size | 102,248 bytes |
+| SHA-256 | `c69fcc715221e69beafdde713fa2a9ab1edf64a3b630c09a5403ffddd1893311` |
+| Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (gitignored) |
 | PNGs | `drafts/travel/woc/*.png` (120 dpi) |
 
 | Leaf | Source page | Header | What to check |
 |------|-------------|--------|---------------|
-| `matthew-baptism` | 6 | `MATTHEW · 3:12–4:6` | “Let it be so now” and “Man shall not live on bread alone” in cobalt; boxed drop 4 |
-| `matthew-sermon` | 8 | `MATTHEW · 4:23–5:12` | Beatitudes from “Blessed are the poor in spirit”; boxed drop 5 |
-| `john-loved` | 74 | `JOHN · 3:15–32` | 3:16–21 speech in cobalt; Baptist testimony after returns to ink |
-| `john-farewell` | 101 | `JOHN · 13:30–14:4` | Upper-room speech through “Do not let your hearts be troubled”; boxed drop 14 |
+| `matthew-baptism` | 5 | `MATTHEW · 2:21–3:12` | “Let it be so now”; notes a–c run in on one line |
+| `matthew-temptation` | 6 | `MATTHEW · 3:13–4:11` | “Man shall not live on bread alone”; notes a–f wrap; boxed drop 4 |
+| `john-loved` | 70 | `JOHN · 2:21–3:17` | 3:16–17 speech in cobalt; notes a–e wrap |
+| `john-farewell` | 97 | `JOHN · 13:33–14:11` | Upper-room speech through “Do not let your hearts be troubled”; boxed drop 14 |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `woc/matthew-baptism.png` | 148,420 | `d4e5f3bf73b27ff4513eed4e342147a49398717946fd96fdaae3a714918f8fc4` |
-| `woc/matthew-sermon.png` | 135,988 | `8adca148614af0c64a792ceab45663f14c434cb90505846133de2feded4f59a3` |
-| `woc/john-loved.png` | 166,957 | `ec1e7ec4b31b4160042e1b6c57b88592687b83b1de66621e5d2724555b63907b` |
-| `woc/john-farewell.png` | 159,239 | `7f81eb690deec3d5eec599f78137ff2e0391643459427b75867bffd31c312cd6` |
+| `woc/matthew-baptism.png` | 150,602 | `fc54d9e48298868e69a424ba23f84e69a66b3799a29542eb071b9971d5f9e4e6` |
+| `woc/matthew-temptation.png` | 146,947 | `aea73767207e3295acfc5584605202b530119e83242e12aa4089fc3d31f9cb4e` |
+| `woc/john-loved.png` | 158,487 | `4f268128903683e38161b9bca0a684de5477c5b110959feb9c4b7e5cac7b7095` |
+| `woc/john-farewell.png` | 161,149 | `7e6540d230f23252a60b9ff2c9ed27f9d59e37d4be65a0db65a9e6657cdf9ee7` |
 
 ## Running-header QA (2026-09-09)
 
