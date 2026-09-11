@@ -789,10 +789,14 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let inscription(body) = block(spacing: baseline-skip)[
   #align(center)[#text(font: head-font, size: body-size, tracking: 0.08em)[#smallcaps(body)]]
 ]
-#let section(title) = block(above: 2 * baseline-skip, below: baseline-skip)[
+#let section(title) = block(
+  above: 2 * baseline-skip,
+  below: baseline-skip,
+  sticky: true,
+)[
   #text(font: head-font, size: {spec.section_pt}pt, weight: 700, fill: ink)[#title]
 ]
-#let chapter-xrefs(body) = block(above: 0pt, below: baseline-skip)[
+#let chapter-xrefs(body) = block(above: 0pt, below: baseline-skip, sticky: true)[
   #set text(font: body-font, size: {spec.xref_pt}pt, style: "italic", fill: ink)
   #set par(justify: true, leading: leading-gap, hanging-indent: 0.75em)
   #body
@@ -851,10 +855,10 @@ def generate_travel_typst(
         for chapter in book["chapters"]:
             heading_ranges(chapter, book["osis"])
             running_chapter = f"{running} · {chapter['chapter']}"
-            lines.append(f"#outline-chapter({int(chapter['chapter'])})")
             lines.append(f"#mark-run({typst_string(running_chapter)})")
             chapter_open = True
             chapter_xrefs_emitted = False
+            chapter_outlined = False
             first_heading_refs = ""
             for para in chapter["paras"]:
                 if para["kind"] == "heading" and para.get("refs") and not first_heading_refs:
@@ -885,11 +889,16 @@ def generate_travel_typst(
                 elif para["kind"] == "blank":
                     lines.append("#v(baseline-skip)")
                 else:
+                    if not chapter_outlined:
+                        lines.append(f"#outline-chapter({int(chapter['chapter'])})")
+                        chapter_outlined = True
                     for markup in paragraph_markup(
                         para, book["osis"], chapter["chapter"], chapter_open=chapter_open
                     ):
                         lines.append(markup)
                     chapter_open = False
+            if not chapter_outlined:
+                lines.append(f"#outline-chapter({int(chapter['chapter'])})")
         lines.append("")
     output_typ.parent.mkdir(parents=True, exist_ok=True)
     output_typ.write_text("\n\n".join(lines) + "\n", encoding="utf-8")

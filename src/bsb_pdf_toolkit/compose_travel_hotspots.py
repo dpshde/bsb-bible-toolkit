@@ -227,9 +227,12 @@ def select_hotspot_pages(
 def remap_outline(toc: list, source_pages: list[int]) -> list[list]:
     """Keep Book → Chapter outline entries that land on extracted pages.
 
-    A level-1 book row is kept when any of its chapters (or the book page
-    itself) is extracted. If the book page is not in the extract, the book
-    dest jumps to the first included chapter.
+    A chapter maps when any extracted page falls in ``[start, next)``.
+    The last chapter of a book ends at the next book's dest (not infinity),
+    so Matthew 28 cannot swallow John leaves. A level-1 book row is kept
+    when any of its chapters (or the book page itself) is extracted. If
+    the book page is not in the extract, the book dest jumps to the first
+    included chapter.
     """
     page_map = {src: index + 1 for index, src in enumerate(source_pages)}
     groups: list[tuple[list | None, list[list]]] = []
@@ -253,14 +256,24 @@ def remap_outline(toc: list, source_pages: list[int]) -> list[list]:
     flush()
 
     remapped: list[list] = []
-    for book, book_chapters in groups:
+    for group_index, (book, book_chapters) in enumerate(groups):
         mapped_chapters = []
-        for entry in book_chapters:
-            src_page = entry[2]
-            if src_page in page_map:
-                mapped = list(entry)
-                mapped[2] = page_map[src_page]
-                mapped_chapters.append(mapped)
+        starts = [entry[2] for entry in book_chapters]
+        next_book = groups[group_index + 1][0] if group_index + 1 < len(groups) else None
+        book_end = next_book[2] if next_book else None
+        for index, entry in enumerate(book_chapters):
+            start = entry[2]
+            end = starts[index + 1] if index + 1 < len(starts) else book_end
+            covered = [
+                page
+                for page in source_pages
+                if page >= start and (end is None or page < end)
+            ]
+            if not covered:
+                continue
+            mapped = list(entry)
+            mapped[2] = page_map[covered[0]]
+            mapped_chapters.append(mapped)
         book_page = book[2] if book else None
         if book and book_page in page_map:
             mapped_book = list(book)

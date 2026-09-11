@@ -53,10 +53,10 @@ Letter markers reset at the start of each page via `counter(footnote).update(0)`
 in the Typst page header (the documented Typst pattern). Book pagebreaks still
 reset as a safety net.
 
-John-only recompile (`--grid-proof --book John`, 47 pages): every sampled
+John-only recompile (`--grid-proof --book John`, 52 pages): every sampled
 footnote listing starts at `a` and the notes on a page run in as one
 wrapping paragraph. Page 2 carries notes **a–d**. No two-letter markers
-in the 47-page John PDF.
+in the 52-page John PDF.
 
 Psalms-only targeted compile (`--book Psalms`, 197 pages): same reset. Page 2
 has **a–e**; page 3 starts at **a**. Zero two-letter markers across the book.
@@ -87,9 +87,9 @@ text lines meet across the gutter; drop-cap squares and footnotes do not
 break the body grid.
 
 Recompiled John PDF 2026-09-11 (Typst 0.14.2, run-in grey notes, Book →
-Chapter PDF outline, no ruled background, no footer watermark): 47 pages,
-1,946,114 bytes, SHA-256
-`cab5b21628399841f42e9c235d3bd6735f0eb75d2ca9f8bad6b0bca1256001b2`.
+Chapter PDF outline, extra air around pericope titles, no ruled
+background, no footer watermark): 52 pages, 1,950,662 bytes, SHA-256
+`1dc572a5c920dbd8618300e3430bc95c4859adff177516387a9b3500081cc077`.
 Page 2 notes **a–d** run in as one wrapping paragraph. Outline is
 `John` → `1`…`21`. The 2-up spread PDF above is the earlier line-match
 sheet and was not rebuilt in this pass.
@@ -100,10 +100,12 @@ sheet and was not rebuilt in this pass.
 4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
 `#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Not Milo.
 Run-in footnotes in grey `rgb(76, 76, 76)`, no ruled background, no
-`GRID PROOF` / `NOT FINAL FACE`. PDF outline: Matthew → 3, 4; John → 3, 14.
+`GRID PROOF` / `NOT FINAL FACE`. PDF outline: Matthew → 4, 5; John → 3, 14.
 
-After the footnote/chrome polish, baptism and temptation no longer share
-a leaf. The sheet keeps both, plus John 3:16 and John 14.
+After the extra pericope air, baptism and the start of the temptation
+share source p.6 (Matthew 3:8–4:4). The sheet keeps that leaf, the
+Matthew 5 Beatitudes, John 3:16, and the John 14 farewell (title +
+drop 14 on the same page).
 
 | Item | Value |
 |------|-------|
@@ -112,24 +114,24 @@ a leaf. The sheet keeps both, plus John 3:16 and John 14.
 | Engine | Typst 0.14.2 |
 | Compiled | 2026-09-11 |
 | Pages | 4 (native 4.75 × 7 in leaves) |
-| Size | 102,718 bytes |
-| SHA-256 | `229d1b8c7839a234b0dae68d1bf674c642ae13bb43b32490c687c470a2a6cd29` |
+| Size | 92,979 bytes |
+| SHA-256 | `c8667ae0cf36a50b4dfcb18736b5c20c061482fc6c5f25cc469cc58d4c550335` |
 | Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (gitignored) |
 | PNGs | `drafts/travel/woc/*.png` (120 dpi) |
 
 | Leaf | Source page | Header | What to check |
 |------|-------------|--------|---------------|
-| `matthew-baptism` | 5 | `MATTHEW · 2:21–3:12` | “Let it be so now”; notes a–c run in on one line |
-| `matthew-temptation` | 6 | `MATTHEW · 3:13–4:11` | “Man shall not live on bread alone”; notes a–f wrap; boxed drop 4 |
-| `john-loved` | 70 | `JOHN · 2:21–3:17` | 3:16–17 speech in cobalt; notes a–e wrap |
-| `john-farewell` | 97 | `JOHN · 13:33–14:11` | Upper-room speech through “Do not let your hearts be troubled”; boxed drop 14 |
+| `matthew-baptism` | 6 | `MATTHEW · 3:8–4:4` | “Let it be so now”; temptation speech starts; boxed drop 4 |
+| `matthew-sermon` | 8 | `MATTHEW · 4:18–5:3` | “Blessed are the poor in spirit”; boxed drop 5 |
+| `john-loved` | 81 | `JOHN · 3:3–22` | 3:16–17 speech in cobalt; notes wrap |
+| `john-farewell` | 110 | `JOHN · 13:33–14:5` | “In My Father’s House Are Many Rooms” with air above/below; boxed drop 14 |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `woc/matthew-baptism.png` | 150,786 | `6e69bc6ee222ff5166a47595810ab208a4989d7b797fe891d3bcdd8bbde2e9d1` |
-| `woc/matthew-temptation.png` | 147,414 | `391936bc46ca129811fa6e106e5a4352323eb5e68a865854de9bf279fdb7721a` |
-| `woc/john-loved.png` | 158,959 | `3144cd9794231d6340e484a9400afd56a874f0d4b59dbc086e085e8efebda817` |
-| `woc/john-farewell.png` | 161,530 | `8975dad6ecbc7ce9fca97e6cea4e018421250131c9a787c0a6e639c86159c1bd` |
+| `woc/matthew-baptism.png` | 134,890 | `3fe4cdfa2840277e35607e5dca38bd301232f2be23b3d62cdf01f66877960748` |
+| `woc/matthew-sermon.png` | 108,320 | `7604ce531ffcdc736e78e11c6be4b08bc2fa141ab31eb52aabda07c862f168b7` |
+| `woc/john-loved.png` | 157,903 | `e752c3c2922f357f9bcda4ea29463a7f7451d66a2bebe9e452902739a520a6ff` |
+| `woc/john-farewell.png` | 126,153 | `88a17a096c2c1d73c6b41186ff5435b611327d1bff79b750bfb31c4f8a989e93` |
 
 ## Running-header QA (2026-09-09)
 

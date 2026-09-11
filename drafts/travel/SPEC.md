@@ -111,7 +111,9 @@ as the loved face.
   not Humble Lamb drop-cap art, not Doré.
 - **Section headings:** BSB `\s1` titles in the head face, **two
   baselines above** and **one baseline below** so a pericope title does
-  not sit on the chapter drop or the next verse.
+  not sit on the chapter drop or the next verse. The title block (and
+  its `\r` line) is sticky so it stays with the following verse or
+  chapter drop instead of orphaning at the previous page foot.
 - **Chapter-start cross-references:** the first USFM `\r` block in a chapter
   is set as a 7 pt italic justified line under that opening heading. Later
   `\r` blocks stay with their section headings. If a chapter has no `\r`,
@@ -143,7 +145,9 @@ as the loved face.
 - **PDF outline:** Typst `heading` bookmarks (no printed `#outline()`).
   Level 1 is the USFM `\h` book name; level 2 is the chapter number.
   `#show heading: none` keeps those marks out of the text block. The
-  sidebar is Book → Chapter.
+  sidebar is Book → Chapter. The chapter dest is emitted with the first
+  body paragraph (after any opening `\s1`), so John 14 lands on the
+  drop, not on the previous chapter’s last page.
 
 ## 6. Color and ink
 

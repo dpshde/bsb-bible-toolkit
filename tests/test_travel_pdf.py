@@ -340,6 +340,12 @@ def test_real_usfm_john_preserves_corpus_text(tmp_path):
     assert "Source Serif 4" not in text
     assert "Lexend" not in text
     assert GRID_PROOF_WATERMARK not in text
+    # Chapter bookmark dest sits with the first body, after the opening \s1.
+    rooms = text.index('#section("In My Father')
+    way = text.index('#section("The Way, the Truth, and the Life")')
+    ch14 = text.index("#outline-chapter(14)")
+    drop14 = text.find("#chapter-drop(", text.find("#mark-run(\"JOHN · 14\")"))
+    assert rooms < ch14 < drop14 < way
 
 
 def test_grid_proof_preamble_is_labeled_stand_in_not_loved_face():
@@ -392,14 +398,14 @@ def test_preamble_section_heads_have_air_above_and_below():
     snippet = preamble[section_at : section_at + 180]
     assert "above: 2 * baseline-skip" in snippet
     assert "below: baseline-skip" in snippet
+    assert "sticky: true" in snippet
     assert "below: leading-gap" not in snippet
     xrefs_at = preamble.index("#let chapter-xrefs(")
-    xref_snippet = preamble[xrefs_at : xrefs_at + 160]
+    xref_snippet = preamble[xrefs_at : xrefs_at + 200]
     assert "below: baseline-skip" in xref_snippet
+    assert "sticky: true" in xref_snippet
     grid = travel_preamble(grid_proof=True)
-    assert grid[grid.index("#let section(title)") :].startswith(
-        "#let section(title) = block(above: 2 * baseline-skip, below: baseline-skip)"
-    )
+    assert "sticky: true" in grid[grid.index("#let section(title)") :]
 
 
 def test_preamble_pdf_outline_is_heading_bookmarks():
@@ -713,8 +719,11 @@ def test_remap_outline_keeps_book_when_chapter_extracted():
         [2, "3", 3],
         [2, "14", 4],
     ]
+    # A leaf inside a chapter still maps that chapter, not only the dest page.
+    assert remap_outline(toc, [81]) == [[1, "John", 1], [2, "3", 1]]
     assert remap_outline(toc, [1]) == [[1, "Matthew", 1]]
-    assert remap_outline(toc, [99]) == []
+    assert remap_outline(toc, [4]) == []
+    assert remap_outline(toc, [99]) == [[1, "John", 1], [2, "14", 1]]
 
 
 def test_hotspot_page_selection_and_extract(tmp_path):
