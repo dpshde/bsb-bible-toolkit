@@ -92,14 +92,15 @@ class TravelSpec:
 
     trim_width_in: float = 4.75
     trim_height_in: float = 7.0
-    margin_inside_in: float = 0.55
-    margin_outside_in: float = 0.40
+    margin_inside_in: float = 0.61
+    margin_outside_in: float = 0.46
     margin_head_in: float = 0.50
     margin_foot_in: float = 0.375
     body_pt: float = 8.5
     baseline_pt: float = 10.5
     lines_per_page: int = 42
-    measure_in: float = 3.80
+    measure_in: float = 3.68
+    para_indent_in: float = 0.20
     target_cpl_min: int = 60
     target_cpl_max: int = 70
     drop_lines: int = 3
@@ -121,9 +122,10 @@ class TravelSpec:
     # 120% left the 60–70 cpl travel measure almost unhyphenated (2 breaks
     # in 49 John pages). 80% is still conservative vs Typst's 50% eagerness.
     hyphenation_cost_pct: int = 80
-    # Tiny extra leading on body prose only. Poetry / drop geometry stay
+    # Extra leading on body prose only. Poetry / drop geometry stay
     # on the 10.5 pt structural grid (leading-gap = baseline − body).
-    body_leading_extra_pt: float = 0.35
+    # 0.35 + a second 0.30 bump so long narrative is less of a brick.
+    body_leading_extra_pt: float = 0.65
 
 
 SPEC = TravelSpec()
@@ -500,7 +502,7 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
     if not segments:
         return []
 
-    def join_segments(items, drop=False):
+    def join_segments(items, drop=False, flush=False):
         pieces = []
         first = True
         for verse, url, body in items:
@@ -533,6 +535,9 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
             elif marker == "li2":
                 level = 2
             return f"#poetry({level})[{content}]"
+        # First para under a chapter drop stays flush. USFM \m is flush.
+        if flush or marker == "m":
+            return f"#para-flush[{content}]"
         return f"#para[{content}]"
 
     if chapter_open:
@@ -545,7 +550,7 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
             drop_line = join_segments(drop_items, drop=True)
             if drop_line:
                 lines.append(drop_line)
-            rest_line = join_segments(rest_items, drop=False)
+            rest_line = join_segments(rest_items, drop=False, flush=True)
             if rest_line:
                 lines.append(rest_line)
             return lines
@@ -821,7 +826,15 @@ def travel_preamble(
   ]
 }}
 
-#let para(body) = block(spacing: body-leading-gap)[#body]
+#let para-indent = {spec.para_indent_in}in
+#let para(body) = block(spacing: body-leading-gap)[
+  #set par(first-line-indent: para-indent)
+  #body
+]
+#let para-flush(body) = block(spacing: body-leading-gap)[
+  #set par(first-line-indent: 0pt)
+  #body
+]
 #let poetry(level, body) = block(
   spacing: leading-gap,
   // q1 sits on the measure; each further q-level steps 0.18 in (parallelism).

@@ -196,7 +196,8 @@ as FF Milo Serif Text. Notes run in as one wrapping paragraph in grey
 `rgb(76, 76, 76)`; section titles take 1.5 baselines above and 0.5
 below, wrapped with the following verse or chapter drop so they cannot
 orphan. Book openers are the USFM title only. Body prose leading is
-+0.35 pt. There is no ruled background and no `GRID PROOF` / `NOT FINAL
++0.65 pt, with a 0.20 in first-line indent on later `\p` blocks.
+There is no ruled background and no `GRID PROOF` / `NOT FINAL
 FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
