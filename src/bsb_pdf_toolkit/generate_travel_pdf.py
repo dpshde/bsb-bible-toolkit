@@ -935,6 +935,31 @@ def compile_typst(input_typ: Path, output_pdf: Path, font_dir: Path):
     return subprocess.run(cmd, check=False)
 
 
+def merge_travel_pdfs(sources: list[Path], output: Path) -> Path:
+    """Concatenate testament PDFs and offset Book → Chapter outlines."""
+    import fitz
+
+    if len(sources) < 2:
+        raise ValueError("merge_travel_pdfs needs at least two PDFs")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    out = fitz.open()
+    outline: list[list] = []
+    offset = 0
+    for source in sources:
+        with fitz.open(source) as src:
+            for entry in src.get_toc() or []:
+                mapped = list(entry)
+                mapped[2] = entry[2] + offset
+                outline.append(mapped)
+            out.insert_pdf(src)
+            offset = out.page_count
+    if outline:
+        out.set_toc(outline)
+    out.save(output, deflate=True, garbage=4)
+    out.close()
+    return output
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Generate the compact travel BSB from toolkit USFM (John sample or full canon)"
@@ -1021,6 +1046,35 @@ def main(argv=None):
         return exc.exit_code
 
     result = compile_typst(args.typst_out, args.output_pdf, args.font_dir)
+    if result.returncode != 0 and args.all_books and args.testament == "all":
+        print(
+            "Full-canon Typst compile failed; building OT and NT, then merging.",
+            file=sys.stderr,
+        )
+        parts = []
+        for testament in ("ot", "nt"):
+            part_pdf, part_typ, part_fonts = default_output_paths(
+                grid_proof=args.grid_proof, all_books=True, testament=testament
+            )
+            part_books = select_travel_books(all_books=True, testament=testament)
+            generate_travel_typst(
+                usfm_zip, part_typ, books=part_books, grid_proof=args.grid_proof
+            )
+            print(f"Wrote Typst source: {part_typ} ({len(part_books)} books)")
+            part = compile_typst(part_typ, part_pdf, part_fonts)
+            if part.returncode != 0:
+                print(
+                    f"{testament.upper()} Typst compile failed. Source was still generated.",
+                    file=sys.stderr,
+                )
+                return part.returncode
+            print(f"Wrote PDF: {part_pdf}")
+            parts.append(part_pdf)
+        merge_travel_pdfs(parts, args.output_pdf)
+        print(f"Wrote merged PDF: {args.output_pdf}")
+        if args.grid_proof:
+            print(GRID_PROOF_NOTE, file=sys.stderr)
+        return 0
     if result.returncode != 0:
         print("Typst compile failed. Source was still generated.", file=sys.stderr)
         return result.returncode

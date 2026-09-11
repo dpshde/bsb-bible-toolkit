@@ -28,6 +28,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     default_output_paths,
     footnote_markup,
     generate_travel_typst,
+    merge_travel_pdfs,
     is_hebrew_script,
     body_leading_gap_pt,
     leading_gap_pt,
@@ -638,6 +639,35 @@ def test_cli_all_books_and_book_exits_2(tmp_path):
             "--no-compile",
         ])
     assert exc.value.code == 2
+
+
+def test_merge_travel_pdfs_offsets_outline(tmp_path):
+    import fitz
+
+    first = tmp_path / "ot.pdf"
+    second = tmp_path / "nt.pdf"
+    merged = tmp_path / "bible.pdf"
+    ot = fitz.open()
+    ot.new_page(width=342, height=504)
+    ot.new_page(width=342, height=504)
+    ot.set_toc([[1, "Genesis", 1], [2, "1", 1], [2, "2", 2]])
+    ot.save(first)
+    ot.close()
+    nt = fitz.open()
+    nt.new_page(width=342, height=504)
+    nt.set_toc([[1, "Matthew", 1], [2, "1", 1]])
+    nt.save(second)
+    nt.close()
+    merge_travel_pdfs([first, second], merged)
+    with fitz.open(merged) as doc:
+        assert doc.page_count == 3
+        assert doc.get_toc() == [
+            [1, "Genesis", 1],
+            [2, "1", 1],
+            [2, "2", 2],
+            [1, "Matthew", 3],
+            [2, "1", 3],
+        ]
 
 
 def test_selah_and_divine_name_spans():
