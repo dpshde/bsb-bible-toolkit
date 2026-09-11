@@ -789,10 +789,10 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let inscription(body) = block(spacing: baseline-skip)[
   #align(center)[#text(font: head-font, size: body-size, tracking: 0.08em)[#smallcaps(body)]]
 ]
-#let section(title) = block(above: baseline-skip, below: leading-gap)[
+#let section(title) = block(above: 2 * baseline-skip, below: baseline-skip)[
   #text(font: head-font, size: {spec.section_pt}pt, weight: 700, fill: ink)[#title]
 ]
-#let chapter-xrefs(body) = block(above: 0pt, below: leading-gap)[
+#let chapter-xrefs(body) = block(above: 0pt, below: baseline-skip)[
   #set text(font: body-font, size: {spec.xref_pt}pt, style: "italic", fill: ink)
   #set par(justify: true, leading: leading-gap, hanging-indent: 0.75em)
   #body

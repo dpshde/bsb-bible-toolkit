@@ -193,8 +193,9 @@ metrics proof only.
 
 This file is a **metrics proof**, not the loved-face print. Do not treat it
 as FF Milo Serif Text. Notes run in as one wrapping paragraph in grey
-`rgb(76, 76, 76)`; there is no ruled background and no `GRID PROOF` /
-`NOT FINAL FACE` footer string. The PDF outline is John → chapters 1–21.
+`rgb(76, 76, 76)`; section titles take two baselines above and one
+below. There is no ruled background and no `GRID PROOF` / `NOT FINAL
+FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
 | Item | Value |

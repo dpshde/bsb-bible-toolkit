@@ -386,6 +386,22 @@ def test_preamble_footnotes_use_grey_ink():
     assert "fill: footnote-ink" in grid
 
 
+def test_preamble_section_heads_have_air_above_and_below():
+    preamble = travel_preamble()
+    section_at = preamble.index("#let section(title)")
+    snippet = preamble[section_at : section_at + 180]
+    assert "above: 2 * baseline-skip" in snippet
+    assert "below: baseline-skip" in snippet
+    assert "below: leading-gap" not in snippet
+    xrefs_at = preamble.index("#let chapter-xrefs(")
+    xref_snippet = preamble[xrefs_at : xrefs_at + 160]
+    assert "below: baseline-skip" in xref_snippet
+    grid = travel_preamble(grid_proof=True)
+    assert grid[grid.index("#let section(title)") :].startswith(
+        "#let section(title) = block(above: 2 * baseline-skip, below: baseline-skip)"
+    )
+
+
 def test_preamble_pdf_outline_is_heading_bookmarks():
     preamble = travel_preamble()
     assert "#set heading(numbering: none)" in preamble
