@@ -380,6 +380,7 @@ def test_preamble_footnotes_use_grey_ink():
     assert fr > SPEC.ink_rgb[0]
     assert f"footnote-ink = rgb({fr}, {fg}, {fb})" in preamble
     assert "fill: footnote-ink" in preamble
+    assert "show link: set text(fill: footnote-ink)" in preamble
     assert "stroke: 0.35pt + footnote-ink" in preamble
     grid = travel_preamble(grid_proof=True)
     assert "fill: footnote-ink" in grid
@@ -674,6 +675,30 @@ def test_hotspot_books_and_required_leaves():
     aleph = next(spec for spec in DEFAULT_HOTSPOTS if spec.slug == "psalm-119")
     assert "ALEPH" in aleph.needles
     assert "א" in aleph.forbid
+
+
+def test_remap_outline_keeps_book_when_chapter_extracted():
+    from bsb_pdf_toolkit.compose_travel_hotspots import remap_outline
+
+    toc = [
+        [1, "Matthew", 1],
+        [2, "3", 5],
+        [2, "4", 6],
+        [2, "5", 7],
+        [1, "John", 66],
+        [2, "3", 70],
+        [2, "14", 97],
+    ]
+    assert remap_outline(toc, [5, 6, 70, 97]) == [
+        [1, "Matthew", 1],
+        [2, "3", 1],
+        [2, "4", 2],
+        [1, "John", 3],
+        [2, "3", 3],
+        [2, "14", 4],
+    ]
+    assert remap_outline(toc, [1]) == [[1, "Matthew", 1]]
+    assert remap_outline(toc, [99]) == []
 
 
 def test_hotspot_page_selection_and_extract(tmp_path):

@@ -86,19 +86,21 @@ same slot coordinates (phase Δ 0.0 pt). Shared body y-slots: **23** on 2–3,
 text lines meet across the gutter; drop-cap squares and footnotes do not
 break the body grid.
 
-Recompiled John PDF 2026-09-11 (Typst 0.14.2, run-in notes, no ruled
-background, no footer watermark): 47 pages, 1,939,744 bytes, SHA-256
-`42c7e1719fbc4bf5d05759fef2f34105ffa85eb6b6f99080eabdabba660c4d87`.
-Page 2 notes **a–d** run in as one wrapping paragraph. The 2-up spread
-PDF above is the earlier line-match sheet and was not rebuilt in this
-pass.
+Recompiled John PDF 2026-09-11 (Typst 0.14.2, run-in grey notes, Book →
+Chapter PDF outline, no ruled background, no footer watermark): 47 pages,
+1,946,114 bytes, SHA-256
+`cab5b21628399841f42e9c235d3bd6735f0eb75d2ca9f8bad6b0bca1256001b2`.
+Page 2 notes **a–d** run in as one wrapping paragraph. Outline is
+`John` → `1`…`21`. The 2-up spread PDF above is the earlier line-match
+sheet and was not rebuilt in this pass.
 
 ## Words of Christ blue QA (2026-09-11)
 
 `make travel-woc-qa` compiles Matthew + John and extracts four native
 4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
 `#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Not Milo.
-Run-in footnotes, no ruled background, no `GRID PROOF` / `NOT FINAL FACE`.
+Run-in footnotes in grey `rgb(76, 76, 76)`, no ruled background, no
+`GRID PROOF` / `NOT FINAL FACE`. PDF outline: Matthew → 3, 4; John → 3, 14.
 
 After the footnote/chrome polish, baptism and temptation no longer share
 a leaf. The sheet keeps both, plus John 3:16 and John 14.
@@ -110,8 +112,8 @@ a leaf. The sheet keeps both, plus John 3:16 and John 14.
 | Engine | Typst 0.14.2 |
 | Compiled | 2026-09-11 |
 | Pages | 4 (native 4.75 × 7 in leaves) |
-| Size | 102,248 bytes |
-| SHA-256 | `c69fcc715221e69beafdde713fa2a9ab1edf64a3b630c09a5403ffddd1893311` |
+| Size | 102,718 bytes |
+| SHA-256 | `229d1b8c7839a234b0dae68d1bf674c642ae13bb43b32490c687c470a2a6cd29` |
 | Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (gitignored) |
 | PNGs | `drafts/travel/woc/*.png` (120 dpi) |
 
@@ -124,10 +126,10 @@ a leaf. The sheet keeps both, plus John 3:16 and John 14.
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `woc/matthew-baptism.png` | 150,602 | `fc54d9e48298868e69a424ba23f84e69a66b3799a29542eb071b9971d5f9e4e6` |
-| `woc/matthew-temptation.png` | 146,947 | `aea73767207e3295acfc5584605202b530119e83242e12aa4089fc3d31f9cb4e` |
-| `woc/john-loved.png` | 158,487 | `4f268128903683e38161b9bca0a684de5477c5b110959feb9c4b7e5cac7b7095` |
-| `woc/john-farewell.png` | 161,149 | `7e6540d230f23252a60b9ff2c9ed27f9d59e37d4be65a0db65a9e6657cdf9ee7` |
+| `woc/matthew-baptism.png` | 150,786 | `6e69bc6ee222ff5166a47595810ab208a4989d7b797fe891d3bcdd8bbde2e9d1` |
+| `woc/matthew-temptation.png` | 147,414 | `391936bc46ca129811fa6e106e5a4352323eb5e68a865854de9bf279fdb7721a` |
+| `woc/john-loved.png` | 158,959 | `3144cd9794231d6340e484a9400afd56a874f0d4b59dbc086e085e8efebda817` |
+| `woc/john-farewell.png` | 161,530 | `8975dad6ecbc7ce9fca97e6cea4e018421250131c9a787c0a6e639c86159c1bd` |
 
 ## Running-header QA (2026-09-09)
 

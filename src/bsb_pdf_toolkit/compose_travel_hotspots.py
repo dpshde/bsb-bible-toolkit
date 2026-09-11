@@ -224,6 +224,58 @@ def select_hotspot_pages(
     return chosen
 
 
+def remap_outline(toc: list, source_pages: list[int]) -> list[list]:
+    """Keep Book → Chapter outline entries that land on extracted pages.
+
+    A level-1 book row is kept when any of its chapters (or the book page
+    itself) is extracted. If the book page is not in the extract, the book
+    dest jumps to the first included chapter.
+    """
+    page_map = {src: index + 1 for index, src in enumerate(source_pages)}
+    groups: list[tuple[list | None, list[list]]] = []
+    book_entry = None
+    chapters: list[list] = []
+
+    def flush():
+        nonlocal book_entry, chapters
+        if book_entry is not None or chapters:
+            groups.append((book_entry, chapters))
+        book_entry = None
+        chapters = []
+
+    for entry in toc or []:
+        level = entry[0]
+        if level <= 1:
+            flush()
+            book_entry = list(entry)
+        else:
+            chapters.append(list(entry))
+    flush()
+
+    remapped: list[list] = []
+    for book, book_chapters in groups:
+        mapped_chapters = []
+        for entry in book_chapters:
+            src_page = entry[2]
+            if src_page in page_map:
+                mapped = list(entry)
+                mapped[2] = page_map[src_page]
+                mapped_chapters.append(mapped)
+        book_page = book[2] if book else None
+        if book and book_page in page_map:
+            mapped_book = list(book)
+            mapped_book[2] = page_map[book_page]
+            remapped.append(mapped_book)
+            remapped.extend(mapped_chapters)
+        elif mapped_chapters:
+            if book:
+                mapped_book = list(book)
+                mapped_book[2] = mapped_chapters[0][2]
+                remapped.append(mapped_book)
+            remapped.extend(mapped_chapters)
+    return remapped
+
+
 def extract_sampler_pdf(
     source: Path,
     output: Path,
@@ -236,9 +288,12 @@ def extract_sampler_pdf(
         for page_no in pages:
             if page_no < 1 or page_no > count:
                 raise ValueError(f"{source} has {count} pages; cannot take {page_no}")
+        outline = remap_outline(src.get_toc(), pages)
         out = fitz.open()
         for page_no in pages:
             out.insert_pdf(src, from_page=page_no - 1, to_page=page_no - 1)
+        if outline:
+            out.set_toc(outline)
         out.save(output, deflate=True, garbage=4)
         out.close()
     return output

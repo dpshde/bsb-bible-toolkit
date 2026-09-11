@@ -157,8 +157,9 @@ make travel-woc-qa
 ```
 
 Output: `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf`
-(4 leaves, 102,248 bytes, SHA-256
-`c69fcc715221e69beafdde713fa2a9ab1edf64a3b630c09a5403ffddd1893311`).
+(4 leaves, 102,718 bytes, SHA-256
+`229d1b8c7839a234b0dae68d1bf674c642ae13bb43b32490c687c470a2a6cd29`).
+PDF outline: Matthew → 3, 4; John → 3, 14.
 120 dpi PNG previews: `drafts/travel/woc/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
@@ -191,8 +192,9 @@ metrics proof only.
 ## Current grid-proof artifact
 
 This file is a **metrics proof**, not the loved-face print. Do not treat it
-as FF Milo Serif Text. Notes run in as one wrapping paragraph; there is
-no ruled background and no `GRID PROOF` / `NOT FINAL FACE` footer string.
+as FF Milo Serif Text. Notes run in as one wrapping paragraph in grey
+`rgb(76, 76, 76)`; there is no ruled background and no `GRID PROOF` /
+`NOT FINAL FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
 | Item | Value |
@@ -207,8 +209,8 @@ Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 | Trim | 4.75 in × 7.00 in |
 | Pages | 47 |
 | Links | 3264 |
-| Size | 1,939,744 bytes |
-| SHA-256 | `42c7e1719fbc4bf5d05759fef2f34105ffa85eb6b6f99080eabdabba660c4d87` |
+| Size | 1,946,114 bytes |
+| SHA-256 | `cab5b21628399841f42e9c235d3bd6735f0eb75d2ca9f8bad6b0bca1256001b2` |
 
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.

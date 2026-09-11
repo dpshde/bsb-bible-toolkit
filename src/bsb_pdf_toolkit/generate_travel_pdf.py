@@ -694,6 +694,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 )
 #show footnote.entry: it => context {{
   set text(fill: footnote-ink)
+  show link: set text(fill: footnote-ink)
   let page-num = here().page()
   let notes = query(footnote).filter(n => n.location().page() == page-num)
   if notes.len() == 0 {{
@@ -720,10 +721,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #show heading: none
 #let outline-book(name) = heading(level: 1, outlined: false, bookmarked: true)[#name]
 #let outline-chapter(n) = heading(level: 2, outlined: false, bookmarked: true)[#str(n)]
-#show link: it => {{
-  set text(fill: ink)
-  it
-}}
+#show link: set text(fill: ink)
 
 #let woc(body) = text(fill: woc-blue, font: (body-font, "{body_alias}"))[#body]
 #let divine(body) = text(hyphenate: false)[#smallcaps[#body]]
