@@ -103,7 +103,7 @@ class TravelSpec:
     para_indent_in: float = 0.35
     # Extra space above later #\p prose so 8–10 verses cannot fuse.
     # Not applied to the flush remainder under a chapter drop.
-    para_above_baselines: float = 0.55
+    para_above_baselines: float = 0.75
     target_cpl_min: int = 58
     target_cpl_max: int = 62
     drop_lines: int = 3
@@ -837,13 +837,11 @@ def travel_preamble(
 #let para-indent = {spec.para_indent_in}in
 #let para-above = {spec.para_above_baselines} * baseline-skip
 #let para(body) = block(above: para-above, below: 0pt, spacing: body-leading-gap)[
-  // Typst skips first-line indent on the first para of a container unless
-  // `all` is true. Each USFM \\p is its own block, so `all` must be on.
-  #set par(first-line-indent: (amount: para-indent, all: true))
-  #body
+  // Typst par.first-line-indent does not apply inside these one-shot
+  // blocks (even with all: true). A real leading #h is visible at 120 dpi.
+  #h(para-indent)#body
 ]
 #let para-flush(body) = block(above: 0pt, below: 0pt, spacing: body-leading-gap)[
-  #set par(first-line-indent: (amount: 0pt, all: true))
   #body
 ]
 #let poetry(level, body) = block(

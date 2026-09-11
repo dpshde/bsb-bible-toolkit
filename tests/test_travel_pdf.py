@@ -115,7 +115,7 @@ def test_spec_line_matches_page():
     assert SPEC.margin_outside_in == pytest.approx(0.55)
     assert SPEC.measure_in == pytest.approx(3.50)
     assert SPEC.para_indent_in == pytest.approx(0.35)
-    assert SPEC.para_above_baselines == pytest.approx(0.55)
+    assert SPEC.para_above_baselines == pytest.approx(0.75)
     assert SPEC.margin_head_in + SPEC.margin_foot_in + text_block_in == pytest.approx(7.0)
     assert SPEC.target_cpl_min == 58
     assert SPEC.target_cpl_max == 62
@@ -124,10 +124,10 @@ def test_spec_line_matches_page():
     assert leading_gap_pt() == 2.0
     assert SPEC.body_leading_extra_pt == 0.65
     assert body_leading_gap_pt() == pytest.approx(2.65)
-    assert para_above_pt() == pytest.approx(5.775)
+    assert para_above_pt() == pytest.approx(7.875)
     preamble = travel_preamble()
     assert "#let para-indent = 0.35in" in preamble
-    assert "first-line-indent: (amount: para-indent, all: true)" in preamble
+    assert "#h(para-indent)" in preamble
     assert "#let para-above =" in preamble
     assert "above: para-above" in preamble
     assert "#let para-flush(body)" in preamble
