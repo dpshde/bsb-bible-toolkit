@@ -177,6 +177,7 @@ def select_woc_pages(
     missing = [name for name in WOC_QA_BOOKS if name not in books]
     if missing:
         raise ValueError(f"WOC QA must include Matthew and John; missing {missing}")
+    chosen.sort(key=lambda item: item[1])
     return chosen
 
 

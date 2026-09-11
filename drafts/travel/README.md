@@ -147,6 +147,23 @@ Output: `drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf`
 120 dpi PNG previews: `drafts/travel/headers/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
+## Words of Christ blue QA
+
+`make travel-woc-qa` compiles Matthew + John and extracts four interior
+leaves so cobalt Words of Christ (`\wj` → `#woc`, `rgb(28, 56, 110)`)
+can be checked. Still Source Serif 4, still watermarked
+`GRID PROOF — NOT FINAL FACE`. Not Milo.
+
+```bash
+make travel-woc-qa
+```
+
+Output: `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf`
+(4 leaves, 92,711 bytes, SHA-256
+`3a38e3dc224a7be08be77984d53b2c366ca0715af2986d732c7a09c17d937177`).
+120 dpi PNG previews: `drafts/travel/woc/*.png`.
+Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
+
 ## BSB license
 
 The Berean Standard Bible text is public domain / CC0 (dedicated 30 April

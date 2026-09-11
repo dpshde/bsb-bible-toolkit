@@ -838,11 +838,11 @@ def test_woc_page_selection_skips_duplicate_matthew_leaf():
     chosen = select_woc_pages(pages, catalog)
     assert [spec.slug for spec, _ in chosen] == [
         "matthew-baptism",
-        "john-farewell",
-        "john-loved",
         "matthew-sermon",
+        "john-loved",
+        "john-farewell",
     ]
-    assert [page_no for _, page_no in chosen] == [1, 4, 3, 2]
+    assert [page_no for _, page_no in chosen] == [1, 2, 3, 4]
 
 
 def test_woc_page_selection_keeps_four_when_distinct():
@@ -863,10 +863,10 @@ def test_woc_page_selection_keeps_four_when_distinct():
     assert [spec.slug for spec, _ in chosen] == [
         "matthew-baptism",
         "matthew-temptation",
-        "john-farewell",
         "john-loved",
+        "john-farewell",
     ]
-    assert [page_no for _, page_no in chosen] == [1, 2, 4, 3]
+    assert [page_no for _, page_no in chosen] == [1, 2, 3, 4]
 
 
 def test_woc_speech_and_typst_helpers():

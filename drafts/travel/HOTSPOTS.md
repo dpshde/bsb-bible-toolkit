@@ -93,6 +93,43 @@ Page 2 notes **a–f**; page 3 starts at **a**. Spread PDF SHA-256
 (70,080 bytes). Facing PNGs are unchanged from the 2026-09-03 line-match
 pass.
 
+## Words of Christ blue QA (2026-09-11)
+
+`make travel-woc-qa` compiles Matthew + John and extracts four native
+4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
+`#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Watermark
+`GRID PROOF — NOT FINAL FACE`. Not Milo.
+
+Matthew 3 baptism and Matthew 4 temptation land on the same leaf; the
+sheet keeps that page once and adds the Beatitudes plus two John speech
+leaves (John 3:16 and John 14).
+
+| Item | Value |
+|------|-------|
+| File | `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf` |
+| Regen | `make travel-woc-qa` |
+| Engine | Typst 0.14.2 |
+| Compiled | 2026-09-11 |
+| Pages | 4 (native 4.75 × 7 in leaves) |
+| Size | 92,711 bytes |
+| SHA-256 | `3a38e3dc224a7be08be77984d53b2c366ca0715af2986d732c7a09c17d937177` |
+| Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (117 pages, gitignored) |
+| PNGs | `drafts/travel/woc/*.png` (120 dpi) |
+
+| Leaf | Source page | Header | What to check |
+|------|-------------|--------|---------------|
+| `matthew-baptism` | 6 | `MATTHEW · 3:12–4:6` | “Let it be so now” and “Man shall not live on bread alone” in cobalt; boxed drop 4 |
+| `matthew-sermon` | 8 | `MATTHEW · 4:23–5:12` | Beatitudes from “Blessed are the poor in spirit”; boxed drop 5 |
+| `john-loved` | 74 | `JOHN · 3:15–32` | 3:16–21 speech in cobalt; Baptist testimony after returns to ink |
+| `john-farewell` | 101 | `JOHN · 13:30–14:4` | Upper-room speech through “Do not let your hearts be troubled”; boxed drop 14 |
+
+| PNG | Bytes | SHA-256 |
+|-----|-------|---------|
+| `woc/matthew-baptism.png` | 148,420 | `d4e5f3bf73b27ff4513eed4e342147a49398717946fd96fdaae3a714918f8fc4` |
+| `woc/matthew-sermon.png` | 135,988 | `8adca148614af0c64a792ceab45663f14c434cb90505846133de2feded4f59a3` |
+| `woc/john-loved.png` | 166,957 | `ec1e7ec4b31b4160042e1b6c57b88592687b83b1de66621e5d2724555b63907b` |
+| `woc/john-farewell.png` | 159,239 | `7f81eb690deec3d5eec599f78137ff2e0391643459427b75867bffd31c312cd6` |
+
 ## Running-header QA (2026-09-09)
 
 `make travel-running-headers-qa` compiles John and extracts four interior
