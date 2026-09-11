@@ -31,6 +31,7 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     merge_travel_pdfs,
     is_hebrew_script,
     body_leading_gap_pt,
+    book_part_slug,
     leading_gap_pt,
     main,
     measure_em,
@@ -433,6 +434,26 @@ def test_preamble_section_heads_have_air_above_and_below():
     assert "0.5 * baseline-skip" in book_snippet
     assert "body-leading-gap" in preamble
     assert "leading: body-leading-gap" in preamble
+    assert "hide-opening-chrome = true" in preamble
+    shown = travel_preamble(hide_opening_chrome=False)
+    assert "hide-opening-chrome = false" in shown
+
+
+def test_book_part_slug_and_page_start(tmp_path):
+    assert book_part_slug(1, "1 Samuel") == "01-1-samuel"
+    assert book_part_slug(22, "Song of Songs") == "22-song-of-songs"
+    usfm = write_sample_zip(tmp_path / "sample.zip")
+    out = tmp_path / "matt.typ"
+    generate_travel_typst(
+        usfm,
+        out,
+        books=("John",),
+        hide_opening_chrome=False,
+        page_start=81,
+    )
+    text = out.read_text()
+    assert "hide-opening-chrome = false" in text
+    assert "#counter(page).update(81)" in text
 
 
 def test_preamble_pdf_outline_is_heading_bookmarks():

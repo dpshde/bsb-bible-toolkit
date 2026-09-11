@@ -529,7 +529,12 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
     return [line] if line else []
 
 
-def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str:
+def travel_preamble(
+    spec: TravelSpec = SPEC,
+    *,
+    grid_proof: bool = False,
+    hide_opening_chrome: bool = True,
+) -> str:
     leading = leading_gap_pt(spec)
     body_leading = body_leading_gap_pt(spec)
     r, g, b = spec.woc_rgb
@@ -544,9 +549,12 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
             f"Loved face is {spec.body_font} (Text optical). "
             "Never present this stand-in as the loved face."
         )
-        proof_lets = "#let grid-proof = true\n"
+        proof_lets = (
+            "#let grid-proof = true\n"
+            f"#let hide-opening-chrome = {'true' if hide_opening_chrome else 'false'}\n"
+        )
         page_background = "none"
-        footer_block = '''    if here().page() == 1 {
+        footer_block = '''    if here().page() == 1 and hide-opening-chrome {
       none
     } else {
       align(center, counter(page).display())
@@ -556,9 +564,12 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
         head_font = spec.head_font
         body_alias = spec.body_font_alias
         face_comment = f"Face: {spec.body_font} (Text optical). Do not substitute Source Serif."
-        proof_lets = "#let grid-proof = false\n"
+        proof_lets = (
+            "#let grid-proof = false\n"
+            f"#let hide-opening-chrome = {'true' if hide_opening_chrome else 'false'}\n"
+        )
         page_background = "none"
-        footer_block = '''    if here().page() == 1 {
+        footer_block = '''    if here().page() == 1 and hide-opening-chrome {
       none
     } else {
       align(center, counter(page).display())
@@ -620,7 +631,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
   header: context {{
     // Per-page letter numbering (Typst docs: reset counter(footnote) in the header).
     counter(footnote).update(0)
-    if here().page() == 1 {{
+    if here().page() == 1 and hide-opening-chrome {{
       none
     }} else {{
       set text(font: head-font, size: {spec.running_head_pt}pt, fill: ink, tracking: 0.12em)
@@ -832,11 +843,21 @@ def generate_travel_typst(
     spec: TravelSpec = SPEC,
     *,
     grid_proof: bool = False,
+    hide_opening_chrome: bool = True,
+    page_start: int = 1,
 ):
     parsed = parse_usfm_zip(usfm_zip, book_names=list(books))
     if not parsed:
         raise ValueError(f"No BSB books matched {books!r} in {usfm_zip}")
-    lines = [travel_preamble(spec, grid_proof=grid_proof)]
+    lines = [
+        travel_preamble(
+            spec,
+            grid_proof=grid_proof,
+            hide_opening_chrome=hide_opening_chrome,
+        )
+    ]
+    if page_start != 1:
+        lines.append(f"#counter(page).update({int(page_start)})")
     for book_index, book in enumerate(parsed):
         if book_index:
             lines.append("#pagebreak()")
@@ -933,6 +954,59 @@ def compile_typst(input_typ: Path, output_pdf: Path, font_dir: Path):
         str(output_pdf),
     ]
     return subprocess.run(cmd, check=False)
+
+
+def pdf_page_count(path: Path) -> int:
+    import fitz
+
+    with fitz.open(path) as doc:
+        return doc.page_count
+
+
+def book_part_slug(index: int, name: str) -> str:
+    safe = "".join(ch.lower() if ch.isalnum() else "-" for ch in name).strip("-")
+    safe = "-".join(part for part in safe.split("-") if part)
+    return f"{index:02d}-{safe}"
+
+
+def compile_canon_by_book(
+    usfm_zip: Path,
+    books: list[str],
+    output_pdf: Path,
+    font_dir: Path,
+    work_dir: Path,
+    *,
+    grid_proof: bool = True,
+) -> int:
+    """Compile each book on its own, then merge. Used when a 66-book Typst run OOMs."""
+    parts: list[Path] = []
+    page_start = 1
+    work_dir.mkdir(parents=True, exist_ok=True)
+    for index, book in enumerate(books):
+        slug = book_part_slug(index + 1, book)
+        suffix = "grid-proof" if grid_proof else "print"
+        part_typ = work_dir / f"book-{slug}-{suffix}.typ"
+        part_pdf = work_dir / f"book-{slug}-{suffix}.pdf"
+        generate_travel_typst(
+            usfm_zip,
+            part_typ,
+            books=(book,),
+            grid_proof=grid_proof,
+            hide_opening_chrome=(index == 0),
+            page_start=page_start,
+        )
+        print(f"Wrote Typst source: {part_typ} (1 book, page start {page_start})")
+        result = compile_typst(part_typ, part_pdf, font_dir)
+        if result.returncode != 0:
+            print(f"Typst compile failed for {book}.", file=sys.stderr)
+            return result.returncode
+        count = pdf_page_count(part_pdf)
+        print(f"Wrote PDF: {part_pdf} ({count} pages)")
+        parts.append(part_pdf)
+        page_start += count
+    merge_travel_pdfs(parts, output_pdf)
+    print(f"Wrote merged PDF: {output_pdf} ({page_start - 1} pages, {len(parts)} books)")
+    return 0
 
 
 def merge_travel_pdfs(sources: list[Path], output: Path) -> Path:
@@ -1046,35 +1120,22 @@ def main(argv=None):
         return exc.exit_code
 
     result = compile_typst(args.typst_out, args.output_pdf, args.font_dir)
-    if result.returncode != 0 and args.all_books and args.testament == "all":
+    if result.returncode != 0 and args.all_books:
         print(
-            "Full-canon Typst compile failed; building OT and NT, then merging.",
+            "Canon Typst compile failed; compiling one book at a time, then merging.",
             file=sys.stderr,
         )
-        parts = []
-        for testament in ("ot", "nt"):
-            part_pdf, part_typ, part_fonts = default_output_paths(
-                grid_proof=args.grid_proof, all_books=True, testament=testament
-            )
-            part_books = select_travel_books(all_books=True, testament=testament)
-            generate_travel_typst(
-                usfm_zip, part_typ, books=part_books, grid_proof=args.grid_proof
-            )
-            print(f"Wrote Typst source: {part_typ} ({len(part_books)} books)")
-            part = compile_typst(part_typ, part_pdf, part_fonts)
-            if part.returncode != 0:
-                print(
-                    f"{testament.upper()} Typst compile failed. Source was still generated.",
-                    file=sys.stderr,
-                )
-                return part.returncode
-            print(f"Wrote PDF: {part_pdf}")
-            parts.append(part_pdf)
-        merge_travel_pdfs(parts, args.output_pdf)
-        print(f"Wrote merged PDF: {args.output_pdf}")
-        if args.grid_proof:
+        code = compile_canon_by_book(
+            usfm_zip,
+            books,
+            args.output_pdf,
+            args.font_dir,
+            args.typst_out.parent,
+            grid_proof=args.grid_proof,
+        )
+        if code == 0 and args.grid_proof:
             print(GRID_PROOF_NOTE, file=sys.stderr)
-        return 0
+        return code
     if result.returncode != 0:
         print("Typst compile failed. Source was still generated.", file=sys.stderr)
         return result.returncode
