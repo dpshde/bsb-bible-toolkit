@@ -6,17 +6,17 @@ Watermarked metrics PDF only. Stand-in face is Source Serif 4 (SIL OFL).
 Compile: `make travel-bible-grid-proof`
 
 Seeded 16-page visual QA (2026-09-11): [`qa-random/README.md`](qa-random/README.md)
-(`make travel-random-qa`, seed `20260911`). Page numbers follow the 2,365-page
-compile. `Next:` and `|OSIS` leaks are gone. Book titles and the Psalm 119
-Lamp title have more air.
+(`make travel-random-qa`, seed `20260911`). Older sample page numbers follow
+an earlier compile. `Next:` and `|OSIS` leaks are gone. Book titles and the
+Psalm 119 Lamp title have more air.
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` |
 | Engine | Typst 0.14.2 (per-book compile + merge; one-shot canon OOMs here) |
-| Pages | 2433 |
-| Bytes | 32,150,589 (~30.7 MiB) |
-| SHA-256 | `43c389f0f0c5b08df9cde98dbe9f4fa877d3d6e7f44367f6020a86e7e5a50548` |
+| Pages | 2661 |
+| Bytes | 33,374,612 (~31.8 MiB) |
+| SHA-256 | `afbe698b426725029c25066c0eebc3753271e0ae6591e9cfe9487eb38de77c17` |
 | Trim | 4.75 in × 7.00 in (342 × 504 pt) |
 | Books | 66, Protestant canon order |
 | Outline | Book → Chapter (66 books, 1,189 chapter dests) |
@@ -30,7 +30,7 @@ Lamp title have more air.
 - Footnote *a* on Matthew 1 showed `1 Chronicles 2:9–10|1CH 2:9-10`. Display text now strips leftover `|OSIS` tails across the canon.
 - “Your Word Is a Lamp to My Feet” sat crushed between Psalm 118:29 and ALEPH / drop 119. Pericope titles before a stanza letter + chapter drop now use `keep-with-break`.
 - Book openers were tight against the running head and first section. Display titles now have two baselines of air above and below.
-- Genesis 16 narrative read as a wall of text. Later `\p` blocks now take a 0.20 in first-line indent, body leading is +0.65 pt, and the measure is 3.68 in. Poetry and the drop paragraph stay flush. Single column kept.
+- Genesis 16 narrative read as a wall of text. Later `\p` blocks now take a **0.35 in** first-line indent (`#h`, because Typst `first-line-indent` does not apply inside one-shot `#para` blocks), **0.75 baseline** extra space above, and a **3.50 in** measure (~58–62 cpl). Flush only immediately under a chapter drop and on USFM `\m`. Poetry and lists stay unindented. Single column kept.
 
 ## Checks
 

@@ -9,7 +9,7 @@ make travel-random-qa
 
 | Item | Value |
 |------|-------|
-| Source | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (2,433 pages) |
+| Source | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (2,661 pages) |
 | Seed | `20260911` |
 | Engine | Typst 0.14.2, 120 dpi PNG, native 4.75 × 7 in |
 | Forced hotspots | Genesis 1 (p.1), Psalm 119 (p.1145), Revelation 22 last leaf (p.2365) |
@@ -18,13 +18,18 @@ Machine scan: no page carries `Berean Standard Bible`, `Travel print sample`,
 `GRID PROOF`, or `NOT FINAL FACE`. No leftover `Next:` and no `|OSIS` /
 `|1CH` footnote tails.
 
-## Requested re-rasters (prose-density pass)
+## Requested re-rasters (hard densify)
 
 | Leaf | Page | PNG |
 |------|------|-----|
-| Genesis 16 Hagar (crop match) | 27 | [`genesis-16-hagar-p0027.png`](genesis-16-hagar-p0027.png) |
-| Psalm 119 ALEPH / Lamp title | 1183 | [`psalm-119-aleph-p1183.png`](psalm-119-aleph-p1183.png) |
-| Matthew 1 opener | 1883 | [`matthew-1-opener-p1883.png`](matthew-1-opener-p1883.png) |
+| Genesis 16 Hagar (closest to the wall crop: drop 16 + 16:1–8) | 31 | [`genesis-16-hagar-p0031.png`](genesis-16-hagar-p0031.png) |
+| Psalm 119 ALEPH / Lamp title | 1315 | [`psalm-119-aleph-p1315.png`](psalm-119-aleph-p1315.png) |
+| Matthew 1 opener | 2045 | [`matthew-1-opener-p2045.png`](matthew-1-opener-p2045.png) |
+
+Hard pass vs the Genesis 16 wall: later `\p` first lines sit **0.35 in**
+in from the measure (measured 75.60 pt on this recto = 0.70 + 0.35),
+with extra space between USFM paragraphs. Verse 2 under the drop stays
+flush. Poetry on Psalm 119 and the Matthew genealogy is not prose-indented.
 
 ## Sample (pass/fail)
 
@@ -71,6 +76,7 @@ grid/watermark, collisions, `Next:`, `|OSIS`): **none on this seed**.
 | `15-uniform-revelation-p2343.png` | 122,584 | `410f226239d854523ee18f2c5b9e65da8b29c8620a0c46df12ff8bc68ce547b4` |
 | `16-ending-revelation-p2365.png` | 72,873 | `27da33c82c5328c53e9b4b0b2020ea9c1a5975b45c246847c0bd1a3484db665b` |
 | `genesis-1-opener-p0001.png` | 102,684 | `7dca9cf6f0b536dc2fdc84c962128360fdab208497a644ff486bd7739072773d` |
-| `matthew-1-opener-p1836.png` | 87,534 | `3a2b506ef535299184ea3dca123f807be74937378f55c06f65f6212988c7a223` |
-| `psalm-119-aleph-p1145.png` | 117,084 | `fcc2a3a7af56c3baa1696b98442093b025611d4094f28fef33c4d31a7eec490e` |
 | `philemon-opener-p2273.png` | 120,269 | `8ddf9c05775f1274c1473cd4a49800ee2b8f092bc986347769cd589acd9d6455` |
+| `genesis-16-hagar-p0031.png` | 101,523 | `7bb628dbd292ed0422562280082063b1b374e401fa2f6cd7ad6a5d49eb9a7353` |
+| `psalm-119-aleph-p1315.png` | 81,716 | `2a403ebe88b36f1377427338b00b745bb888846e9d6933f38612bc74afe07310` |
+| `matthew-1-opener-p2045.png` | 68,434 | `ab586713b49a3fed2c5b1c0d1612d742a6eff129aadffd87c5263a3a4d2193a5` |

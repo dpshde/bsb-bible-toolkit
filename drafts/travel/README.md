@@ -237,8 +237,8 @@ make travel-bible-grid-proof    # 66-book metrics preview
 ```
 
 Output: `drafts/travel/bsb-travel-bible-grid-proof.pdf`
-(2,433 pages, 32,150,589 bytes, SHA-256
-`43c389f0f0c5b08df9cde98dbe9f4fa877d3d6e7f44367f6020a86e7e5a50548`).
+(2,661 pages, 33,374,612 bytes, 113,654 links, SHA-256
+`afbe698b426725029c25066c0eebc3753271e0ae6591e9cfe9487eb38de77c17`).
 Per-book Typst/PDF intermediates stay in `drafts/travel/work/` (gitignored).
 
 If a single compile runs out of memory, `make travel-bible-ot-grid-proof` and
