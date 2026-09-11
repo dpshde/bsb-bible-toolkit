@@ -5,6 +5,9 @@ Watermarked metrics PDF only. Stand-in face is Source Serif 4 (SIL OFL).
 
 Compile: `make travel-bible-grid-proof`
 
+Seeded 16-page visual QA (2026-09-11): [`qa-random/README.md`](qa-random/README.md)
+(`make travel-random-qa`, seed `20260911`). All 16 leaves passed.
+
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` |

@@ -243,8 +243,9 @@ Per-book Typst/PDF intermediates stay in `drafts/travel/work/` (gitignored).
 If a single compile runs out of memory, `make travel-bible-ot-grid-proof` and
 `make travel-bible-nt-grid-proof` build the testaments separately.
 
-Raster QA of typesetting hotspots (Genesis 1, Exodus 20, Psalms, Matthew,
-John → Acts, Revelation 22, tiny books) lives in [`HOTSPOTS.md`](HOTSPOTS.md).
+Seeded random-page visual QA (16 leaves, seed `20260911`) lives in
+[`qa-random/`](qa-random/). Older hotspot notes stay in
+[`HOTSPOTS.md`](HOTSPOTS.md).
 That note records page counts for a local compile; the PDF itself is not
 committed.
 
