@@ -321,6 +321,9 @@ def test_generate_travel_typst_john_sample(tmp_path):
     assert "In the beginning." not in text
     assert "#set page(" in text
     assert "4.75in" in text or "4.75" in text
+    assert '#outline-book("John")' in text
+    assert "#outline-chapter(1)" in text
+    assert "#outline-chapter(2)" in text
 
 
 @pytest.mark.skipif(not USFM_ZIP.exists(), reason="official BSB USFM zip not present")
@@ -361,12 +364,39 @@ def test_preamble_footnotes_run_in_not_stacked():
     preamble = travel_preamble()
     assert "Run-in notes" in preamble
     assert "query(footnote)" in preamble
-    assert "footnote.entry(indent: 0pt, gap: 0pt)" in preamble
+    assert "footnote.entry(" in preamble
+    assert "indent: 0pt" in preamble
     assert ".join([#h(0.7em)])" in preamble
     assert "notes.first().location()" in preamble
     grid = travel_preamble(grid_proof=True)
     assert "query(footnote)" in grid
     assert GRID_PROOF_WATERMARK not in grid
+
+
+def test_preamble_footnotes_use_grey_ink():
+    preamble = travel_preamble()
+    fr, fg, fb = SPEC.footnote_ink_rgb
+    assert fr == fg == fb
+    assert fr > SPEC.ink_rgb[0]
+    assert f"footnote-ink = rgb({fr}, {fg}, {fb})" in preamble
+    assert "fill: footnote-ink" in preamble
+    assert "stroke: 0.35pt + footnote-ink" in preamble
+    grid = travel_preamble(grid_proof=True)
+    assert "fill: footnote-ink" in grid
+
+
+def test_preamble_pdf_outline_is_heading_bookmarks():
+    preamble = travel_preamble()
+    assert "#set heading(numbering: none)" in preamble
+    assert "#show heading: none" in preamble
+    assert "#let outline-book(name)" in preamble
+    assert "#let outline-chapter(n)" in preamble
+    assert "bookmarked: true" in preamble
+    assert "outlined: false" in preamble
+    assert "#outline(" not in preamble
+    grid = travel_preamble(grid_proof=True)
+    assert "#let outline-book(name)" in grid
+    assert "#outline(" not in grid
 
 
 def test_require_grid_proof_fonts_rejects_milo_as_stand_in(tmp_path):
@@ -506,6 +536,11 @@ def test_all_books_typst_is_canon_order_and_sample_only_on_first(tmp_path):
     assert "BOOK I" in text
     assert "#counter(footnote).update(0)" in text
     assert "א" not in text
+    assert '#outline-book("Genesis")' in text
+    assert '#outline-book("Psalm")' in text
+    assert '#outline-book("John")' in text
+    assert text.index('#outline-book("Genesis")') < text.index('#book-title("Genesis"')
+    assert text.index("#outline-chapter(1)") < text.index("In the beginning.")
 
 
 def test_hebrew_script_detection():

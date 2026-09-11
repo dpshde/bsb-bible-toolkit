@@ -56,8 +56,9 @@ If Milo is not on the workstation, a **metrics-only** PDF can still be
 compiled so trim, hyphenation, drop cap, WOC blue, and footnotes can
 be checked digitally. The stand-in is Source Serif 4 (SIL OFL 1.1)
 from `fonts/grid-proof/`. Interior pages keep a centered folio and do
-not print `GRID PROOF — NOT FINAL FACE` or a ruled background. It is
-never presented as FF Milo Serif Text.
+not print `GRID PROOF — NOT FINAL FACE` or a ruled background. Footnotes
+run in and sit in a lighter grey. The PDF outline is Book → Chapter.
+It is never presented as FF Milo Serif Text.
 
 ```bash
 make travel-john-grid-proof

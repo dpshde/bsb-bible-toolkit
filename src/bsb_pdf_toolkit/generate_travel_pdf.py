@@ -101,6 +101,7 @@ class TravelSpec:
     drop_lines: int = 3
     footnote_pt: float = 7.0
     footnote_baseline_pt: float = 8.5
+    footnote_ink_rgb: tuple[int, int, int] = (76, 76, 76)
     running_head_pt: float = 7.0
     folio_pt: float = 7.0
     section_pt: float = 8.5
@@ -524,6 +525,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
     leading = leading_gap_pt(spec)
     r, g, b = spec.woc_rgb
     ir, ig, ib = spec.ink_rgb
+    fr, fg, fb = spec.footnote_ink_rgb
     if grid_proof:
         body_font = GRID_PROOF_FAMILY
         head_font = GRID_PROOF_FAMILY
@@ -572,6 +574,7 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 #let body-font = "{body_font}"
 #let head-font = "{head_font}"
 #let ink = rgb({ir}, {ig}, {ib})
+#let footnote-ink = rgb({fr}, {fg}, {fb})
 #let woc-blue = rgb({r}, {g}, {b})
 #let chapter-label = state("chapter-label", "JOHN")
 #let mark-run(label) = {{
@@ -678,9 +681,19 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
 // Run-in notes: the first entry on the page draws every note as one
 // wrapping paragraph; later entries collapse so they do not stack.
 #set footnote(numbering: "a")
-#set footnote.entry(indent: 0pt, gap: 0pt)
-#show footnote.entry: set text(font: body-font, size: {spec.footnote_pt}pt, fallback: false)
+#set footnote.entry(
+  indent: 0pt,
+  gap: 0pt,
+  separator: line(length: 30%, stroke: 0.35pt + footnote-ink),
+)
+#show footnote.entry: set text(
+  font: body-font,
+  size: {spec.footnote_pt}pt,
+  fill: footnote-ink,
+  fallback: false,
+)
 #show footnote.entry: it => context {{
+  set text(fill: footnote-ink)
   let page-num = here().page()
   let notes = query(footnote).filter(n => n.location().page() == page-num)
   if notes.len() == 0 {{
@@ -701,6 +714,12 @@ def travel_preamble(spec: TravelSpec = SPEC, *, grid_proof: bool = False) -> str
     }}).join([#h(0.7em)])
   }}
 }}
+// PDF sidebar: Typst emits bookmarks from heading. bookmarked: true with
+// outlined: false keeps Book → Chapter in the outline without a printed TOC.
+#set heading(numbering: none)
+#show heading: none
+#let outline-book(name) = heading(level: 1, outlined: false, bookmarked: true)[#name]
+#let outline-chapter(n) = heading(level: 2, outlined: false, bookmarked: true)[#str(n)]
 #show link: it => {{
   set text(fill: ink)
   it
@@ -827,11 +846,14 @@ def generate_travel_typst(
         running = (book.get("heading") or book["book"]).upper()
         sample = "true" if book_index == 0 else "false"
         first_chapter = book["chapters"][0]["chapter"] if book["chapters"] else 1
+        outline_name = book.get("heading") or book["book"]
+        lines.append(f"#outline-book({typst_string(outline_name)})")
         lines.append(f"#mark-run({typst_string(f'{running} · {first_chapter}')})")
         lines.append(f"#book-title({typst_string(display)}, sample: {sample})")
         for chapter in book["chapters"]:
             heading_ranges(chapter, book["osis"])
             running_chapter = f"{running} · {chapter['chapter']}"
+            lines.append(f"#outline-chapter({int(chapter['chapter'])})")
             lines.append(f"#mark-run({typst_string(running_chapter)})")
             chapter_open = True
             chapter_xrefs_emitted = False

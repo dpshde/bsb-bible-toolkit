@@ -120,8 +120,9 @@ as the loved face.
   the counter as a safety net. Long books such as Psalms therefore stay on
   short markers instead of running into `aa` / `cdh`. `\fqa` alternate
   readings in italic. Notes **run in** as one wrapping paragraph at the
-  foot (not each letter on its own line). Notes are not moved into the
-  side margin.
+  foot (not each letter on its own line), in a slightly lighter grey than
+  body ink (`rgb(76, 76, 76)`). In-text letter markers stay body ink.
+  Notes are not moved into the side margin.
 - **Words of Christ:** USFM `\wj` … `\wj*` in the travel cobalt, same Text
   face. Verse numbers stay ink even when a speech wraps a `\v` marker.
 
@@ -137,10 +138,15 @@ as the loved face.
 - Folio, 7 pt, centered in the foot.
 - Folios and running heads live in the head/foot margins, not in the 42-line
   text block.
+- **PDF outline:** Typst `heading` bookmarks (no printed `#outline()`).
+  Level 1 is the USFM `\h` book name; level 2 is the chapter number.
+  `#show heading: none` keeps those marks out of the text block. The
+  sidebar is Book → Chapter.
 
 ## 6. Color and ink
 
 - Body ink: `rgb(20, 20, 20)` (near-black, not rich-black build-up).
+- Footnote block: `rgb(76, 76, 76)` (markers + note text at the foot).
 - Words of Christ: `rgb(28, 56, 110)`. Print as a single spot or process
   match; do not use a red-letter palette.
 - Rules in the drop cap: same ink, 0.28–0.45 pt.
