@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compatibility shim for the travel John print sample."""
+"""Compatibility shim for the travel print composer (John or full canon)."""
 
 from pathlib import Path
 import sys

@@ -2,7 +2,8 @@
 
 A compact print specification for a pocket/travel Berean Standard Bible.
 This sheet is written so a human typesetter could recreate the book without
-reading the generator. The first composed artifact is **John only**.
+reading the generator. John remains the grammar sample; a 66-book grid-proof
+compile uses this same spec and is still not the loved face.
 
 Engine: Typst 0.14+ (paragraph composer, `linebreaks: "optimized"`,
 `par.justification-limits`). Not WeasyPrint, paged.js, or browser print CSS.
@@ -17,11 +18,11 @@ Text source: this toolkit’s official BSB USFM
 |------|-------|
 | Trim | 4.75 in × 7.00 in (portrait) |
 | Binding | Two-sided; inside/outside margins swap on verso/recto |
-| Inside (gutter) | 0.55 in |
-| Outside | 0.40 in |
+| Inside (gutter) | 0.70 in |
+| Outside | 0.55 in |
 | Head | 0.50 in |
 | Foot | 0.375 in |
-| Measure | 3.80 in (32.2 em at 8.5 pt) |
+| Measure | 3.50 in (29.6 em at 8.5 pt) |
 | Text-block height | 6.125 in |
 | Lines per page | 42 |
 | Baseline grid | 10.5 pt, shared by verso and recto |
@@ -30,9 +31,10 @@ Head + foot + 42 × 10.5 pt = 0.50 in + 0.375 in + 6.125 in = 7.00 in.
 Every body, heading, and xref interval is an integer multiple of 10.5 pt so
 facing pages line-match.
 
-Target characters per line: **60–70**. At 8.5 pt Text optical, 3.80 in is
-about 32 em ≈ 65–70 English characters. If a later proof runs outside 60–70,
-change measure or size — do not jump to a 6×9 10 pt desk spec.
+Target characters per line: **58–62**. At 8.5 pt Text optical, 3.50 in is
+about 29.6 em ≈ 58–62 English characters (about 0.18 in shorter than the
+3.68 in pass that still read as a brick). If a later proof runs outside
+58–62, change measure or size — do not jump to a 6×9 10 pt desk spec.
 
 ## 2. Type
 
@@ -70,58 +72,97 @@ Designer: Mike Abbink. See <https://mikeabbink.com/typefaces/milo-serif/>.
 Place files in `fonts/milo/` (gitignored). This repository does not ship the
 font.
 
-A separate **metrics-only** path exists for digital grid checks while Milo is
-absent. See §8. That PDF is watermarked `GRID PROOF — NOT FINAL FACE` and
-must never be presented as the loved face.
+A separate **metrics-only** path exists for digital checks while Milo is
+absent. See §8. That PDF uses Source Serif 4 and must never be presented
+as the loved face.
 
 ## 3. Composition
 
-- Language `en`, hyphenation on.
+- Language `en`, hyphenation on. Hyphenation cost is **80%** of Typst’s
+  default (the previous 120% left the travel measure almost
+  unhyphenated). Divine-name spans (`\nd` → `#divine`) set
+  `hyphenate: false` so LORD / GOD do not break.
 - Justified body; Typst optimized paragraph line-breaks (whole-paragraph
   composer, not first-fit).
 - Justification limits: word space 80–150%; tracking −0.005 em to +0.01 em
   to limit rivers without obvious letterspacing.
 - Optical margin alignment: Typst `text.overhang: true` (hanging hyphen and
   punctuation into the margin when the engine supports it).
-- Paragraph spacing equals line leading (2 pt gap + 8.5 pt line box = 10.5 pt
-  baselineskip) so stacked paragraphs stay on the grid.
+- Structural grid stays 10.5 pt (drop-cap height, poetry, section math).
+  Body prose leading is **+0.65 pt** (2.65 pt gap + 8.5 pt line box) so
+  long narrative is less of a brick. Poetry keeps the 2 pt grid gap.
+- Later prose paragraphs (`\p` and equivalents) take a **0.35 in**
+  first-line indent (a leading `#h(0.35in)` — Typst
+  `par.first-line-indent` does not apply inside these one-shot
+  blocks). They also take **0.75 baseline** extra space above so
+  consecutive `\p` blocks cannot fuse into one brick. The paragraph
+  under a chapter drop stays flush; so does USFM `\m`. Poetry (`\q*`)
+  and lists (`\li*`) are not indented and do not take the extra
+  paragraph gap.
 - No orphan of a verse number: the verse numeral is boxed with a thin space
   so it cannot sit alone at the end of a line.
 - Widows/orphans of paragraph lines: Typst default costs (on).
-- Poetry (`\q1`, `\q2`) indents by 0.14 in per level, still on the grid.
+- Poetry (`\q1`, `\q2`) is **ragged-right** (not justified like body prose).
+  `\q1` sits on the text measure; each further level steps **0.18 in** so
+  the parallel colon is obvious. Wrapped verse lines hang 0.18 in. `\b`
+  stanza pauses stay one extra baseline (21 pt). Still on the grid.
 - The superscription `\pc` (e.g. the titulus) is a centered small-cap line.
 
 ## 4. Structure
 
 - **Single column.**
-- **Book opening:** small-cap “Berean Standard Bible”, then the USFM title
-  (`\toc1` / `\mt1`, for John: *The Gospel According to John*).
+- **Book opening:** the USFM title only (`\toc1` / `\mt1`, for John:
+  *The Gospel According to John*), with half a baseline above and below.
+  Do not repeat “Berean Standard Bible”, the travel-sample line, or a
+  stand-in-face note on book pages.
 - **Chapter drop cap:** original geometric construction — double-ruled square
   the height of 3 baselines (31.5 pt), hairline mid-edge ticks, chapter
   numeral centered. Sits on the grid beside verse 1. Not a decorated letter,
   not Humble Lamb drop-cap art, not Doré.
-- **Section headings:** BSB `\s1` titles in the head face, one baseline above.
+- **Section headings:** BSB `\s1` titles in the head face, **1.5
+  baselines above** and **0.5 baseline below**. The title, its `\r`
+  line, and the following verse or chapter drop are wrapped in an
+  unbreakable `#keep-with` block (sticky is a backup) so a pericope
+  header never sits alone at the page foot.
 - **Chapter-start cross-references:** the first USFM `\r` block in a chapter
   is set as a 7 pt italic justified line under that opening heading. Later
   `\r` blocks stay with their section headings. If a chapter has no `\r`,
   none are invented.
-- **Translator notes:** USFM `\f` → footnotes (letter markers). `\fqa`
-  alternate readings in italic. Notes are not moved into the side margin.
+- **Translator notes:** USFM `\f` → footnotes (letter markers). Numbering is
+  alphabetic (`a`, `b`, `c` …) and **resets at the start of every page**
+  (the page header zeros `counter(footnote)`). A book pagebreak also resets
+  the counter as a safety net. Long books such as Psalms therefore stay on
+  short markers instead of running into `aa` / `cdh`. `\fqa` alternate
+  readings in italic. Notes **run in** as one wrapping paragraph at the
+  foot (not each letter on its own line), in a slightly lighter grey than
+  body ink (`rgb(76, 76, 76)`). In-text letter markers stay body ink.
+  Notes are not moved into the side margin.
 - **Words of Christ:** USFM `\wj` … `\wj*` in the travel cobalt, same Text
   face. Verse numbers stay ink even when a speech wraps a `\v` marker.
 
 ## 5. Running matter
 
 - Page 1 (title) has no header or folio.
-- Running head, 7 pt small caps, outer: `JOHN · <chapter>` (book heading
-  from USFM `\h`).
+- Running head, 7 pt small caps, outer: `JOHN · <chapter>:<first>–<last>`
+  (book heading from USFM `\h`, plus the first and last verse marks on that
+  page). Same-chapter ranges omit the repeated chapter (`JOHN · 4:17–38`).
+  A page that crosses chapters uses `JOHN · 3:31–4:2`. If a page has no
+  verse marks, fall back to `JOHN · <chapter>`.
+- Verso (even) aligns left; recto (odd) aligns right.
 - Folio, 7 pt, centered in the foot.
 - Folios and running heads live in the head/foot margins, not in the 42-line
   text block.
+- **PDF outline:** Typst `heading` bookmarks (no printed `#outline()`).
+  Level 1 is the USFM `\h` book name; level 2 is the chapter number.
+  `#show heading: none` keeps those marks out of the text block. The
+  sidebar is Book → Chapter. The chapter dest is emitted with the first
+  body paragraph (after any opening `\s1`), so John 14 lands on the
+  drop, not on the previous chapter’s last page.
 
 ## 6. Color and ink
 
 - Body ink: `rgb(20, 20, 20)` (near-black, not rich-black build-up).
+- Footnote block: `rgb(76, 76, 76)` (markers + note text at the foot).
 - Words of Christ: `rgb(28, 56, 110)`. Print as a single spot or process
   match; do not use a red-letter palette.
 - Rules in the drop cap: same ink, 0.28–0.45 pt.
@@ -131,7 +172,9 @@ must never be presented as the loved face.
 - Not Humble Lamb BSB Maker’s 6×9 desk size or 10 pt setting.
 - Not a copy of Maker fonts, Doré illustrations, drop-cap artwork, or
   product assets.
-- Not a whole-canon pagination yet. John is the proof of the travel grammar.
+- John remains the grammar proof. A 66-book Protestant-canon grid-proof
+  compile exists (`make travel-bible-grid-proof`) at this same trim and type
+  spec. That PDF is still a labeled stand-in, not the loved face.
 
 ## 8. Grid proof versus loved face
 
@@ -141,12 +184,12 @@ stand-in:
 
 | Item | Loved-face print | Grid proof |
 |------|------------------|------------|
-| Command | `make travel-john` | `make travel-john-grid-proof` |
+| Command | `make travel-john` | `make travel-john-grid-proof` / `make travel-bible-grid-proof` |
 | Face | FF Milo Serif Text | Source Serif 4 (SIL OFL 1.1) |
 | Font dir | `fonts/milo/` | `fonts/grid-proof/` |
-| Output | `drafts/travel/bsb-travel-john.pdf` | `drafts/travel/bsb-travel-john-grid-proof.pdf` |
-| Watermark | none | `GRID PROOF — NOT FINAL FACE` on every page |
-| Overlay | none | 42-line baseline grid in the text block |
+| Output | `drafts/travel/bsb-travel-john.pdf` | `bsb-travel-john-grid-proof.pdf` or `bsb-travel-bible-grid-proof.pdf` |
+| Watermark | none | none (folio only; no `GRID PROOF` / `NOT FINAL FACE` string) |
+| Overlay | none | none (no ruled background) |
 
 The stand-in exists so trim, margins, 10.5 pt grid, hyphenation, drop cap,
 WOC blue, and footnote placement can be checked digitally. It is not Milo,
@@ -157,5 +200,7 @@ not a candidate loved face, and not a FontFont/MyFonts specimen.
 See `drafts/travel/README.md`.
 
 - Loved face (after Milo is dropped in): `make travel-john`
-- Metrics only (OFL stand-in): `make travel-john-grid-proof`
+- Metrics only, John (OFL stand-in): `make travel-john-grid-proof`
+- Mixam John dummy (52-page saddle-stitch, OFL stand-in): `make travel-john-mixam`
+- Metrics only, 66-book canon (OFL stand-in): `make travel-bible-grid-proof`
 - Markup only: `make travel-john-typst`

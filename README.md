@@ -142,12 +142,20 @@ make travel-john
 The loved-face print target fails closed if those fonts are missing. It will
 not download Milo, and it will not silently substitute Source Serif or Lexend.
 
-A separate metrics compile, watermarked `GRID PROOF — NOT FINAL FACE`, uses
-the OFL stand-in in `fonts/grid-proof/`. That PDF is not the loved face.
+A separate metrics compile uses the OFL stand-in in `fonts/grid-proof/`.
+That PDF is not the loved face.
 
 ```bash
 make travel-john-typst          # markup only; no fonts required
-make travel-john-grid-proof     # watermarked OFL metrics PDF; not Milo
+make travel-john-grid-proof     # John OFL metrics PDF; not Milo
+make travel-john-mixam          # John Mixam saddle-stitch dummy (52 pp); not Milo
+make travel-john-spreads        # 2-up John openings 2–3, 4–5, 10–11; not Milo
+make travel-hotspot-sampler     # compact committed hotspot leaves; not Milo
+make travel-hyphenation-qa      # John/poetry/Genesis hyphenation leaves; not Milo
+make travel-poetry-qa           # Psalm 1 + Psalm 119 poetry leaves; not Milo
+make travel-running-headers-qa  # John verso/recto running-header leaves; not Milo
+make travel-woc-qa              # Matthew/John Words of Christ blue leaves; not Milo
+make travel-bible-grid-proof    # 66-book OFL metrics PDF; not Milo; do not commit
 PYTHONPATH=src python -m bsb_pdf_toolkit.generate_travel_pdf --help
 ```
 

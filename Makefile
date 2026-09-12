@@ -10,17 +10,55 @@ TRAVEL_PDF := drafts/travel/bsb-travel-john.pdf
 TRAVEL_TYP := drafts/travel/work/john.typ
 TRAVEL_GRID_PDF := drafts/travel/bsb-travel-john-grid-proof.pdf
 TRAVEL_GRID_TYP := drafts/travel/work/john-grid-proof.typ
+TRAVEL_BIBLE_GRID_PDF := drafts/travel/bsb-travel-bible-grid-proof.pdf
+TRAVEL_BIBLE_GRID_TYP := drafts/travel/work/bible-grid-proof.typ
+TRAVEL_BIBLE_OT_GRID_PDF := drafts/travel/bsb-travel-bible-ot-grid-proof.pdf
+TRAVEL_BIBLE_OT_GRID_TYP := drafts/travel/work/bible-ot-grid-proof.typ
+TRAVEL_BIBLE_NT_GRID_PDF := drafts/travel/bsb-travel-bible-nt-grid-proof.pdf
+TRAVEL_BIBLE_NT_GRID_TYP := drafts/travel/work/bible-nt-grid-proof.typ
+TRAVEL_SPREADS_PDF := drafts/travel/bsb-travel-john-spreads-grid-proof.pdf
+TRAVEL_SPREADS_DIR := drafts/travel/spreads
+TRAVEL_HOTSPOT_PDF := drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf
+TRAVEL_HOTSPOT_DIR := drafts/travel/hotspots
+TRAVEL_HYPHEN_PDF := drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf
+TRAVEL_HYPHEN_DIR := drafts/travel/hyphenation
+TRAVEL_POETRY_PDF := drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf
+TRAVEL_POETRY_DIR := drafts/travel/poetry
+TRAVEL_HEADERS_PDF := drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf
+TRAVEL_HEADERS_DIR := drafts/travel/headers
+TRAVEL_WOC_PDF := drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
+TRAVEL_WOC_DIR := drafts/travel/woc
+TRAVEL_RANDOM_QA_DIR := drafts/travel/qa-random
+TRAVEL_MIXAM_PDF := drafts/travel/bsb-travel-john-mixam-dummy.pdf
+TRAVEL_MIXAM_PAGES := 52
 MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
 
-.PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof test-travel test-travel-unit
+.PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
+	travel-john-spreads travel-john-mixam travel-hotspot-sampler \
+	travel-hyphenation-qa \
+	travel-poetry-qa travel-running-headers-qa travel-woc-qa travel-random-qa \
+	travel-bible-grid-proof \
+	travel-bible-ot-grid-proof travel-bible-nt-grid-proof test-travel \
+	test-travel-unit
 
 help:
-	@echo "usfm-source              Download official BSB USFM if missing"
-	@echo "travel-john-typst        Compose John Typst (no fonts required)"
-	@echo "travel-john              Compile the travel John PDF (requires Milo)"
-	@echo "travel-john-grid-proof   Watermarked OFL metrics PDF (not the loved face)"
-	@echo "test-travel              Unit tests for the travel composer"
+	@echo "usfm-source                 Download official BSB USFM if missing"
+	@echo "travel-john-typst           Compose John Typst (no fonts required)"
+	@echo "travel-john                 Compile the travel John PDF (requires Milo)"
+	@echo "travel-john-grid-proof      John OFL metrics PDF (not the loved face)"
+	@echo "travel-john-mixam           John Mixam saddle-stitch dummy (52 pp, not Milo)"
+	@echo "travel-john-spreads         2-up John openings 2–3, 4–5, 10–11 (grid proof)"
+	@echo "travel-hotspot-sampler      Compact committed hotspot leaves (grid proof)"
+	@echo "travel-hyphenation-qa       John/poetry/Genesis hyphenation leaves (grid proof)"
+	@echo "travel-poetry-qa            Psalm 1 + Psalm 119 poetry leaves (grid proof)"
+	@echo "travel-running-headers-qa   John verso/recto running-header leaves (grid proof)"
+	@echo "travel-woc-qa               Matthew/John Words of Christ blue leaves (grid proof)"
+	@echo "travel-random-qa            Seeded ~16-page visual QA from the 66-book PDF"
+	@echo "travel-bible-grid-proof     66-book OFL metrics PDF (not the loved face)"
+	@echo "travel-bible-ot-grid-proof  OT-only fallback of the grid-proof compile"
+	@echo "travel-bible-nt-grid-proof  NT-only fallback of the grid-proof compile"
+	@echo "test-travel                 Unit tests for the travel composer"
 
 usfm-source:
 	@mkdir -p drafts/primary/source
@@ -48,6 +86,78 @@ travel-john-grid-proof: usfm-source
 		--typst-out $(TRAVEL_GRID_TYP) \
 		--font-dir $(GRID_DIR) \
 		--grid-proof
+
+travel-john-mixam:
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_MIXAM_PDF) \
+		--pad-source $(TRAVEL_GRID_PDF) \
+		--pad-pages $(TRAVEL_MIXAM_PAGES)
+
+travel-john-spreads: travel-john-grid-proof
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_spreads \
+		$(TRAVEL_GRID_PDF) $(TRAVEL_SPREADS_PDF) \
+		--png-dir $(TRAVEL_SPREADS_DIR)
+
+travel-hotspot-sampler: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_hotspots \
+		--usfm $(USFM) \
+		--output $(TRAVEL_HOTSPOT_PDF) \
+		--png-dir $(TRAVEL_HOTSPOT_DIR)
+
+travel-hyphenation-qa: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_hyphenation \
+		--usfm $(USFM) \
+		--output $(TRAVEL_HYPHEN_PDF) \
+		--png-dir $(TRAVEL_HYPHEN_DIR)
+
+travel-poetry-qa: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_poetry \
+		--usfm $(USFM) \
+		--output $(TRAVEL_POETRY_PDF) \
+		--png-dir $(TRAVEL_POETRY_DIR)
+
+travel-running-headers-qa: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_headers \
+		--usfm $(USFM) \
+		--output $(TRAVEL_HEADERS_PDF) \
+		--png-dir $(TRAVEL_HEADERS_DIR)
+
+travel-woc-qa: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_woc \
+		--usfm $(USFM) \
+		--output $(TRAVEL_WOC_PDF) \
+		--png-dir $(TRAVEL_WOC_DIR)
+
+travel-random-qa:
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_random_qa \
+		--source-pdf $(TRAVEL_BIBLE_GRID_PDF) \
+		--png-dir $(TRAVEL_RANDOM_QA_DIR)
+
+travel-bible-grid-proof: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_BIBLE_GRID_PDF) \
+		--typst-out $(TRAVEL_BIBLE_GRID_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--all-books
+
+travel-bible-ot-grid-proof: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_BIBLE_OT_GRID_PDF) \
+		--typst-out $(TRAVEL_BIBLE_OT_GRID_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--all-books \
+		--testament ot
+
+travel-bible-nt-grid-proof: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_BIBLE_NT_GRID_PDF) \
+		--typst-out $(TRAVEL_BIBLE_NT_GRID_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--all-books \
+		--testament nt
 
 test-travel test-travel-unit:
 	$(PYTHON) -m pytest tests/test_travel_pdf.py -q

@@ -15,8 +15,40 @@ description = "Compile the compact travel John PDF (licensed FF Milo Serif requi
 run = "make travel-john"
 
 [tasks.travel-john-grid-proof]
-description = "Watermarked OFL metrics PDF (GRID PROOF — NOT FINAL FACE; not Milo)"
+description = "OFL metrics PDF (Source Serif stand-in; not Milo)"
 run = "make travel-john-grid-proof"
+
+[tasks.travel-john-mixam]
+description = "John Mixam saddle-stitch dummy, 52 pages, Source Serif stand-in"
+run = "make travel-john-mixam"
+
+[tasks.travel-john-spreads]
+description = "2-up John grid-proof openings 2–3, 4–5, 10–11 (not Milo)"
+run = "make travel-john-spreads"
+
+[tasks.travel-hotspot-sampler]
+description = "Compact committed hotspot sampler PDF + 120 dpi PNGs (not Milo)"
+run = "make travel-hotspot-sampler"
+
+[tasks.travel-hyphenation-qa]
+description = "Hyphenation QA leaves: dense John, Psalm 119, Genesis 1 (not Milo)"
+run = "make travel-hyphenation-qa"
+
+[tasks.travel-poetry-qa]
+description = "Psalm 1 + Psalm 119 ragged-right poetry QA leaves (not Milo)"
+run = "make travel-poetry-qa"
+
+[tasks.travel-running-headers-qa]
+description = "John verso/recto running-header QA leaves (not Milo)"
+run = "make travel-running-headers-qa"
+
+[tasks.travel-woc-qa]
+description = "Matthew/John Words of Christ blue QA leaves (not Milo)"
+run = "make travel-woc-qa"
+
+[tasks.travel-bible-grid-proof]
+description = "Full 66-book OFL metrics PDF (not the loved face; do not commit)"
+run = "make travel-bible-grid-proof"
 
 [tasks.test-travel]
 description = "Unit tests for the travel composer"

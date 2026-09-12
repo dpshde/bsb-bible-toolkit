@@ -22,8 +22,13 @@ not an official Berean Bible project.
 - The current committed PDF exceptions are:
  - `drafts/primary/bsb-primary-draft.pdf`
  - `drafts/primary/bsb-single-column-draft.pdf`
- - `drafts/travel/bsb-travel-john-grid-proof.pdf` (metrics-only; watermarked
-   `GRID PROOF — NOT FINAL FACE`; never the loved face)
+ - `drafts/travel/bsb-travel-john-grid-proof.pdf` (metrics-only Source Serif
+   stand-in; never the loved face)
+ - `drafts/travel/bsb-travel-john-spreads-grid-proof.pdf` (2-up John QA of
+   pairs 2–3, 4–5, 10–11; still the Source Serif metrics proof)
+ - `drafts/travel/spreads/john-spread-*.png` (120 dpi rasters of those openings)
+ - `drafts/travel/bsb-travel-bible-grid-proof.pdf` (66-book Source Serif
+   metrics preview; never the loved face)
 - If you add third-party assets, document their license and attribution in
   `NOTICE` or a nearby license file.
 
