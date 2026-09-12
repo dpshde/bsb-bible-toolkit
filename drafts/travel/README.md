@@ -67,6 +67,30 @@ make travel-john-grid-proof
 Output: `drafts/travel/bsb-travel-john-grid-proof.pdf`.
 Typst source: `drafts/travel/work/john-grid-proof.typ`.
 
+## Mixam John dummy (saddle-stitch)
+
+A John-only 4.75 × 7 in booklet padded to **52 pages** for a Mixam
+saddle-stitch color dummy (50 lb uncoated). Same Source Serif 4 stand-in
+as the grid-proof: no ruled background, no `NOT FINAL FACE` footer, WOC
+blue kept. Extra leaves are blank endmatter, not filler text. Not Milo.
+
+```bash
+make travel-john-mixam
+# or
+mise run travel-john-mixam
+# or
+PYTHONPATH=src python -m bsb_pdf_toolkit.generate_travel_pdf \
+  drafts/primary/source/engbsb_usfm.zip \
+  drafts/travel/bsb-travel-john-mixam-dummy.pdf \
+  --typst-out drafts/travel/work/john-mixam-dummy.typ \
+  --font-dir fonts/grid-proof \
+  --grid-proof \
+  --pad-pages 52
+```
+
+Output: `drafts/travel/bsb-travel-john-mixam-dummy.pdf`.
+Typst source: `drafts/travel/work/john-mixam-dummy.typ`.
+
 Facing-page QA for John openings 2–3, 4–5, and the chapter-5 open at 10–11:
 
 ```bash

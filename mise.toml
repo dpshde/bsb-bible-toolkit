@@ -18,6 +18,10 @@ run = "make travel-john"
 description = "OFL metrics PDF (Source Serif stand-in; not Milo)"
 run = "make travel-john-grid-proof"
 
+[tasks.travel-john-mixam]
+description = "John Mixam saddle-stitch dummy, 52 pages, Source Serif stand-in"
+run = "make travel-john-mixam"
+
 [tasks.travel-john-spreads]
 description = "2-up John grid-proof openings 2–3, 4–5, 10–11 (not Milo)"
 run = "make travel-john-spreads"

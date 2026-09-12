@@ -148,6 +148,7 @@ That PDF is not the loved face.
 ```bash
 make travel-john-typst          # markup only; no fonts required
 make travel-john-grid-proof     # John OFL metrics PDF; not Milo
+make travel-john-mixam          # John Mixam saddle-stitch dummy (52 pp); not Milo
 make travel-john-spreads        # 2-up John openings 2–3, 4–5, 10–11; not Milo
 make travel-hotspot-sampler     # compact committed hotspot leaves; not Milo
 make travel-hyphenation-qa      # John/poetry/Genesis hyphenation leaves; not Milo

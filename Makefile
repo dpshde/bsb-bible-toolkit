@@ -29,11 +29,15 @@ TRAVEL_HEADERS_DIR := drafts/travel/headers
 TRAVEL_WOC_PDF := drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
 TRAVEL_WOC_DIR := drafts/travel/woc
 TRAVEL_RANDOM_QA_DIR := drafts/travel/qa-random
+TRAVEL_MIXAM_PDF := drafts/travel/bsb-travel-john-mixam-dummy.pdf
+TRAVEL_MIXAM_TYP := drafts/travel/work/john-mixam-dummy.typ
+TRAVEL_MIXAM_PAGES := 52
 MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
 
 .PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
-	travel-john-spreads travel-hotspot-sampler travel-hyphenation-qa \
+	travel-john-spreads travel-john-mixam travel-hotspot-sampler \
+	travel-hyphenation-qa \
 	travel-poetry-qa travel-running-headers-qa travel-woc-qa travel-random-qa \
 	travel-bible-grid-proof \
 	travel-bible-ot-grid-proof travel-bible-nt-grid-proof test-travel \
@@ -44,6 +48,7 @@ help:
 	@echo "travel-john-typst           Compose John Typst (no fonts required)"
 	@echo "travel-john                 Compile the travel John PDF (requires Milo)"
 	@echo "travel-john-grid-proof      John OFL metrics PDF (not the loved face)"
+	@echo "travel-john-mixam           John Mixam saddle-stitch dummy (52 pp, not Milo)"
 	@echo "travel-john-spreads         2-up John openings 2–3, 4–5, 10–11 (grid proof)"
 	@echo "travel-hotspot-sampler      Compact committed hotspot leaves (grid proof)"
 	@echo "travel-hyphenation-qa       John/poetry/Genesis hyphenation leaves (grid proof)"
@@ -82,6 +87,14 @@ travel-john-grid-proof: usfm-source
 		--typst-out $(TRAVEL_GRID_TYP) \
 		--font-dir $(GRID_DIR) \
 		--grid-proof
+
+travel-john-mixam: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
+		$(USFM) $(TRAVEL_MIXAM_PDF) \
+		--typst-out $(TRAVEL_MIXAM_TYP) \
+		--font-dir $(GRID_DIR) \
+		--grid-proof \
+		--pad-pages $(TRAVEL_MIXAM_PAGES)
 
 travel-john-spreads: travel-john-grid-proof
 	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_spreads \

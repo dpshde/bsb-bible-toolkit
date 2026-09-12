@@ -47,6 +47,10 @@ DEFAULT_BIBLE_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-bible.pdf"
 DEFAULT_BIBLE_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "bible.typ"
 DEFAULT_BIBLE_GRID_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-bible-grid-proof.pdf"
 DEFAULT_BIBLE_GRID_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "bible-grid-proof.typ"
+DEFAULT_MIXAM_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john-mixam-dummy.pdf"
+DEFAULT_MIXAM_TYPST = REPO_ROOT / "drafts" / "travel" / "work" / "john-mixam-dummy.typ"
+# Mixam saddle-stitch interiors must land on a multiple of 4.
+MIXAM_SADDLE_PAGES = 52
 USFM_URL = "https://bereanbible.com/bsb_usfm.zip"
 PROTESTANT_CANON = tuple(BOOK_NAMES[number] for number in range(1, 67))
 SAMPLE_SUBTITLE = "Travel print sample · 4.75 × 7 in"
@@ -1027,6 +1031,42 @@ def pdf_page_count(path: Path) -> int:
         return doc.page_count
 
 
+def pad_travel_pdf_to_pages(source: Path, output: Path, target_pages: int) -> int:
+    """Append blank trim-size end leaves so a Mixam dummy reaches <target_pages>.
+
+    Leaves are empty (no folio, no junk text). Color pages are copied as-is.
+    Returns the number of blank leaves added.
+    """
+    import fitz
+
+    if int(target_pages) < 1:
+        raise ValueError("target_pages must be at least 1")
+    target_pages = int(target_pages)
+    with fitz.open(source) as src:
+        if src.page_count < 1:
+            raise ValueError(f"{source} has no pages")
+        count = src.page_count
+        if count > target_pages:
+            raise ValueError(
+                f"{source} has {count} pages; cannot pad down to {target_pages}"
+            )
+        trim = src[0].rect
+        toc = src.get_toc() or []
+        out = fitz.open()
+        out.insert_pdf(src)
+    added = target_pages - count
+    for _ in range(added):
+        out.new_page(width=trim.width, height=trim.height)
+    if toc:
+        out.set_toc(toc)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    tmp = output.with_name(output.name + ".padded")
+    out.save(tmp, deflate=True)
+    out.close()
+    tmp.replace(output)
+    return added
+
+
 def book_part_slug(index: int, name: str) -> str:
     safe = "".join(ch.lower() if ch.isalnum() else "-" for ch in name).strip("-")
     safe = "-".join(part for part in safe.split("-") if part)
@@ -1252,7 +1292,21 @@ def main(argv=None):
             "(Source Serif 4). Never the loved face."
         ),
     )
+    parser.add_argument(
+        "--pad-pages",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "After compile, append blank trim-size end leaves so the PDF "
+            f"has N pages (Mixam saddle-stitch dummy: {MIXAM_SADDLE_PAGES})"
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.pad_pages is not None and args.pad_pages < 1:
+        parser.error("--pad-pages must be at least 1")
+    if args.no_compile and args.pad_pages is not None:
+        parser.error("--pad-pages requires a compiled PDF; omit --no-compile")
 
     default_pdf, default_typ, default_fonts = default_output_paths(
         grid_proof=args.grid_proof,
@@ -1323,6 +1377,8 @@ def main(argv=None):
         )
         if code == 0 and args.grid_proof:
             print(GRID_PROOF_NOTE, file=sys.stderr)
+        if code == 0:
+            return _after_compile(args)
         return code
     if result.returncode != 0:
         print("Typst compile failed. Source was still generated.", file=sys.stderr)
@@ -1330,6 +1386,17 @@ def main(argv=None):
     print(f"Wrote PDF: {args.output_pdf}")
     if args.grid_proof:
         print(GRID_PROOF_NOTE, file=sys.stderr)
+    return _after_compile(args)
+
+
+def _after_compile(args) -> int:
+    if args.pad_pages is None:
+        return 0
+    added = pad_travel_pdf_to_pages(args.output_pdf, args.output_pdf, args.pad_pages)
+    print(
+        f"Padded to {args.pad_pages} pages "
+        f"({added} blank end leaves): {args.output_pdf}"
+    )
     return 0
 
 

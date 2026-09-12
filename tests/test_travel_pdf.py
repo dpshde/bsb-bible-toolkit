@@ -31,6 +31,8 @@ from bsb_pdf_toolkit.generate_travel_pdf import (  # noqa: E402
     generate_travel_typst,
     is_source_nav_marker,
     merge_travel_pdfs,
+    pad_travel_pdf_to_pages,
+    MIXAM_SADDLE_PAGES,
     is_hebrew_script,
     body_leading_gap_pt,
     book_part_slug,
@@ -1327,3 +1329,82 @@ def test_woc_speech_and_typst_helpers():
         )
     with pytest.raises(ValueError, match="does not exercise"):
         validate_woc_typst("no cobalt here", ("Let it be so now",))
+
+
+def _write_color_sample_pdf(path: Path, pages: int = 2) -> Path:
+    import fitz
+
+    doc = fitz.open()
+    for index in range(pages):
+        page = doc.new_page(width=342, height=504)
+        page.insert_text((40, 80), f"leaf {index + 1}", fontsize=12, color=(20 / 255,) * 3)
+        if index == 0:
+            page.insert_text((40, 120), "What do you want?", fontsize=12, color=(28 / 255, 56 / 255, 110 / 255))
+    doc.set_toc([[1, "John", 1], [2, "1", 1]])
+    doc.save(path)
+    doc.close()
+    return path
+
+
+def test_mixam_saddle_pages_is_52():
+    assert MIXAM_SADDLE_PAGES == 52
+    assert MIXAM_SADDLE_PAGES % 4 == 0
+
+
+def test_pad_travel_pdf_to_pages_adds_blank_end_leaves(tmp_path):
+    import fitz
+
+    source = _write_color_sample_pdf(tmp_path / "john.pdf", pages=2)
+    output = tmp_path / "mixam.pdf"
+    added = pad_travel_pdf_to_pages(source, output, 4)
+    assert added == 2
+    with fitz.open(output) as doc:
+        assert doc.page_count == 4
+        assert doc[0].rect == fitz.Rect(0, 0, 342, 504)
+        assert doc[3].rect == fitz.Rect(0, 0, 342, 504)
+        assert "What do you want?" in doc[0].get_text()
+        assert "leaf 2" in doc[1].get_text()
+        assert doc[2].get_text().strip() == ""
+        assert doc[3].get_text().strip() == ""
+        assert doc.get_toc() == [[1, "John", 1], [2, "1", 1]]
+        colors = []
+        for block in doc[0].get_text("dict")["blocks"]:
+            if block.get("type") != 0:
+                continue
+            for line in block.get("lines", []):
+                for span in line.get("spans", []):
+                    color = span.get("color")
+                    if color is None:
+                        continue
+                    colors.append(
+                        ((color >> 16) & 255, (color >> 8) & 255, color & 255)
+                    )
+        assert (28, 56, 110) in colors
+
+
+def test_pad_travel_pdf_to_pages_is_noop_at_target(tmp_path):
+    source = _write_color_sample_pdf(tmp_path / "john.pdf", pages=2)
+    added = pad_travel_pdf_to_pages(source, source, 2)
+    assert added == 0
+
+
+def test_pad_travel_pdf_to_pages_refuses_to_truncate(tmp_path):
+    source = _write_color_sample_pdf(tmp_path / "john.pdf", pages=3)
+    with pytest.raises(ValueError, match="cannot pad down"):
+        pad_travel_pdf_to_pages(source, tmp_path / "out.pdf", 2)
+
+
+def test_cli_pad_pages_requires_compile(tmp_path):
+    usfm = write_sample_zip(tmp_path / "sample.zip")
+    with pytest.raises(SystemExit) as exc:
+        main([
+            str(usfm),
+            str(tmp_path / "out.pdf"),
+            "--typst-out",
+            str(tmp_path / "out.typ"),
+            "--grid-proof",
+            "--no-compile",
+            "--pad-pages",
+            "52",
+        ])
+    assert exc.value.code == 2
