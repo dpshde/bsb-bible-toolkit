@@ -30,7 +30,6 @@ TRAVEL_WOC_PDF := drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
 TRAVEL_WOC_DIR := drafts/travel/woc
 TRAVEL_RANDOM_QA_DIR := drafts/travel/qa-random
 TRAVEL_MIXAM_PDF := drafts/travel/bsb-travel-john-mixam-dummy.pdf
-TRAVEL_MIXAM_TYP := drafts/travel/work/john-mixam-dummy.typ
 TRAVEL_MIXAM_PAGES := 52
 MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
@@ -88,12 +87,10 @@ travel-john-grid-proof: usfm-source
 		--font-dir $(GRID_DIR) \
 		--grid-proof
 
-travel-john-mixam: usfm-source
+travel-john-mixam:
 	$(PYTHON) -m bsb_pdf_toolkit.generate_travel_pdf \
 		$(USFM) $(TRAVEL_MIXAM_PDF) \
-		--typst-out $(TRAVEL_MIXAM_TYP) \
-		--font-dir $(GRID_DIR) \
-		--grid-proof \
+		--pad-source $(TRAVEL_GRID_PDF) \
 		--pad-pages $(TRAVEL_MIXAM_PAGES)
 
 travel-john-spreads: travel-john-grid-proof

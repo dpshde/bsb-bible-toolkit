@@ -1408,3 +1408,22 @@ def test_cli_pad_pages_requires_compile(tmp_path):
             "52",
         ])
     assert exc.value.code == 2
+
+
+def test_cli_pad_source_skips_compose(tmp_path):
+    source = _write_color_sample_pdf(tmp_path / "john.pdf", pages=2)
+    output = tmp_path / "mixam.pdf"
+    code = main([
+        str(tmp_path / "unused.zip"),
+        str(output),
+        "--pad-source",
+        str(source),
+        "--pad-pages",
+        "4",
+    ])
+    assert code == 0
+    import fitz
+
+    with fitz.open(output) as doc:
+        assert doc.page_count == 4
+        assert doc[3].get_text().strip() == ""

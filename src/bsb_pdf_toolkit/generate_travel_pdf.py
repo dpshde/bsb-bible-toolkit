@@ -1302,9 +1302,29 @@ def main(argv=None):
             f"has N pages (Mixam saddle-stitch dummy: {MIXAM_SADDLE_PAGES})"
         ),
     )
+    parser.add_argument(
+        "--pad-source",
+        type=Path,
+        default=None,
+        help=(
+            "Pad an existing travel PDF instead of composing. "
+            "Keeps the reviewed John typeset; requires --pad-pages."
+        ),
+    )
     args = parser.parse_args(argv)
     if args.pad_pages is not None and args.pad_pages < 1:
         parser.error("--pad-pages must be at least 1")
+    if args.pad_source is not None:
+        if args.pad_pages is None:
+            parser.error("--pad-source requires --pad-pages")
+        if args.output_pdf is None:
+            args.output_pdf = DEFAULT_MIXAM_PDF
+        added = pad_travel_pdf_to_pages(args.pad_source, args.output_pdf, args.pad_pages)
+        print(
+            f"Padded {args.pad_source} to {args.pad_pages} pages "
+            f"({added} blank end leaves): {args.output_pdf}"
+        )
+        return 0
     if args.no_compile and args.pad_pages is not None:
         parser.error("--pad-pages requires a compiled PDF; omit --no-compile")
 
