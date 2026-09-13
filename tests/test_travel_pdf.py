@@ -118,20 +118,21 @@ def test_spec_line_matches_page():
     assert SPEC.measure_in == pytest.approx(3.50)
     assert SPEC.para_indent_in == pytest.approx(0.35)
     assert SPEC.para_above_baselines == pytest.approx(0.75)
+    assert SPEC.para_brick_min_verses == 4
     assert SPEC.margin_head_in + SPEC.margin_foot_in + text_block_in == pytest.approx(7.0)
     assert SPEC.target_cpl_min == 58
     assert SPEC.target_cpl_max == 62
     em = measure_em()
     assert 28.5 <= em <= 31
     assert leading_gap_pt() == 2.0
-    assert SPEC.body_leading_extra_pt == 0.65
-    assert body_leading_gap_pt() == pytest.approx(2.65)
+    assert SPEC.body_leading_extra_pt == -1.0
+    assert body_leading_gap_pt() == pytest.approx(1.0)
     assert para_above_pt() == pytest.approx(7.875)
     preamble = travel_preamble()
     assert "#let para-indent = 0.35in" in preamble
     assert "#h(para-indent)" in preamble
     assert "#let para-above =" in preamble
-    assert "above: para-above" in preamble
+    assert "above: if brick { para-above } else { 0pt }" in preamble
     assert "#let para-flush(body)" in preamble
     assert "leading: body-leading-gap" in preamble
     poetry_at = preamble.index("#let poetry(")
@@ -365,7 +366,21 @@ def test_later_prose_paragraphs_are_indented_poetry_is_not():
         chapter_open=False,
     )
     assert later and later[0].startswith("#para[")
+    assert "brick: true" not in later[0]
     assert "#para-flush[" not in later[0]
+    brick = paragraph_markup(
+        {
+            "marker": "p",
+            "raw": (
+                r"\v 6 Abram replied. \v 7 The angel found Hagar. "
+                r"\v 8 And He said. \v 9 Then the angel said."
+            ),
+        },
+        "Gen",
+        16,
+        chapter_open=False,
+    )
+    assert brick and brick[0].startswith("#para(brick: true)[")
     flush = paragraph_markup(
         {"marker": "m", "raw": r"\v 11 The angel of the LORD proceeded:"},
         "Gen",

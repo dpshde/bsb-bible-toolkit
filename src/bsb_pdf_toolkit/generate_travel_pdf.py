@@ -105,9 +105,13 @@ class TravelSpec:
     lines_per_page: int = 42
     measure_in: float = 3.50
     para_indent_in: float = 0.35
-    # Extra space above later #\p prose so 8–10 verses cannot fuse.
-    # Not applied to the flush remainder under a chapter drop.
+    # Extra space above long later #\p prose so 8–10 verse bricks cannot
+    # fuse. Short dialogue later-\p keep the 0.35 in indent only — John
+    # has ~510 USFM \p marks, and 0.75 baseline on every one was the
+    # 48 → 62 page blowup. Not applied under a chapter drop or on \m.
     para_above_baselines: float = 0.75
+    # Later \p with this many verses (or more) take the brick gap.
+    para_brick_min_verses: int = 4
     target_cpl_min: int = 58
     target_cpl_max: int = 62
     drop_lines: int = 3
@@ -129,10 +133,12 @@ class TravelSpec:
     # 120% left the 60–70 cpl travel measure almost unhyphenated (2 breaks
     # in 49 John pages). 80% is still conservative vs Typst's 50% eagerness.
     hyphenation_cost_pct: int = 80
-    # Extra leading on body prose only. Poetry / drop geometry stay
-    # on the 10.5 pt structural grid (leading-gap = baseline − body).
-    # 0.35 + a second 0.30 bump so long narrative is less of a brick.
-    body_leading_extra_pt: float = 0.65
+    # Body prose leading vs the 10.5 pt structural grid (poetry / drops
+    # keep leading-gap = baseline − body). The pre-densify +0.65 pt ease
+    # compounded with 3.50 in measure and 0.75-on-every-\p to 62 John
+    # pages. −1.0 pt recovers the reviewed ~48-page count at 3.50 in
+    # without dropping the 0.35 in later-\p indent.
+    body_leading_extra_pt: float = -1.0
 
 
 SPEC = TravelSpec()
@@ -505,9 +511,10 @@ def verse_segments_travel(raw: str, osis: str, chapter: int):
     return segments
 
 
-def paragraph_markup(para, osis, chapter, chapter_open=False):
+def paragraph_markup(para, osis, chapter, chapter_open=False, spec: TravelSpec = SPEC):
     marker = para["marker"]
     raw = para["raw"]
+    spec_brick_min = spec.para_brick_min_verses
     if is_source_nav_marker(raw):
         return []
     segments = verse_segments_travel(raw, osis, chapter)
@@ -550,6 +557,11 @@ def paragraph_markup(para, osis, chapter, chapter_open=False):
         # First para under a chapter drop stays flush. USFM \m is flush.
         if flush or marker == "m":
             return f"#para-flush[{content}]"
+        verse_count = sum(1 for verse, _url, _body in items if verse is not None)
+        # Long later \p keep the 0.75-baseline brick gap. Short dialogue
+        # turns (most of John) take the 0.35 in indent only.
+        if verse_count >= spec_brick_min:
+            return f"#para(brick: true)[{content}]"
         return f"#para[{content}]"
 
     if chapter_open:
@@ -840,12 +852,15 @@ def travel_preamble(
 
 #let para-indent = {spec.para_indent_in}in
 #let para-above = {spec.para_above_baselines} * baseline-skip
-#let para(body) = block(above: para-above, below: 0pt, spacing: body-leading-gap)[
+#let para(body, brick: false) = block(
+  above: if brick {{ para-above }} else {{ 0pt }},
+  below: 0pt,
+)[
   // Typst par.first-line-indent does not apply inside these one-shot
   // blocks (even with all: true). A real leading #h is visible at 120 dpi.
   #h(para-indent)#body
 ]
-#let para-flush(body) = block(above: 0pt, below: 0pt, spacing: body-leading-gap)[
+#let para-flush(body) = block(above: 0pt, below: 0pt)[
   #body
 ]
 #let poetry(level, body) = block(
@@ -995,7 +1010,11 @@ def generate_travel_typst(
                         chapter_outlined = True
                     body_parts.extend(
                         paragraph_markup(
-                            para, book["osis"], chapter["chapter"], chapter_open=chapter_open
+                            para,
+                            book["osis"],
+                            chapter["chapter"],
+                            chapter_open=chapter_open,
+                            spec=spec,
                         )
                     )
                     flush_keep(body_parts)
@@ -1006,7 +1025,7 @@ def generate_travel_typst(
                 flush_keep([])
         lines.append("")
     output_typ.parent.mkdir(parents=True, exist_ok=True)
-    output_typ.write_text("\n\n".join(lines) + "\n", encoding="utf-8")
+    output_typ.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return parsed
 
 

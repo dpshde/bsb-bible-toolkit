@@ -89,16 +89,19 @@ as the loved face.
 - Optical margin alignment: Typst `text.overhang: true` (hanging hyphen and
   punctuation into the margin when the engine supports it).
 - Structural grid stays 10.5 pt (drop-cap height, poetry, section math).
-  Body prose leading is **+0.65 pt** (2.65 pt gap + 8.5 pt line box) so
-  long narrative is less of a brick. Poetry keeps the 2 pt grid gap.
+  Body prose leading is **−1.0 pt** (1.0 pt gap + 8.5 pt line box) so
+  the 3.50 in densify still paginates near the reviewed John count.
+  Poetry keeps the 2 pt grid gap.
 - Later prose paragraphs (`\p` and equivalents) take a **0.35 in**
   first-line indent (a leading `#h(0.35in)` — Typst
   `par.first-line-indent` does not apply inside these one-shot
-  blocks). They also take **0.75 baseline** extra space above so
-  consecutive `\p` blocks cannot fuse into one brick. The paragraph
-  under a chapter drop stays flush; so does USFM `\m`. Poetry (`\q*`)
-  and lists (`\li*`) are not indented and do not take the extra
-  paragraph gap.
+  blocks). Long later `\p` (4+ verses) also take **0.75 baseline**
+  extra space above so narrative bricks cannot fuse. Short dialogue
+  later `\p` keep the indent only — applying 0.75 baseline to every
+  one of John’s ~510 `\p` marks was the 48 → 62 page blowup. The
+  paragraph under a chapter drop stays flush; so does USFM `\m`.
+  Poetry (`\q*`) and lists (`\li*`) are not indented and do not take
+  the extra paragraph gap.
 - No orphan of a verse number: the verse numeral is boxed with a thin space
   so it cannot sit alone at the end of a line.
 - Widows/orphans of paragraph lines: Typst default costs (on).
