@@ -96,12 +96,12 @@ Output: `drafts/travel/bsb-travel-john-mixam-dummy.pdf`.
 |------|-------|
 | File | `bsb-travel-john-mixam-dummy.pdf` |
 | Stand-in | Source Serif 4 Regular/Italic/Bold (SIL OFL 1.1) |
-| Source | committed `bsb-travel-john-grid-proof.pdf` plus 4 blank end leaves |
+| Source | committed `bsb-travel-john-grid-proof.pdf` plus 2 blank end leaves |
 | Trim | 4.75 in × 7.00 in |
-| Pages | 52 (48 text + 4 blank) |
-| Links | 3263 |
-| Size | 866,023 bytes |
-| SHA-256 | `b1c46beeb310ee46b183549a87b4c2358aafa095867afa69d3124e40d3870aff` |
+| Pages | 52 (50 text + 2 blank) |
+| Links | 3438 |
+| Size | 892,357 bytes |
+| SHA-256 | `803ed3e465764a496c90a464886fd7342ae650fa73d89a25628e91c322ea7bfc` |
 | Mixam | saddle-stitch color dummy; WOC `rgb(28, 56, 110)` preserved |
 
 Facing-page QA for John openings 2–3, 4–5, and the chapter-5 open at 10–11:
@@ -233,10 +233,16 @@ as FF Milo Serif Text. Notes run in as one wrapping paragraph in grey
 `rgb(76, 76, 76)`; section titles take 1.5 baselines above and 0.5
 below, wrapped with the following verse or chapter drop so they cannot
 orphan. Book openers are the USFM title only. Body prose leading is
-+0.65 pt, with a 0.35 in first-line indent and 0.75-baseline gap on later `\p` blocks.
-There is no ruled background and no `GRID PROOF` / `NOT FINAL
+−1.0 pt (recovering the 3.50 in densify page count). Later `\p` takes
+a 0.35 in first-line indent; long later `\p` (4+ verses) also take a
+0.75-baseline gap. Short dialogue later `\p` keep the indent only —
+0.75 baseline on every one of John’s ~510 `\p` marks was the 48 → 62
+page blowup. There is no ruled background and no `GRID PROOF` / `NOT FINAL
 FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
+
+John QA leaves (opener / later-`\p` indent / WOC blue) live in
+[`qa-john/`](qa-john/).
 
 | Item | Value |
 |------|-------|
@@ -246,12 +252,12 @@ Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 | Loved face | FF Milo Serif Text (not in this PDF) |
 | Source | `drafts/primary/source/engbsb_usfm.zip` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-11 |
+| Compiled | 2026-09-13 |
 | Trim | 4.75 in × 7.00 in |
-| Pages | 48 |
-| Links | 3263 |
-| Size | 1,977,058 bytes |
-| SHA-256 | `a7adcc9d9d568a8ab723b25db2741759d1cfe0a26712215b7b805471db0ad961` |
+| Pages | 50 |
+| Links | 3438 |
+| Size | 2,043,507 bytes |
+| SHA-256 | `181c4e42f6797d13288518fba389deb63fa53e4862da1d9ebb16809423178494` |
 
 Re-hash after any recompile. The loved-face PDF is not committed until
 licensed Milo OTFs are present.

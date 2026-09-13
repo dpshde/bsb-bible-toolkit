@@ -47,6 +47,9 @@ dist/
 !drafts/travel/qa-random/
 !drafts/travel/qa-random/*.png
 !drafts/travel/qa-random/*.md
+!drafts/travel/qa-john/
+!drafts/travel/qa-john/*.png
+!drafts/travel/qa-john/*.md
 bsb-*.typ
 drafts/travel/work/
 .DS_Store
