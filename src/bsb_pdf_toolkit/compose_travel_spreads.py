@@ -4,7 +4,11 @@
 Verso (even) sits on the left; recto (odd) on the right. Each source page
 keeps its 4.75 × 7 in trim. Spreads are 2-up at 9.5 × 7 in.
 
-Default John pairs: 2–3, 4–5, and the chapter-5 open at 10–11.
+Default densified-John pairs (50-page grid-proof):
+  2–3   early prose after the title
+  6–7   Words of Christ blue (John 3)
+  18–19 denser dialogue / later-\\p indent (John 8)
+  24–25 mid-book chapter-open with drop 10
 
 This is a metrics/grid-proof helper. It never touches fonts/milo/.
 """
@@ -22,9 +26,10 @@ from .generate_travel_pdf import GRID_PROOF_WATERMARK, SPEC
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_INPUT = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john-grid-proof.pdf"
-DEFAULT_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john-spreads-grid-proof.pdf"
-DEFAULT_PNG_DIR = REPO_ROOT / "drafts" / "travel" / "spreads"
-DEFAULT_PAIRS = ((2, 3), (4, 5), (10, 11))
+DEFAULT_PDF = REPO_ROOT / "drafts" / "travel" / "bsb-travel-john-facing-spreads-densified.pdf"
+DEFAULT_PNG_DIR = REPO_ROOT / "drafts" / "travel" / "qa-john"
+DEFAULT_PAIRS = ((2, 3), (6, 7), (18, 19), (24, 25))
+DEFAULT_PAIRS_TEXT = ",".join(f"{verso}-{recto}" for verso, recto in DEFAULT_PAIRS)
 PNG_DPI = 120
 BODY_SIZE_MIN = 8.0
 BODY_SIZE_MAX = 9.2
@@ -214,8 +219,8 @@ def main(argv=None) -> int:
     parser.add_argument("output_pdf", type=Path, nargs="?", default=DEFAULT_PDF)
     parser.add_argument(
         "--pairs",
-        default="2-3,4-5,10-11",
-        help="Facing verso-recto pairs (default: 2-3,4-5,10-11)",
+        default=DEFAULT_PAIRS_TEXT,
+        help=f"Facing verso-recto pairs (default: {DEFAULT_PAIRS_TEXT})",
     )
     parser.add_argument("--png-dir", type=Path, default=DEFAULT_PNG_DIR)
     parser.add_argument("--dpi", type=int, default=PNG_DPI)

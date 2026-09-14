@@ -16,8 +16,8 @@ TRAVEL_BIBLE_OT_GRID_PDF := drafts/travel/bsb-travel-bible-ot-grid-proof.pdf
 TRAVEL_BIBLE_OT_GRID_TYP := drafts/travel/work/bible-ot-grid-proof.typ
 TRAVEL_BIBLE_NT_GRID_PDF := drafts/travel/bsb-travel-bible-nt-grid-proof.pdf
 TRAVEL_BIBLE_NT_GRID_TYP := drafts/travel/work/bible-nt-grid-proof.typ
-TRAVEL_SPREADS_PDF := drafts/travel/bsb-travel-john-spreads-grid-proof.pdf
-TRAVEL_SPREADS_DIR := drafts/travel/spreads
+TRAVEL_SPREADS_PDF := drafts/travel/bsb-travel-john-facing-spreads-densified.pdf
+TRAVEL_SPREADS_DIR := drafts/travel/qa-john
 TRAVEL_HOTSPOT_PDF := drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf
 TRAVEL_HOTSPOT_DIR := drafts/travel/hotspots
 TRAVEL_HYPHEN_PDF := drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf
@@ -48,7 +48,7 @@ help:
 	@echo "travel-john                 Compile the travel John PDF (requires Milo)"
 	@echo "travel-john-grid-proof      John OFL metrics PDF (not the loved face)"
 	@echo "travel-john-mixam           John Mixam saddle-stitch dummy (52 pp, not Milo)"
-	@echo "travel-john-spreads         2-up John openings 2–3, 4–5, 10–11 (grid proof)"
+	@echo "travel-john-spreads         2-up densified John openings 2–3, 6–7, 18–19, 24–25"
 	@echo "travel-hotspot-sampler      Compact committed hotspot leaves (grid proof)"
 	@echo "travel-hyphenation-qa       John/poetry/Genesis hyphenation leaves (grid proof)"
 	@echo "travel-poetry-qa            Psalm 1 + Psalm 119 poetry leaves (grid proof)"
@@ -93,7 +93,11 @@ travel-john-mixam:
 		--pad-source $(TRAVEL_GRID_PDF) \
 		--pad-pages $(TRAVEL_MIXAM_PAGES)
 
-travel-john-spreads: travel-john-grid-proof
+travel-john-spreads:
+	@test -f "$(TRAVEL_GRID_PDF)" || { \
+		echo "Missing $(TRAVEL_GRID_PDF); run make travel-john-grid-proof first." >&2; \
+		exit 1; \
+	}
 	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_spreads \
 		$(TRAVEL_GRID_PDF) $(TRAVEL_SPREADS_PDF) \
 		--png-dir $(TRAVEL_SPREADS_DIR)

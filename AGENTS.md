@@ -24,9 +24,12 @@ not an official Berean Bible project.
  - `drafts/primary/bsb-single-column-draft.pdf`
  - `drafts/travel/bsb-travel-john-grid-proof.pdf` (metrics-only Source Serif
    stand-in; never the loved face)
- - `drafts/travel/bsb-travel-john-spreads-grid-proof.pdf` (2-up John QA of
+ - `drafts/travel/bsb-travel-john-spreads-grid-proof.pdf` (older 2-up John QA of
    pairs 2–3, 4–5, 10–11; still the Source Serif metrics proof)
- - `drafts/travel/spreads/john-spread-*.png` (120 dpi rasters of those openings)
+ - `drafts/travel/bsb-travel-john-facing-spreads-densified.pdf` (2-up QA of the
+   densified 50-page John: pairs 2–3, 6–7, 18–19, 24–25)
+ - `drafts/travel/qa-john/john-spread-*.png` (120 dpi rasters of those openings)
+ - `drafts/travel/spreads/john-spread-*.png` (120 dpi rasters of the older openings)
  - `drafts/travel/bsb-travel-bible-grid-proof.pdf` (66-book Source Serif
    metrics preview; never the loved face)
 - If you add third-party assets, document their license and attribution in

@@ -104,16 +104,20 @@ Output: `drafts/travel/bsb-travel-john-mixam-dummy.pdf`.
 | SHA-256 | `803ed3e465764a496c90a464886fd7342ae650fa73d89a25628e91c322ea7bfc` |
 | Mixam | saddle-stitch color dummy; WOC `rgb(28, 56, 110)` preserved |
 
-Facing-page QA for John openings 2–3, 4–5, and the chapter-5 open at 10–11:
+Facing-page QA from the committed densified John grid-proof (50 pages).
+Pairs: 2–3 early prose, 6–7 WOC (John 3), 18–19 later-`\p` dialogue,
+24–25 mid-book drop 10.
 
 ```bash
 make travel-john-spreads
 ```
 
-That recompiles the John grid-proof, then writes a 2-up PDF
-(`bsb-travel-john-spreads-grid-proof.pdf`) and 120 dpi PNGs under
-`spreads/`. Verso is left; recto is right; each leaf stays 4.75 × 7 in.
-Still not the loved face. Line-match notes live in [`HOTSPOTS.md`](HOTSPOTS.md).
+That composes a 2-up PDF (`bsb-travel-john-facing-spreads-densified.pdf`)
+from the committed John grid-proof — it does not recompile — and writes
+120 dpi PNGs under [`qa-john/`](qa-john/). Verso is left; recto is right;
+each leaf stays 4.75 × 7 in. Still not the loved face. Line-match notes
+live in [`HOTSPOTS.md`](HOTSPOTS.md). To rebuild the typeset first:
+`make travel-john-grid-proof && make travel-john-spreads`.
 
 ## Hotspot sampler (committed, not the 66-book file)
 
@@ -241,8 +245,8 @@ page blowup. There is no ruled background and no `GRID PROOF` / `NOT FINAL
 FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
-John QA leaves (opener / later-`\p` indent / WOC blue) live in
-[`qa-john/`](qa-john/).
+John QA leaves (opener / later-`\p` indent / WOC blue) and densified
+facing-spread PNGs live in [`qa-john/`](qa-john/).
 
 | Item | Value |
 |------|-------|

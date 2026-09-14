@@ -930,9 +930,14 @@ def test_selah_and_divine_name_spans():
 
 
 def test_parse_facing_pairs_defaults_and_rejects_non_opening():
-    from bsb_pdf_toolkit.compose_travel_spreads import DEFAULT_PAIRS, parse_pairs
+    from bsb_pdf_toolkit.compose_travel_spreads import (
+        DEFAULT_PAIRS,
+        DEFAULT_PAIRS_TEXT,
+        parse_pairs,
+    )
 
-    assert parse_pairs("2-3,4-5,10-11") == DEFAULT_PAIRS
+    assert DEFAULT_PAIRS == ((2, 3), (6, 7), (18, 19), (24, 25))
+    assert parse_pairs(DEFAULT_PAIRS_TEXT) == DEFAULT_PAIRS
     with pytest.raises(ValueError, match="facing"):
         parse_pairs("3-4")
     with pytest.raises(ValueError, match="facing"):

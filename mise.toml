@@ -23,7 +23,7 @@ description = "John Mixam saddle-stitch dummy, 52 pages, Source Serif stand-in"
 run = "make travel-john-mixam"
 
 [tasks.travel-john-spreads]
-description = "2-up John grid-proof openings 2–3, 4–5, 10–11 (not Milo)"
+description = "2-up densified John openings 2–3, 6–7, 18–19, 24–25 (not Milo)"
 run = "make travel-john-spreads"
 
 [tasks.travel-hotspot-sampler]

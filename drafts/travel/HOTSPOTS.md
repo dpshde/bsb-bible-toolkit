@@ -73,36 +73,38 @@ has **a–e**; page 3 starts at **a**. Zero two-letter markers across the book.
 Do not treat two-letter markers inside a single page as a regression unless
 that page has more than 26 notes.
 
-## Facing spreads (John 2–3, 4–5, 10–11)
+## Facing spreads (densified John, 2026-09-14)
 
-`make travel-john-spreads` recompiles the John grid-proof and writes a 2-up
-QA sheet of three openings. Verso is left; recto is right; each leaf stays
-4.75 × 7 in. Source Serif 4 stand-in. Not Milo.
+`make travel-john-spreads` composes a 2-up QA sheet from the committed
+densified John grid-proof (50 pages). It does not recompile. Verso is
+left; recto is right; each leaf stays 4.75 × 7 in. Source Serif 4
+stand-in. Not Milo.
 
 | Item | Value |
 |------|-------|
-| Source | `drafts/travel/bsb-travel-john-grid-proof.pdf` |
-| Spread PDF | `drafts/travel/bsb-travel-john-spreads-grid-proof.pdf` (3 pages, 70,080 bytes) |
-| Spread SHA-256 | `8d3d1ff461f797d47a34bc228a8bcbb7ce85ac65ca067c164e6d0dfdd3114fb3` |
-| PNGs | `drafts/travel/spreads/john-spread-02-03.png`, `john-spread-04-05.png`, `john-spread-10-11.png` (120 dpi) |
-| Pairs | 2–3 (John 1), 4–5 (ch. 2 drop on 4, ch. 3 drop on 5), 10–11 (ch. 5 open on 10) |
+| Source | `drafts/travel/bsb-travel-john-grid-proof.pdf` (50 pages, SHA-256 `181c4e42f6797d13288518fba389deb63fa53e4862da1d9ebb16809423178494`) |
+| Spread PDF | `drafts/travel/bsb-travel-john-facing-spreads-densified.pdf` (4 pages, 84,566 bytes) |
+| Spread SHA-256 | `ebb867616f5f0f61d0830029ffc019cf61e8d96e1921182faf68b77343406661` |
+| PNGs | `drafts/travel/qa-john/john-spread-02-03.png`, `john-spread-06-07.png`, `john-spread-18-19.png`, `john-spread-24-25.png` (120 dpi) |
+| Pairs | 2–3 early prose (John 1:16–49); 6–7 WOC John 3 (3:10–4:14, drop 4 on 7); 18–19 later-`\p` dialogue (7:40–8:24, drop 8 on 18); 24–25 mid-book chapter-open (drop 10, Good Shepherd) |
+
+The older 3-opening sheet `bsb-travel-john-spreads-grid-proof.pdf`
+(pairs 2–3, 4–5, 10–11) stays in-tree for history. Prefer the densified
+file above.
 
 ### Verso/recto line-match
 
 Body 8.5 pt spans sit on a shared 10.5 pt y lattice. Facing pages use the
-same slot coordinates (phase Δ 0.0 pt). Shared body y-slots: **23** on 2–3,
-**21** on 4–5, **25** on 10–11. Visual check of the three PNGs matches:
-text lines meet across the gutter; drop-cap squares and footnotes do not
-break the body grid.
+same slot coordinates (phase Δ 0.0 pt). Shared body y-slots: **14** on 2–3,
+**11** on 6–7, **8** on 18–19, **21** on 24–25. Visual check of the four
+PNGs matches: text lines meet across the gutter; drop-cap squares and
+footnotes do not break the body grid.
 
-Recompiled John PDF 2026-09-11 (Typst 0.14.2, run-in grey notes, Book →
-Chapter PDF outline, 1.5 / 0.5 baseline section air, keep-with heads,
-+0.35 pt body leading, no ruled background, no footer watermark):
-48 pages, 1,977,058 bytes, SHA-256
-`a7adcc9d9d568a8ab723b25db2741759d1cfe0a26712215b7b805471db0ad961`.
-Page 2 notes **a–d** run in as one wrapping paragraph. Outline is
-`John` → `1`…`21`. The 2-up spread PDF above is the earlier line-match
-sheet and was not rebuilt in this pass.
+Densified John grid-proof 2026-09-13 (Typst 0.14.2, 3.50 in measure,
+0.35 in later-`\p` indent, 0.75-baseline gap only on long later `\p`,
+body leading −1.0 pt, run-in grey notes, no ruled background, no footer
+watermark): 50 pages, 2,043,507 bytes, SHA-256
+`181c4e42f6797d13288518fba389deb63fa53e4862da1d9ebb16809423178494`.
 
 ## Words of Christ blue QA (2026-09-11)
 
