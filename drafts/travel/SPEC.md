@@ -205,5 +205,6 @@ See `drafts/travel/README.md`.
 - Loved face (after Milo is dropped in): `make travel-john`
 - Metrics only, John (OFL stand-in): `make travel-john-grid-proof`
 - Mixam John dummy (52-page saddle-stitch, OFL stand-in): `make travel-john-mixam`
+- John chapter-opener crops from the committed John PDF: `make travel-john-chapter-openers`
 - Metrics only, 66-book canon (OFL stand-in): `make travel-bible-grid-proof`
 - Markup only: `make travel-john-typst`

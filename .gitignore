@@ -23,6 +23,7 @@ dist/
 !drafts/travel/bsb-travel-john-mixam-dummy.pdf
 !drafts/travel/bsb-travel-john-spreads-grid-proof.pdf
 !drafts/travel/bsb-travel-john-facing-spreads-densified.pdf
+!drafts/travel/qa-john/bsb-travel-john-chapter-openers.pdf
 !drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf
 !drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf
 !drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf
@@ -51,6 +52,7 @@ dist/
 !drafts/travel/qa-john/
 !drafts/travel/qa-john/*.png
 !drafts/travel/qa-john/*.md
+!drafts/travel/qa-john/*.pdf
 bsb-*.typ
 drafts/travel/work/
 .DS_Store

@@ -993,6 +993,102 @@ def test_compose_spread_is_two_up_verso_left(tmp_path):
     assert not drifted["pass"]
 
 
+def test_chapter_opener_toc_and_slug():
+    from bsb_pdf_toolkit.compose_travel_chapter_openers import (
+        DEFAULT_PDF,
+        JOHN_CHAPTER_COUNT,
+        chapter_openers_from_toc,
+        opener_slug,
+        validate_john_openers,
+        ChapterOpener,
+    )
+    import fitz
+
+    assert opener_slug(1) == "john-ch01-opener"
+    assert opener_slug(21) == "john-ch21-opener"
+    assert JOHN_CHAPTER_COUNT == 21
+    assert DEFAULT_PDF.name == "bsb-travel-john-chapter-openers.pdf"
+    pairs = chapter_openers_from_toc(
+        [[1, "John", 1], [2, "1", 1], [2, "2", 4], [2, "3", 5]]
+    )
+    assert pairs == [(1, 1), (2, 4), (3, 5)]
+    with pytest.raises(ValueError, match="not a number"):
+        chapter_openers_from_toc([[2, "Prologue", 1]])
+    with pytest.raises(ValueError, match="expected John chapters"):
+        validate_john_openers(
+            [
+                ChapterOpener(
+                    chapter=1,
+                    page=1,
+                    clip=fitz.Rect(0, 0, 10, 10),
+                    drop=fitz.Rect(0, 0, 31.5, 31.5),
+                )
+            ]
+        )
+
+
+def test_opener_clip_follows_midpage_drop(tmp_path):
+    import fitz
+
+    from bsb_pdf_toolkit.compose_travel_chapter_openers import (
+        DROP_SIZE_PT,
+        compose_opener_pdf,
+        drop_rect_on_page,
+        load_chapter_openers,
+        opener_clip_rect,
+        opener_slug,
+        render_opener_pngs,
+    )
+
+    source = tmp_path / "john.pdf"
+    src = fitz.open()
+    # Page 1: drop near the top. Page 2: drop low so a top-half crop would miss it.
+    tops = (50.0, 360.0)
+    for index, top in enumerate(tops):
+        page = src.new_page(width=342, height=504)
+        page.draw_rect(
+            fitz.Rect(40, top, 40 + DROP_SIZE_PT, top + DROP_SIZE_PT),
+            color=(0, 0, 0),
+            width=0.45,
+        )
+        page.insert_text((40, top - 14), f"Heading {index + 1}", fontsize=8.5)
+    src.set_toc([[1, "John", 1], [2, "1", 1], [2, "2", 2]])
+    src.save(source)
+    src.close()
+
+    openers = load_chapter_openers(source)
+    assert [item.chapter for item in openers] == [1, 2]
+    assert [item.page for item in openers] == [1, 2]
+    top_clip = openers[0].clip
+    assert top_clip.y0 == pytest.approx(0.0)
+    assert openers[0].drop.y0 < top_clip.y1
+    low_clip = openers[1].clip
+    assert low_clip.y0 > 100
+    assert low_clip.y0 <= openers[1].drop.y0
+    assert low_clip.y1 >= openers[1].drop.y1
+
+    with fitz.open(source) as doc:
+        missing = drop_rect_on_page(doc[0])
+        assert missing is not None
+        clip = opener_clip_rect(doc[1], openers[1].drop)
+        assert clip.y0 == pytest.approx(low_clip.y0)
+
+    output = tmp_path / "openers.pdf"
+    compose_opener_pdf(source, output, openers)
+    with fitz.open(output) as doc:
+        assert len(doc) == 2
+        assert doc[0].rect.width == pytest.approx(342)
+        assert doc[0].rect.height < 504
+        assert doc[1].rect.height < 504
+
+    pngs = render_opener_pngs(source, tmp_path / "png", openers, dpi=72)
+    assert [path.name for path in pngs] == [
+        opener_slug(1) + ".png",
+        opener_slug(2) + ".png",
+    ]
+    assert all(path.is_file() for path in pngs)
+
+
 def test_hotspot_books_and_required_leaves():
     from bsb_pdf_toolkit.compose_travel_hotspots import DEFAULT_HOTSPOTS, HOTSPOT_BOOKS
 

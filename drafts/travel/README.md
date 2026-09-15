@@ -119,6 +119,21 @@ each leaf stays 4.75 × 7 in. Still not the loved face. Line-match notes
 live in [`HOTSPOTS.md`](HOTSPOTS.md). To rebuild the typeset first:
 `make travel-john-grid-proof && make travel-john-spreads`.
 
+## John chapter-opener QA (densified)
+
+`make travel-john-chapter-openers` crops every John chapter start
+(chs 1–21) from the committed 50-page grid-proof. Mid-page opens crop
+around the drop, not the physical page top, so a top-half leaf still
+shows heading + drop + first lines. 120 dpi PNGs and a 21-page crop PDF
+land in [`qa-john/`](qa-john/). Does not recompile. Not Milo.
+
+```bash
+make travel-john-chapter-openers
+```
+
+Output: `drafts/travel/qa-john/bsb-travel-john-chapter-openers.pdf` and
+`qa-john/john-ch01-opener.png` … `john-ch21-opener.png`.
+
 ## Hotspot sampler (committed, not the 66-book file)
 
 `make travel-hotspot-sampler` compiles only Genesis, Psalms, Obadiah,
@@ -245,8 +260,8 @@ page blowup. There is no ruled background and no `GRID PROOF` / `NOT FINAL
 FACE` footer string. The PDF outline is John → chapters 1–21.
 Licensed FF Milo Serif Text is still missing from `fonts/milo/`.
 
-John QA leaves (opener / later-`\p` indent / WOC blue) and densified
-facing-spread PNGs live in [`qa-john/`](qa-john/).
+John QA leaves (opener / later-`\p` indent / WOC blue), densified
+facing-spread PNGs, and chapter-opener crops live in [`qa-john/`](qa-john/).
 
 | Item | Value |
 |------|-------|

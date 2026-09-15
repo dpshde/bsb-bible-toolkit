@@ -18,6 +18,8 @@ TRAVEL_BIBLE_NT_GRID_PDF := drafts/travel/bsb-travel-bible-nt-grid-proof.pdf
 TRAVEL_BIBLE_NT_GRID_TYP := drafts/travel/work/bible-nt-grid-proof.typ
 TRAVEL_SPREADS_PDF := drafts/travel/bsb-travel-john-facing-spreads-densified.pdf
 TRAVEL_SPREADS_DIR := drafts/travel/qa-john
+TRAVEL_OPENERS_PDF := drafts/travel/qa-john/bsb-travel-john-chapter-openers.pdf
+TRAVEL_OPENERS_DIR := drafts/travel/qa-john
 TRAVEL_HOTSPOT_PDF := drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf
 TRAVEL_HOTSPOT_DIR := drafts/travel/hotspots
 TRAVEL_HYPHEN_PDF := drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf
@@ -35,7 +37,7 @@ MILO_DIR := fonts/milo
 GRID_DIR := fonts/grid-proof
 
 .PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
-	travel-john-spreads travel-john-mixam travel-hotspot-sampler \
+	travel-john-spreads travel-john-chapter-openers travel-john-mixam travel-hotspot-sampler \
 	travel-hyphenation-qa \
 	travel-poetry-qa travel-running-headers-qa travel-woc-qa travel-random-qa \
 	travel-bible-grid-proof \
@@ -49,6 +51,7 @@ help:
 	@echo "travel-john-grid-proof      John OFL metrics PDF (not the loved face)"
 	@echo "travel-john-mixam           John Mixam saddle-stitch dummy (52 pp, not Milo)"
 	@echo "travel-john-spreads         2-up densified John openings 2–3, 6–7, 18–19, 24–25"
+	@echo "travel-john-chapter-openers Half-leaf crops of John chs 1–21 opens (not Milo)"
 	@echo "travel-hotspot-sampler      Compact committed hotspot leaves (grid proof)"
 	@echo "travel-hyphenation-qa       John/poetry/Genesis hyphenation leaves (grid proof)"
 	@echo "travel-poetry-qa            Psalm 1 + Psalm 119 poetry leaves (grid proof)"
@@ -101,6 +104,15 @@ travel-john-spreads:
 	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_spreads \
 		$(TRAVEL_GRID_PDF) $(TRAVEL_SPREADS_PDF) \
 		--png-dir $(TRAVEL_SPREADS_DIR)
+
+travel-john-chapter-openers:
+	@test -f "$(TRAVEL_GRID_PDF)" || { \
+		echo "Missing $(TRAVEL_GRID_PDF); run make travel-john-grid-proof first." >&2; \
+		exit 1; \
+	}
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_chapter_openers \
+		$(TRAVEL_GRID_PDF) $(TRAVEL_OPENERS_PDF) \
+		--png-dir $(TRAVEL_OPENERS_DIR)
 
 travel-hotspot-sampler: usfm-source
 	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_hotspots \

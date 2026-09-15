@@ -100,6 +100,23 @@ same slot coordinates (phase Δ 0.0 pt). Shared body y-slots: **14** on 2–3,
 PNGs matches: text lines meet across the gutter; drop-cap squares and
 footnotes do not break the body grid.
 
+## Chapter-opener QA (densified John, 2026-09-15)
+
+`make travel-john-chapter-openers` crops every chapter start from the
+committed 50-page John grid-proof. It does not recompile. Source Serif 4
+stand-in. Not Milo.
+
+| Item | Value |
+|------|-------|
+| Source | `drafts/travel/bsb-travel-john-grid-proof.pdf` (50 pages) |
+| Opener PDF | `drafts/travel/qa-john/bsb-travel-john-chapter-openers.pdf` (21 half-leaf crops, 171,131 bytes, SHA-256 `e9035f1d7a06e256e097a0e62e5b0349b295c003bff165fe20c93be9f60dd44a`) |
+| PNGs | `drafts/travel/qa-john/john-ch01-opener.png` … `john-ch21-opener.png` (120 dpi) |
+| What to check | Drop-cap square, `JOHN ·` running head (interior), first-verse flush beside the drop, 0.35 in indent after later `\s1`, air under book/section title |
+
+No compose change this step: every chapter already has a 31.5 pt drop,
+interior running heads, and later-heading indent. Mid-page opens (chs 3,
+8, 9, 16, 17, 19) are cropped around the drop so they stay in frame.
+
 Densified John grid-proof 2026-09-13 (Typst 0.14.2, 3.50 in measure,
 0.35 in later-`\p` indent, 0.75-baseline gap only on long later `\p`,
 body leading −1.0 pt, run-in grey notes, no ruled background, no footer
