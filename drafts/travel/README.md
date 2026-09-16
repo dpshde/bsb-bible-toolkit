@@ -299,18 +299,19 @@ make travel-bible-grid-proof    # 66-book metrics preview
 ```
 
 Output: `drafts/travel/bsb-travel-bible-grid-proof.pdf`
-(2,661 pages, 33,374,612 bytes, 113,654 links, SHA-256
-`afbe698b426725029c25066c0eebc3753271e0ae6591e9cfe9487eb38de77c17`).
-Per-book Typst/PDF intermediates stay in `drafts/travel/work/` (gitignored).
+(2,327 pages, 32,004,542 bytes, 113,662 links, SHA-256
+`14d7b0b56eaa433fe60e19e1edee499695e107ddf9612ca16d6a6ce7f42332d9`).
+John inside this file is pages **1997–2046** (50 pages), matching the
+standalone densified John grid-proof. Per-book Typst/PDF intermediates
+stay in `drafts/travel/work/` (gitignored).
 
 If a single compile runs out of memory, `make travel-bible-ot-grid-proof` and
 `make travel-bible-nt-grid-proof` build the testaments separately.
 
-Seeded random-page visual QA (16 leaves, seed `20260911`) lives in
+Seeded random-page visual QA (16 leaves, seed `20260911`) plus the
+Genesis 16 / mid-John WOC / Psalm 119 / Matthew 1 glance pack live in
 [`qa-random/`](qa-random/). Older hotspot notes stay in
 [`HOTSPOTS.md`](HOTSPOTS.md).
-That note records page counts for a local compile; the PDF itself is not
-committed.
 
 ## Scope
 

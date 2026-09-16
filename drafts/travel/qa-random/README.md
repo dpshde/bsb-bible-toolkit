@@ -1,7 +1,8 @@
-# Random-page visual QA (2026-09-11)
+# Random-page visual QA (2026-09-16)
 
-Seeded sample of the committed 66-book travel grid-proof. Source Serif 4
-stand-in. **Not** FF Milo Serif Text.
+Seeded sample of the committed 66-book travel grid-proof after the
+John-fixed densify recompile. Source Serif 4 stand-in. **Not** FF Milo
+Serif Text.
 
 ```bash
 make travel-random-qa
@@ -9,48 +10,53 @@ make travel-random-qa
 
 | Item | Value |
 |------|-------|
-| Source | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (2,661 pages) |
+| Source | `drafts/travel/bsb-travel-bible-grid-proof.pdf` (2,327 pages) |
+| SHA-256 | `14d7b0b56eaa433fe60e19e1edee499695e107ddf9612ca16d6a6ce7f42332d9` |
+| Size | 32,004,542 bytes |
+| John | pages 1997–2046 (50; ±0 vs standalone) |
 | Seed | `20260911` |
 | Engine | Typst 0.14.2, 120 dpi PNG, native 4.75 × 7 in |
-| Forced hotspots | Genesis 1 (p.1), Psalm 119 (p.1145), Revelation 22 last leaf (p.2365) |
+| Forced hotspots | Genesis 1 (p.1), Psalm 119 (p.1125), Revelation 22 last leaf (p.2327) |
 
-Machine scan: no page carries `Berean Standard Bible`, `Travel print sample`,
-`GRID PROOF`, or `NOT FINAL FACE`. No leftover `Next:` and no `|OSIS` /
-`|1CH` footnote tails.
+Machine scan of the full PDF: no page carries `Berean Standard Bible`,
+`Travel print sample`, `GRID PROOF`, or `NOT FINAL FACE`. No leftover
+`Next:` and no `|OSIS` / `|1CH` footnote tails.
 
-## Requested re-rasters (hard densify)
+## Glance pack (today)
 
 | Leaf | Page | PNG |
 |------|------|-----|
-| Genesis 16 Hagar (closest to the wall crop: drop 16 + 16:1–8) | 31 | [`genesis-16-hagar-p0031.png`](genesis-16-hagar-p0031.png) |
-| Psalm 119 ALEPH / Lamp title | 1315 | [`psalm-119-aleph-p1315.png`](psalm-119-aleph-p1315.png) |
-| Matthew 1 opener | 2045 | [`matthew-1-opener-p2045.png`](matthew-1-opener-p2045.png) |
+| Genesis 16 Hagar (later-`\p` indent obvious) | 26 | [`genesis-16-hagar-p0026.png`](genesis-16-hagar-p0026.png) |
+| Mid-John prose with WOC blue (John 17:6–26) | 2036 | [`john-mid-woc-p2036.png`](john-mid-woc-p2036.png) |
+| Psalm 119 ALEPH / Lamp opener | 1125 | [`psalm-119-aleph-p1125.png`](psalm-119-aleph-p1125.png) |
+| Matthew 1 book opener | 1809 | [`matthew-1-opener-p1809.png`](matthew-1-opener-p1809.png) |
 
-Hard pass vs the Genesis 16 wall: later `\p` first lines sit **0.35 in**
-in from the measure (measured 75.60 pt on this recto = 0.70 + 0.35),
-with extra space between USFM paragraphs. Verse 2 under the drop stays
-flush. Poetry on Psalm 119 and the Matthew genealogy is not prose-indented.
+Later `\p` first lines on Genesis 16 sit **0.35 in** in from the verso
+measure (measured 64.80 pt = 0.55 + 0.35). Verse 1 under the drop stays
+flush. John 17 paints WOC `rgb(28, 56, 110)` across the High Priestly
+Prayer. Psalm 119 keeps the Lamp title with ALEPH + drop 119. Matthew 1
+notes say “see 1 Chronicles 2:9–10” with no `|1CH` tail.
 
-## Sample (pass/fail)
+## Seeded sample (pass/fail)
 
 | # | Page | Role | Book / range | Result | Notes |
 |---|------|------|--------------|--------|-------|
-| 1 | 1 | opener (OT, hotspot) | Genesis 1 · `Genesis` | Pass | Title has air above/below; no branding; “The Creation” with drop 1. |
+| 1 | 1 | opener (OT, hotspot) | Genesis 1 | Pass | Title air; no branding; drop 1. |
 | 2 | 286 | mid prose | Numbers | Pass | Seeded mid-chapter prose leaf. |
 | 3 | 365 | mid prose | Deuteronomy | Pass | Seeded mid-chapter prose leaf. |
-| 4 | 869 | mid prose | Ezra | Pass | Seeded mid-chapter prose leaf. |
-| 5 | 1017 | poetry | Psalm | Pass | Poetry indent; section stays with the next verse. |
+| 4 | 871 | mid prose | Nehemiah | Pass | Seeded mid-chapter prose leaf. |
+| 5 | 996 | poetry | Psalm | Pass | Poetry indent; section stays with the next verse. |
 | 6 | 1040 | uniform | Psalm | Pass | Parallelism indent. |
-| 7 | 1145 | poetry (hotspot) | Psalm 118:26–119:9 | Pass | Lamp title clears 118:29 and stays with ALEPH + drop 119. |
-| 8 | 1564 | opener (OT) | Lamentations 1 | Pass | Book name only; air around the title; section + drop 1. |
-| 9 | 1732 | mid prose | Hosea | Pass | Seeded mid-chapter prose leaf. |
-| 10 | 1836 | opener (NT) | Matthew 1:1–8 | Pass | Title air; no `Next:`; notes say “see 1 Chronicles 2:9–10” with no `|1CH`. |
-| 11 | 2011 | uniform | Luke | Pass | Seeded uniform leaf. |
-| 12 | 2094 | mid prose | Acts | Pass | Seeded mid-chapter prose leaf. |
-| 13 | 2263 | opener (NT) | 2 Timothy 1 | Pass | Title air; greeting stays with drop 1. |
-| 14 | 2273 | tiny book | Philemon 1:1–15 | Pass | Title air; opening fits; not exploded. |
-| 15 | 2343 | uniform | Revelation | Pass | Seeded uniform leaf. |
-| 16 | 2365 | ending (hotspot) | Revelation 22 | Pass | Last leaf of the 2,365-page canon. |
+| 7 | 1111 | uniform | Psalm | Pass | Seeded uniform leaf. |
+| 8 | 1125 | poetry (hotspot) | Psalm 118:25–119:9 | Pass | Lamp title clears 118:29 and stays with ALEPH + drop 119. |
+| 9 | 1541 | opener (OT) | Lamentations 1 | Pass | Book name only; air around the title; section + drop 1. |
+| 10 | 1734 | mid prose | Amos | Pass | Seeded mid-chapter prose leaf. |
+| 11 | 1809 | opener (NT) | Matthew 1:1–8 | Pass | Title air; no `Next:`; notes have no `|1CH`. |
+| 12 | 2011 | uniform | John 6 | Pass | Interior John leaf inside the 50-page span. |
+| 13 | 2091 | mid prose | Acts | Pass | Seeded mid-chapter prose leaf. |
+| 14 | 2227 | opener (NT) | 2 Timothy 1 | Pass | Title air; greeting stays with drop 1. |
+| 15 | 2237 | tiny book | Philemon 1 | Pass | Title air; opening fits; not exploded. |
+| 16 | 2327 | ending (hotspot) | Revelation 22 | Pass | Last leaf of the 2,327-page canon. |
 
 Hard-fail checks (orphan header, book-page branding, leftover metadata,
 grid/watermark, collisions, `Next:`, `|OSIS`): **none on this seed**.
@@ -59,24 +65,23 @@ grid/watermark, collisions, `Next:`, `|OSIS`): **none on this seed**.
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `01-opener-genesis-p0001.png` | 102,684 | `7dca9cf6f0b536dc2fdc84c962128360fdab208497a644ff486bd7739072773d` |
-| `02-prose-numbers-p0286.png` | 113,801 | `276a8975bf59ae7de9aeee008c4882b5d3848ebc49a2dbe5d9c8e787e49c3c72` |
-| `03-prose-deuteronomy-p0365.png` | 85,531 | `3c86ad2a974d66fe146a19cdbb398347e2854c5f81d6e9ecf36d371f94a523ea` |
-| `04-prose-ezra-p0869.png` | 129,485 | `2f0d5343a3158d0050708f25a1b0bad9cbe260f5428f62a92f78188443fe4196` |
-| `05-poetry-psalm-p1017.png` | 95,785 | `deca51ef64686d06760c75790b8cbbd84e492dd89470bcc6366848eabd9a984a` |
-| `06-uniform-psalm-p1040.png` | 102,162 | `eb0e7468ac7c90839cef689660a33b21049e86f447dffb4f7bf4235bcba4e219` |
-| `07-poetry-psalm-p1145.png` | 117,084 | `fcc2a3a7af56c3baa1696b98442093b025611d4094f28fef33c4d31a7eec490e` |
-| `08-opener-lamentations-p1564.png` | 75,840 | `29fb327a31d819b61bd5388ead4f23fa5c2f3a8542b93e801f0d6d18c151e8d9` |
-| `09-prose-hosea-p1732.png` | 113,586 | `ce1b421d9acce608fa5dd3bdace2397b0c6dc24330416332153e5cbd7adcc516` |
-| `10-opener-matthew-p1836.png` | 87,534 | `3a2b506ef535299184ea3dca123f807be74937378f55c06f65f6212988c7a223` |
-| `11-uniform-luke-p2011.png` | 141,472 | `02a3882f34acb21b52277ddf18a4caa57f0ad685d6ec9c4728bf2a52d6bf3378` |
-| `12-prose-acts-p2094.png` | 130,892 | `0ff27c91bfc513916539640cc930db9aca1a9077351c2d963ef8426e04753eb6` |
-| `13-opener-2-timothy-p2263.png` | 119,247 | `b838815acb7bf40dcff0047c9a25a7f4a6966e859c3b3857fa35a847837b2c2d` |
-| `14-tiny-philemon-p2273.png` | 120,269 | `8ddf9c05775f1274c1473cd4a49800ee2b8f092bc986347769cd589acd9d6455` |
-| `15-uniform-revelation-p2343.png` | 122,584 | `410f226239d854523ee18f2c5b9e65da8b29c8620a0c46df12ff8bc68ce547b4` |
-| `16-ending-revelation-p2365.png` | 72,873 | `27da33c82c5328c53e9b4b0b2020ea9c1a5975b45c246847c0bd1a3484db665b` |
-| `genesis-1-opener-p0001.png` | 102,684 | `7dca9cf6f0b536dc2fdc84c962128360fdab208497a644ff486bd7739072773d` |
-| `philemon-opener-p2273.png` | 120,269 | `8ddf9c05775f1274c1473cd4a49800ee2b8f092bc986347769cd589acd9d6455` |
-| `genesis-16-hagar-p0031.png` | 101,523 | `7bb628dbd292ed0422562280082063b1b374e401fa2f6cd7ad6a5d49eb9a7353` |
-| `psalm-119-aleph-p1315.png` | 81,716 | `2a403ebe88b36f1377427338b00b745bb888846e9d6933f38612bc74afe07310` |
-| `matthew-1-opener-p2045.png` | 68,434 | `ab586713b49a3fed2c5b1c0d1612d742a6eff129aadffd87c5263a3a4d2193a5` |
+| `01-opener-genesis-p0001.png` | 96,271 | `9adb47940c08f7e30cd3c997bf7fc3c903182d3bbce6a908f6e895e77ab8385e` |
+| `02-prose-numbers-p0286.png` | 109,369 | `2a006eb37a14003b4910c7c08c300f7685e8252c6c08ffc6bbbb8caadc73351c` |
+| `03-prose-deuteronomy-p0365.png` | 163,643 | `381755620bb6c6389582aa1f476b16ad20ace554239dcce9bec6b03541da9596` |
+| `04-prose-nehemiah-p0871.png` | 156,366 | `3e50d2aa9c4ec3fe85b3bb271461416a723ce5c8ff96e1f5b6f5ef839f617ac9` |
+| `05-poetry-psalm-p0996.png` | 94,362 | `44e46910f168762c29785be91f3ff8e55366a0dcd456bd125aaa00453dc5773d` |
+| `06-uniform-psalm-p1040.png` | 103,042 | `b530579d90eb5a09eff05a37c5d1c997093a5a910a7cc66ecde1f3114275c323` |
+| `07-uniform-psalm-p1111.png` | 108,561 | `a81530c426580ea9951acdfa4d04ac328e7d2df894eb9dd08eb30e8fdd12b901` |
+| `08-poetry-psalm-p1125.png` | 97,375 | `44673be7da5cbc8639154c7010ed488599ea0cd2013cfd2b5e7e87da1847e9ef` |
+| `09-opener-lamentations-p1541.png` | 75,737 | `30f6936808f45f41398d41eb4e16ff473741f8c3621e6fa5e87114bd18beff4e` |
+| `10-prose-amos-p1734.png` | 123,677 | `3136b401f28da75cde9f6f3ef15c7783a1eeebb3953cc911ec0fcb4508fa4e40` |
+| `11-opener-matthew-p1809.png` | 87,329 | `55f42eaa01cd77daa337cb32c9fda3c1bf324389310502db085998a26e7aea88` |
+| `12-uniform-john-p2011.png` | 147,555 | `a8f24676a878e3a84a79ebe0b7738d8d2084afc49020b0f0e66c0296a1885d3f` |
+| `13-prose-acts-p2091.png` | 122,700 | `a615c6a677637215e8572fa1be5ee1e44079b1968bb96e128291b7d454cc72d9` |
+| `14-opener-2-timothy-p2227.png` | 124,513 | `1cbe7a50678abfce801c5e93d4c037be8373e7afc6575da5c305a66b4ae8249b` |
+| `15-tiny-philemon-p2237.png` | 121,916 | `36f82502d6c6c988f7734e10fcb1f8e4494df299bda6cae065f6ebe435e206a7` |
+| `16-ending-revelation-p2327.png` | 94,297 | `513f72c37372a63a92422bd3df347d32ba5cd2cd0887a704fbb0f47d9849520c` |
+| `genesis-16-hagar-p0026.png` | 156,509 | `a1cb128a88d9c1f63e094644f05c91c6e6ad18098ff894f25e4dbd119c25c7a6` |
+| `john-mid-woc-p2036.png` | 164,415 | `3f97a9e2f404d6e922db94310cd83c3232de157f8d50f06cb0ae432f2986aa91` |
+| `psalm-119-aleph-p1125.png` | 97,375 | `44673be7da5cbc8639154c7010ed488599ea0cd2013cfd2b5e7e87da1847e9ef` |
+| `matthew-1-opener-p1809.png` | 87,329 | `55f42eaa01cd77daa337cb32c9fda3c1bf324389310502db085998a26e7aea88` |

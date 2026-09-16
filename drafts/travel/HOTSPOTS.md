@@ -1,22 +1,27 @@
 # Travel Bible grid-proof hotspot QA
 
-Watermarked metrics PDF only. Stand-in face is Source Serif 4 (SIL OFL).
-**Not** FF Milo Serif Text. Do not present this file as the loved face.
+Metrics PDF only (no ruled background, no `GRID PROOF` / `NOT FINAL FACE`).
+Stand-in face is Source Serif 4 (SIL OFL). **Not** FF Milo Serif Text.
+Do not present this file as the loved face.
 
 Compile: `make travel-bible-grid-proof`
 
-Seeded 16-page visual QA (2026-09-11): [`qa-random/README.md`](qa-random/README.md)
-(`make travel-random-qa`, seed `20260911`). Older sample page numbers follow
-an earlier compile. `Next:` and `|OSIS` leaks are gone. Book titles and the
-Psalm 119 Lamp title have more air.
+Recompiled 2026-09-16 on the John-fixed densify compose (0.35 in later-`\p`
+`#h` indent; 0.75-baseline brick gap only on long later `\p` of 4+ verses;
+body leading −1.0 pt). John inside the canon is 50 pages (1997–2046),
+matching the standalone John grid-proof. Seeded 16-page visual QA and the
+four glance leaves: [`qa-random/README.md`](qa-random/README.md)
+(`make travel-random-qa`, seed `20260911`). Older sample page numbers below
+follow earlier compiles. `Next:` and `|OSIS` leaks stay gone.
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-bible-grid-proof.pdf` |
 | Engine | Typst 0.14.2 (per-book compile + merge; one-shot canon OOMs here) |
-| Pages | 2661 |
-| Bytes | 33,374,612 (~31.8 MiB) |
-| SHA-256 | `afbe698b426725029c25066c0eebc3753271e0ae6591e9cfe9487eb38de77c17` |
+| Pages | 2327 |
+| Bytes | 32,004,542 (~30.5 MiB) |
+| SHA-256 | `14d7b0b56eaa433fe60e19e1edee499695e107ddf9612ca16d6a6ce7f42332d9` |
+| John | pages 1997–2046 (50) |
 | Trim | 4.75 in × 7.00 in (342 × 504 pt) |
 | Books | 66, Protestant canon order |
 | Outline | Book → Chapter (66 books, 1,189 chapter dests) |
