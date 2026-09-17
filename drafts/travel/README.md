@@ -145,8 +145,8 @@ make travel-hotspot-sampler
 ```
 
 Output: `drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf`
-(6 leaves, 86,279 bytes, SHA-256
-`a85c11a15610d4dce39c312dda6a6dc5461fab9f254de31f5be4087f827b6945`).
+(6 leaves, 93,370 bytes, SHA-256
+`a37cb173e6458e5aa5a04a178ef98981c576463021c93631bc2f150141fab808`).
 120 dpi PNG previews: `drafts/travel/hotspots/*.png`.
 Intermediate compile (gitignored): `drafts/travel/work/hotspot-books-grid-proof.pdf`
 (335 pages).

@@ -261,22 +261,27 @@ John-only probe at the old 120% cost had **2** line-end hyphens in 49 pages;
 80% yields about **11**. 50% jumped to 34 and started chopping short stems
 (`bap-`, `tes-`). 80% is the travel setting.
 
-## Compact sampler (2026-09-06)
+## Compact sampler (2026-09-17)
 
 `make travel-hotspot-sampler` builds a committed multi-leaf PDF from a
 targeted book compile (Genesis, Psalms, Obadiah, 1 John, Revelation) —
-not the 2299-page file. Source Serif 4 stand-in. Not Milo.
+not the 2,327-page file. Recompiled 2026-09-17 on the John-fixed
+densify compose (0.35 in later-`\p` `#h` indent; 0.75-baseline brick
+gap only on long later `\p` of 4+ verses; body leading −1.0 pt;
+3.50 in measure), matching the 2026-09-16 full-canon recompile.
+Source Serif 4 stand-in. Not Milo. No ruled background; footnotes
+run in.
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-hotspot-sampler-grid-proof.pdf` |
 | Regen | `make travel-hotspot-sampler` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-06 |
+| Compiled | 2026-09-17 |
 | Pages | 6 (native 4.75 × 7 in leaves) |
-| Size | 86,279 bytes |
-| SHA-256 | `a85c11a15610d4dce39c312dda6a6dc5461fab9f254de31f5be4087f827b6945` |
-| Source compile | `drafts/travel/work/hotspot-books-grid-proof.pdf` (335 pages, gitignored) |
+| Size | 93,370 bytes |
+| SHA-256 | `a37cb173e6458e5aa5a04a178ef98981c576463021c93631bc2f150141fab808` |
+| Source compile | `drafts/travel/work/hotspot-books-grid-proof.pdf` (336 pages, gitignored) |
 | PNGs | `drafts/travel/hotspots/*.png` (120 dpi) |
 
 | Leaf | Source page | What to check |
@@ -284,18 +289,18 @@ not the 2299-page file. Source Serif 4 stand-in. Not Milo.
 | `genesis-1` | 1 | Title + boxed drop 1 + footnotes a–c |
 | `psalm-1` | 96 | `q1`/`q2` indent; BOOK I; drop 1 |
 | `psalm-119` | 254 | ALEPH Latin label + boxed drop 119; no Hebrew tofu |
-| `obadiah` | 293 | Title + body on one opening; not exploded |
-| `1-john-3` | 298 | Ch. 3 open + notes a–e; letters stay short |
-| `revelation-22` | 335 | 22:18–21 including Amen |
+| `obadiah` | 294 | Title + body on one opening; not exploded |
+| `1-john-3` | 300 | Ch. 3 open + notes a–e; letters stay short |
+| `revelation-22` | 336 | 22:14–21 including Amen |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `hotspots/genesis-1.png` | 104,081 | `bef78cd1dc51babe2d9188e9752682f44646bf923e7f90db540ed636c5f2cb41` |
-| `hotspots/psalm-1.png` | 98,678 | `d82b83ce120c7e6c016cb8afb2eb95bc7c18b187db856ebb4b3d19e5744abdc9` |
-| `hotspots/psalm-119.png` | 125,274 | `e28e73343403103e960068d5680e8c07e405ee0bc474ab53d2a2fd0dcc6444c2` |
-| `hotspots/obadiah.png` | 102,471 | `62c224771c2e5d7544d827c6dcb52dcb303e01486a8c3aa39ccf130ae70305e5` |
-| `hotspots/1-john-3.png` | 155,867 | `05e622507ce9b41b400fcf767cb61c33eed426c3ebe81425b99c14eb6145e613` |
-| `hotspots/revelation-22.png` | 63,982 | `7229176492939b00306966188394730a5b7fb84348f25bc5db930de350e9563d` |
+| `hotspots/genesis-1.png` | 96,271 | `9adb47940c08f7e30cd3c997bf7fc3c903182d3bbce6a908f6e895e77ab8385e` |
+| `hotspots/psalm-1.png` | 70,169 | `199956d62dfb02568f44512d0353b72e42f630103eb94875dca5094a144ad606` |
+| `hotspots/psalm-119.png` | 97,334 | `00fffeb4d78d19158a0be6efc1956c5a6b2d0637d41c2818d5273801b373a3ba` |
+| `hotspots/obadiah.png` | 81,969 | `3b10abcddc449326a133804de4e93e6e9b8c5d8114f47d911701fb9ab43628a6` |
+| `hotspots/1-john-3.png` | 158,266 | `d606ef8b67fb068a402e0dbb75c0998e0579386985003db8614d007a0b478b35` |
+| `hotspots/revelation-22.png` | 94,227 | `ca150351266d1526061b7f4bc7ab6ad7c60b9e8aba82dc92e0de65ccd765e5ce` |
 
 ## Known leftovers (not chased)
 
