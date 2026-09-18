@@ -128,42 +128,48 @@ body leading −1.0 pt, run-in grey notes, no ruled background, no footer
 watermark): 50 pages, 2,043,507 bytes, SHA-256
 `181c4e42f6797d13288518fba389deb63fa53e4862da1d9ebb16809423178494`.
 
-## Words of Christ blue QA (2026-09-11)
+## Words of Christ blue QA (2026-09-18)
 
-`make travel-woc-qa` compiles Matthew + John and extracts four native
+`make travel-woc-qa` compiles Matthew + John on the current densify
+compose (3.50 in measure, 0.35 in later-`\p` indent, 0.75-baseline gap
+only on long later `\p`, body leading −1.0 pt) and extracts four native
 4.75 × 7 leaves that carry spoken-Christ text. USFM `\wj` still becomes
-`#woc` in cobalt `rgb(28, 56, 110)`. Source Serif 4 stand-in. Not Milo.
-Run-in footnotes in grey `rgb(76, 76, 76)`, no ruled background, no
-`GRID PROOF` / `NOT FINAL FACE`. PDF outline: Matthew → 3, 4; John → 3, 14.
+`#woc` in cobalt `rgb(28, 56, 110)`. Verse numbers stay body ink inside
+speech. Source Serif 4 stand-in. Not Milo. Run-in footnotes in grey
+`rgb(76, 76, 76)`, no ruled background, no `GRID PROOF` / `NOT FINAL
+FACE`. PDF outline: Matthew → 4, 5; John → 3, 14.
 
-Baptism and temptation are distinct leaves again. John 14 keeps the
-pericope title with drop 14 and with “The Way, the Truth, and the Life”.
+Densify pagination puts Matthew 3 baptism and Matthew 4 temptation on
+the same leaf (`MATTHEW · 3:13–4:10`). The selector keeps baptism and
+takes the Beatitudes as the second distinct Matthew leaf. John 14 still
+keeps the pericope title with drop 14 and “The Way, the Truth, and the
+Life”.
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf` |
 | Regen | `make travel-woc-qa` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-11 |
+| Compiled | 2026-09-18 |
 | Pages | 4 (native 4.75 × 7 in leaves) |
-| Size | 101,655 bytes |
-| SHA-256 | `32c268e297f0707626513b9fc81ae3d0a2797152350f7b8b3ccc1c1aaa066dcb` |
-| Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (gitignored) |
+| Size | 98,012 bytes |
+| SHA-256 | `d57cb175f4cebfe551d1f93072decfca95f6035de2bc42376829c59fd29810ee` |
+| Source compile | `drafts/travel/work/woc-books-grid-proof.pdf` (gitignored; 121 pages) |
 | PNGs | `drafts/travel/woc/*.png` (120 dpi) |
 
 | Leaf | Source page | Header | What to check |
 |------|-------------|--------|---------------|
-| `matthew-baptism` | 5 | `MATTHEW · 3:1–16` | “Let it be so now”; notes wrap |
-| `matthew-temptation` | 6 | `MATTHEW · 3:17–4:15` | “Man shall not live on bread alone”; boxed drop 4 |
-| `john-loved` | 73 | `JOHN · 3:15–34` | 3:16–17 speech in cobalt; notes wrap |
-| `john-farewell` | 100 | `JOHN · 13:36–14:13` | Title + drop 14 + “The Way, the Truth, and the Life” stay with their verses |
+| `matthew-baptism` | 6 | `MATTHEW · 3:13–4:10` | “Let it be so now”; same leaf now also has “Man shall not live on bread alone” + boxed drop 4 |
+| `matthew-sermon` | 8 | `MATTHEW · 4:23–5:12` | Beatitudes in cobalt; boxed drop 5 |
+| `john-loved` | 77 | `JOHN · 3:10–29` | 3:16–17 speech in cobalt; notes wrap |
+| `john-farewell` | 105 | `JOHN · 13:36–14:13` | Title + drop 14 + “The Way, the Truth, and the Life” stay with their verses |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `woc/matthew-baptism.png` | 154,196 | `e5d46eb06070834d1c282725bd7433e629cc9e0ca27f834beea411e985851e53` |
-| `woc/matthew-temptation.png` | 138,947 | `83db73c88c3510d8708b7cc9af250b08073499387b4c49cb5edf5c028c7276cc` |
-| `woc/john-loved.png` | 160,193 | `64cde80e4bff605cb4146775e6cc8441e9d3dc4cf573da8aae92f8b7dfdbaa1f` |
-| `woc/john-farewell.png` | 158,925 | `bad1eba8ce19b4167e95241b3a66f95863480981da405f2b791e9263c77fd084` |
+| `woc/matthew-baptism.png` | 149,404 | `241c03fd8dbc4978974711f70be7cfb65de9c4dac204104024aaf172ccf60882` |
+| `woc/matthew-sermon.png` | 119,497 | `338a50d5ea5339ce97dc5d9f405ba4931c02d663242d5a286dfc6436aa76d038` |
+| `woc/john-loved.png` | 162,065 | `1a43e99478a7c1f3cf052f9c5505d9c568452c0f5d5b12ee5e8ca0d547b6f080` |
+| `woc/john-farewell.png` | 159,098 | `654c39ad21ec14921ad2639abd9fb6af57372ba31a0cb1d9579763faf3a526c8` |
 
 ## Running-header QA (2026-09-09)
 

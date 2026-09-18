@@ -1322,6 +1322,20 @@ def test_header_qa_paths_and_range_detection():
     assert not page_has_verse_header("The Gospel According to John")
 
 
+def test_prune_woc_pngs_keeps_current_leaves(tmp_path):
+    from bsb_pdf_toolkit.compose_travel_woc import prune_woc_pngs
+
+    keep = tmp_path / "matthew-baptism.png"
+    leftover = tmp_path / "matthew-temptation.png"
+    keep.write_bytes(b"keep")
+    leftover.write_bytes(b"stale")
+    removed = prune_woc_pngs(tmp_path, ["matthew-baptism", "john-farewell"])
+    assert removed == [leftover]
+    assert keep.is_file()
+    assert not leftover.exists()
+    assert prune_woc_pngs(tmp_path / "missing", ["matthew-baptism"]) == []
+
+
 def test_woc_qa_paths_and_required_leaves():
     from bsb_pdf_toolkit.compose_travel_woc import (
         DEFAULT_OUTPUT,

@@ -204,20 +204,22 @@ Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 ## Words of Christ blue QA
 
-`make travel-woc-qa` compiles Matthew + John and extracts four interior
-leaves so cobalt Words of Christ (`\wj` → `#woc`, `rgb(28, 56, 110)`)
-can be checked. Still Source Serif 4. Not Milo.
+`make travel-woc-qa` compiles Matthew + John on the current densify
+compose and extracts four interior leaves so cobalt Words of Christ
+(`\wj` → `#woc`, `rgb(28, 56, 110)`) can be checked. Still Source Serif
+4. Not Milo.
 
 ```bash
 make travel-woc-qa
 ```
 
 Output: `drafts/travel/bsb-travel-woc-qa-grid-proof.pdf`
-(4 leaves, 101,655 bytes, SHA-256
-`32c268e297f0707626513b9fc81ae3d0a2797152350f7b8b3ccc1c1aaa066dcb`).
-PDF outline: Matthew → 3, 4; John → 3, 14.
-120 dpi PNG previews: `drafts/travel/woc/*.png`.
-Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
+(4 leaves, 98,012 bytes, SHA-256
+`d57cb175f4cebfe551d1f93072decfca95f6035de2bc42376829c59fd29810ee`).
+PDF outline: Matthew → 4, 5; John → 3, 14.
+Densify pagination puts baptism + temptation on one leaf, so the second
+Matthew leaf is the Beatitudes. 120 dpi PNG previews:
+`drafts/travel/woc/*.png`. Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 ## BSB license
 

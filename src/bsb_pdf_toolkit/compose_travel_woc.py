@@ -210,6 +210,19 @@ def format_selection(chosen: list[tuple[HotspotSpec, int]]) -> str:
     return "\n".join(lines)
 
 
+def prune_woc_pngs(png_dir: Path, slugs: list[str]) -> list[Path]:
+    """Remove leftover WOC previews that are not in the current leaf set."""
+    keep = {f"{slug}.png" for slug in slugs}
+    removed: list[Path] = []
+    if not png_dir.is_dir():
+        return removed
+    for path in sorted(png_dir.glob("*.png")):
+        if path.name not in keep:
+            path.unlink()
+            removed.append(path)
+    return removed
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -272,6 +285,8 @@ def main(argv: list[str] | None = None) -> int:
         pngs = render_hotspot_pngs(args.output, args.png_dir, slugs, dpi=args.dpi)
         for path in pngs:
             print(f"Wrote {path} ({path.stat().st_size} bytes)")
+        for path in prune_woc_pngs(args.png_dir, slugs):
+            print(f"Removed leftover {path}")
     print(GRID_PROOF_WATERMARK, file=sys.stderr)
     return 0
 
