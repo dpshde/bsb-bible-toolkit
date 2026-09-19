@@ -1306,20 +1306,84 @@ def test_travel_typst_emits_verse_chapter_for_running_headers(tmp_path):
 def test_header_qa_paths_and_range_detection():
     from bsb_pdf_toolkit.compose_travel_headers import (
         DEFAULT_OUTPUT,
-        HEADER_PAGES,
         HEADER_QA_BOOKS,
-        HEADER_SLUGS,
+        HEADER_REQUIRED_SLUGS,
         page_has_verse_header,
+        parse_page_header,
+        typst_uses_densify,
     )
 
     assert HEADER_QA_BOOKS == ("John",)
-    assert HEADER_PAGES == (2, 3, 6, 10)
-    assert HEADER_SLUGS == ("john-p02", "john-p03", "john-p06", "john-p10")
+    assert HEADER_REQUIRED_SLUGS == (
+        "john-title",
+        "john-verso",
+        "john-recto",
+        "john-cross",
+    )
     assert DEFAULT_OUTPUT.name == "bsb-travel-running-headers-qa-grid-proof.pdf"
     assert page_has_verse_header("JOHN · 4:17–38\nThe woman said")
     assert page_has_verse_header("JOHN · 3:31–4:2\nHe must increase")
     assert not page_has_verse_header("JOHN · 4\nThe woman said")
     assert not page_has_verse_header("The Gospel According to John")
+    assert parse_page_header("JOHN · 4:17–38\nThe woman said").kind == "same-chapter"
+    assert parse_page_header("JOHN · 3:31–4:2\nHe must increase").kind == "cross-chapter"
+    assert parse_page_header("JOHN · 4\nThe woman said").kind == "chapter-only"
+    assert parse_page_header("The Gospel According to John").kind == "none"
+    assert typst_uses_densify(
+        "#let para-indent = 0.35in\n"
+        "costs: (hyphenation: 80%, runt: 160%)\n"
+        "#let body-leading-gap = 1.0pt\n"
+    )
+    assert not typst_uses_densify("#let para-indent = 0.25in\n")
+
+
+def test_select_header_pages_covers_spec_cases():
+    from bsb_pdf_toolkit.compose_travel_headers import (
+        page_folio,
+        select_header_pages,
+        validate_header_selection,
+    )
+
+    pages = [
+        "The Gospel According to John\nIn the beginning was the Word.",
+        "JOHN · 1:16–33\nFrom His fullness we have all received.\n2",
+        "JOHN · 1:34–49\nI have seen and testified that this is the Son of God.\n3",
+        "JOHN · 1:50–2:15\nYou will see greater things than these.\n4",
+        "JOHN · 4\nA chapter-only fallback leaf.\n5",
+    ]
+    chosen = select_header_pages(pages)
+    assert [slug for slug, _, _ in chosen] == [
+        "john-title",
+        "john-verso",
+        "john-recto",
+        "john-cross",
+        "john-chapter-only",
+    ]
+    assert [page_no for _, page_no, _ in chosen] == [1, 2, 3, 4, 5]
+    assert [info.display for _, _, info in chosen] == [
+        "",
+        "JOHN · 1:16–33",
+        "JOHN · 1:34–49",
+        "JOHN · 1:50–2:15",
+        "JOHN · 4",
+    ]
+    validate_header_selection(chosen, pages)
+    assert page_folio(pages[0]) is None
+    assert page_folio(pages[1]) == "2"
+
+
+def test_prune_header_pngs_keeps_current_leaves(tmp_path):
+    from bsb_pdf_toolkit.compose_travel_headers import prune_header_pngs
+
+    keep = tmp_path / "john-verso.png"
+    leftover = tmp_path / "john-p10.png"
+    keep.write_bytes(b"keep")
+    leftover.write_bytes(b"stale")
+    removed = prune_header_pngs(tmp_path, ["john-verso", "john-recto"])
+    assert removed == [leftover]
+    assert keep.is_file()
+    assert not leftover.exists()
+    assert prune_header_pngs(tmp_path / "missing", ["john-verso"]) == []
 
 
 def test_prune_woc_pngs_keeps_current_leaves(tmp_path):

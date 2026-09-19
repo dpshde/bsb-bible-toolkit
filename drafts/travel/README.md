@@ -188,17 +188,19 @@ Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 ## Running-header QA
 
-`make travel-running-headers-qa` compiles John and extracts four interior
-leaves so verso/recto running heads can be checked after the
-`JOHN · <chapter>:<first>–<last>` change. Still Source Serif 4. Not Milo.
+`make travel-running-headers-qa` compiles John on the current densify
+compose and extracts four native leaves so SPEC §5 running matter can
+be checked: title (no chrome), verso left / recto right, same-chapter
+`JOHN · 1:16–33`, and cross-chapter `JOHN · 1:50–2:15`. Still Source
+Serif 4. Not Milo.
 
 ```bash
 make travel-running-headers-qa
 ```
 
 Output: `drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf`
-(4 leaves, 99,227 bytes, SHA-256
-`d715f8419b393f4eac5007873f22437d184c977444f223e02502f9908a73e463`).
+(4 leaves, 92,538 bytes, SHA-256
+`ebe49aed3abc6e5dc76c1e9ea89f0c00223f12275250add9f38e3804094bd5ed`).
 120 dpi PNG previews: `drafts/travel/headers/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 

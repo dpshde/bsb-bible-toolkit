@@ -171,39 +171,49 @@ Life”.
 | `woc/john-loved.png` | 162,065 | `1a43e99478a7c1f3cf052f9c5505d9c568452c0f5d5b12ee5e8ca0d547b6f080` |
 | `woc/john-farewell.png` | 159,098 | `654c39ad21ec14921ad2639abd9fb6af57372ba31a0cb1d9579763faf3a526c8` |
 
-## Running-header QA (2026-09-09)
+## Running-header QA (2026-09-19)
 
-`make travel-running-headers-qa` compiles John and extracts four interior
-leaves. Running heads now carry the page’s verse range:
-`JOHN · 4:17–38`, or `JOHN · 3:31–4:2` when a leaf crosses chapters.
-Page 1 still has no header. Verso left / recto right. Heads stay in the
-0.50 in head margin, not the 42-line text block. Source Serif 4 stand-in.
+`make travel-running-headers-qa` compiles John on the current densify
+compose (3.50 in measure, 0.35 in later-`\p` indent, 0.75-baseline gap
+only on long later `\p`, body leading −1.0 pt, hyphenation cost 80%)
+and extracts four native 4.75 × 7 leaves for SPEC §5 running matter.
+Same-chapter ranges omit the repeated chapter (`JOHN · 1:16–33`).
+A page that crosses chapters uses `JOHN · 1:50–2:15`. Page 1 still has
+no header or folio. Verso left / recto right. Folio centered in the
+foot. Heads stay in the 0.50 in head margin, not the 42-line text
+block. John has no chapter-only fallback leaf in this pagination
+(`JOHN · <chapter>` with no verse marks). Source Serif 4 stand-in.
 Not Milo.
+
+The selector no longer hard-codes 2026-09-09 pages 2, 3, 6, 10.
+Densify pagination moved the first cross-chapter span to page 4
+(page 10 is now same-chapter `JOHN · 5:1–19`).
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf` |
 | Regen | `make travel-running-headers-qa` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-09 |
+| Compiled | 2026-09-19 |
 | Pages | 4 (native 4.75 × 7 in leaves) |
-| Size | 99,227 bytes |
-| SHA-256 | `d715f8419b393f4eac5007873f22437d184c977444f223e02502f9908a73e463` |
+| Size | 92,538 bytes |
+| SHA-256 | `ebe49aed3abc6e5dc76c1e9ea89f0c00223f12275250add9f38e3804094bd5ed` |
+| Source compile | `drafts/travel/work/headers-john-grid-proof.pdf` (gitignored; 50 pages) |
 | PNGs | `drafts/travel/headers/*.png` (120 dpi) |
 
 | Leaf | Source page | Header | What to check |
 |------|-------------|--------|---------------|
-| `john-p02` | 2 | `JOHN · 1:14–28` | Verso (even): left-aligned verse range |
-| `john-p03` | 3 | `JOHN · 1:29–46` | Recto (odd): right-aligned verse range |
-| `john-p06` | 6 | `JOHN · 3:8–26` | Mid-book Nicodemus leaf; range follows the page |
-| `john-p10` | 10 | `JOHN · 4:53–5:15` | Cross-chapter span; boxed drop 5; still in the head margin |
+| `john-title` | 1 | *(none)* | Title page: no running head, no folio |
+| `john-verso` | 2 | `JOHN · 1:16–33` | Verso (even): left-aligned same-chapter range; folio 2 |
+| `john-recto` | 3 | `JOHN · 1:34–49` | Recto (odd): right-aligned same-chapter range; folio 3 |
+| `john-cross` | 4 | `JOHN · 1:50–2:15` | Cross-chapter span; boxed drop 2; still in the head margin; folio 4 |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `headers/john-p02.png` | 148,898 | `8c776df2a053370e4006f3d9b5a03a8efc76896f267f029a1b2cf40be6ea2f0f` |
-| `headers/john-p03.png` | 169,626 | `6909dcfb870db43f86d392adb9a2385e9d071afedf0a4f83ee87a1b0cf3fdb88` |
-| `headers/john-p06.png` | 163,871 | `404f8a107a5e782547652ec8a2539e3fe2f307b9ca66cfbfb99ed740705af8e1` |
-| `headers/john-p10.png` | 160,243 | `84ed427d6786d0368da48e31a0d47667f5772dbb3e80cf145acf2a7d4511360c` |
+| `headers/john-title.png` | 111,414 | `e77aca4cbfb530048a488d1f5c9a35c173eab1914d0bef811538777400d08b9e` |
+| `headers/john-verso.png` | 146,190 | `af5aed4eac6be62926f68c0ca2cdb351eb869c698bd680c8d0e8afd02dcf7a35` |
+| `headers/john-recto.png` | 157,369 | `8c9e42118b94d50e37f45e007581e15cb6a10f44adcbb99b997edbca77c5d8a2` |
+| `headers/john-cross.png` | 152,697 | `c2d5914ccea1ca293abb04eb86c08c5eb99022a0a87d1f8dc7337a2c5ea3e0b5` |
 
 ## Poetry QA (2026-09-08)
 
