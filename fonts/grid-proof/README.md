@@ -3,9 +3,8 @@
 Source Serif 4 lives here **only** so a metrics John PDF can compile while
 licensed FF Milo Serif Text is absent.
 
-The PDF this face produces is watermarked:
-
-> GRID PROOF — NOT FINAL FACE
+The PDF this face produces is a metrics proof only. It is not watermarked
+`GRID PROOF — NOT FINAL FACE`.
 
 Do not present that PDF, or this face, as the travel edition’s loved face.
 The loved face is FF Milo Serif **Text** (optical), dropped into
