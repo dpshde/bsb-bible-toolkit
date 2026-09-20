@@ -50,6 +50,10 @@ run = "make travel-running-headers-qa"
 description = "Matthew/John Words of Christ blue QA leaves (not Milo)"
 run = "make travel-woc-qa"
 
+[tasks.travel-footnotes-qa]
+description = "John translator-note / footnote QA leaves (not Milo)"
+run = "make travel-footnotes-qa"
+
 [tasks.travel-bible-grid-proof]
 description = "Full 66-book OFL metrics PDF (not the loved face; do not commit)"
 run = "make travel-bible-grid-proof"

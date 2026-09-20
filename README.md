@@ -156,6 +156,7 @@ make travel-hyphenation-qa      # John/poetry/Genesis hyphenation leaves; not Mi
 make travel-poetry-qa           # Psalm 1 + Psalm 119 poetry leaves; not Milo
 make travel-running-headers-qa  # John verso/recto running-header leaves; not Milo
 make travel-woc-qa              # Matthew/John Words of Christ blue leaves; not Milo
+make travel-footnotes-qa        # John translator-note / footnote leaves; not Milo
 make travel-bible-grid-proof    # 66-book OFL metrics PDF; not Milo; do not commit
 PYTHONPATH=src python -m bsb_pdf_toolkit.generate_travel_pdf --help
 ```

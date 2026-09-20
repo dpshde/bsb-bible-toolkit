@@ -1621,3 +1621,160 @@ def test_cli_pad_source_skips_compose(tmp_path):
     with fitz.open(output) as doc:
         assert doc.page_count == 4
         assert doc[3].get_text().strip() == ""
+
+
+def test_footnote_qa_paths_and_marker_helpers():
+    from bsb_pdf_toolkit.compose_travel_footnotes import (
+        DEFAULT_OUTPUT,
+        FOOTNOTE_QA_BOOKS,
+        FOOTNOTE_REQUIRED_SLUGS,
+        extract_footnote_listing,
+        listing_markers,
+        markers_reset_across_pages,
+        page_footnote_markers,
+        page_has_fqa_reading,
+        page_has_inline_markers,
+        typst_uses_densify,
+    )
+
+    assert FOOTNOTE_QA_BOOKS == ("John",)
+    assert FOOTNOTE_REQUIRED_SLUGS == ("john-multi", "john-reset")
+    assert DEFAULT_OUTPUT.name == "bsb-travel-footnotes-qa-grid-proof.pdf"
+
+    multi = (
+        "The Gospel According to John\n"
+        "14The Word became flesh and made His dwelling among us.b\n"
+        "the glory of the one and only Sonc from the Father\n"
+        "a Or comprehended b Or and tabernacled among us c Or the Only Begotten or the Unique One\n"
+    )
+    reset = (
+        "JOHN · 1:16–33\n"
+        "who is Himself God anda is at the Father’s side,b has made Him known.\n"
+        "a Or but the only begotten God, who ; BYZ and TR but the only begotten Son, who "
+        "b Greek in the Father’s bosom\n"
+        "2\n"
+    )
+    dense = (
+        "JOHN · 5:2–16\n"
+        "Now there is in Jerusalem near the Sheep Gate a pool.\n"
+        "a Greek a litra ; that is, approximately 12 ounces or 340 grams "
+        "b A denarius was customarily a day’s wage for a laborer\n"
+        "29\n"
+    )
+    assert extract_footnote_listing(multi).startswith("a Or comprehended")
+    assert listing_markers(extract_footnote_listing(multi)) == ("a", "b", "c")
+    assert page_footnote_markers(reset) == ("a", "b")
+    assert page_footnote_markers(dense) == ("a", "b")
+    assert markers_reset_across_pages(multi, reset)
+    assert not markers_reset_across_pages(multi, "JOHN · 4\nNo notes here.\n5\n")
+    assert page_has_fqa_reading(multi)
+    assert page_has_fqa_reading(reset)
+    assert not page_has_fqa_reading("JOHN · 4\na See Genesis 28:12.\n4\n")
+    assert page_has_inline_markers(multi)
+    assert page_has_inline_markers(reset)
+    assert not page_has_inline_markers("In the beginning was the Word.\n2\n")
+    assert typst_uses_densify(
+        "#let para-indent = 0.35in\n"
+        "costs: (hyphenation: 80%, runt: 160%)\n"
+        "#let body-leading-gap = 1.0pt\n"
+    )
+
+
+def test_select_footnote_pages_covers_spec_cases():
+    from bsb_pdf_toolkit.compose_travel_footnotes import (
+        select_footnote_pages,
+        validate_footnote_selection,
+    )
+
+    pages = [
+        (
+            "The Gospel According to John\n"
+            "among us.b We have seen His glory, the one and only Sonc\n"
+            "a Or comprehended b Or and tabernacled among us c Or the Only Begotten or the Unique One\n"
+        ),
+        (
+            "JOHN · 1:16–33\n"
+            "God anda is at the Father’s side,b has made Him known.\n"
+            "a Or but the only begotten God, who b Greek in the Father’s bosom\n"
+            "2\n"
+        ),
+        (
+            "JOHN · 1:34–49\n"
+            "this is the Son of God.a”\n"
+            "a SBL the Chosen One of God b That is, about four in the afternoon\n"
+            "3\n"
+        ),
+    ]
+    chosen = select_footnote_pages(pages)
+    assert [slug for slug, _, _ in chosen] == ["john-multi", "john-reset"]
+    assert [page_no for _, page_no, _ in chosen] == [1, 2]
+    assert [info.display for _, _, info in chosen] == ["a–c", "a–b"]
+    assert chosen[0][2].has_fqa and chosen[0][2].has_inline
+    assert chosen[1][2].has_fqa and chosen[1][2].has_inline
+    validate_footnote_selection(chosen, pages)
+
+
+def test_select_footnote_pages_adds_distinct_fqa_leaf():
+    from bsb_pdf_toolkit.compose_travel_footnotes import select_footnote_pages
+
+    pages = [
+        (
+            "JOHN · 2:16–3:9\n"
+            "house will consume Me.a\n"
+            "a Psalm 69:9 b See Genesis 28:12.\n"
+            "5\n"
+        ),
+        (
+            "JOHN · 3:10–29\n"
+            "from heaven except the One who descended.a\n"
+            "a BYZ and TR include who is in heaven . b Some translators close this quotation\n"
+            "6\n"
+        ),
+        (
+            "The Gospel According to John\n"
+            "among us.b We have seen His glory\n"
+            "a Or comprehended b Or and tabernacled among us\n"
+        ),
+    ]
+    chosen = select_footnote_pages(pages)
+    assert [slug for slug, _, _ in chosen] == ["john-multi", "john-reset", "john-fqa"]
+    assert [page_no for _, page_no, _ in chosen] == [1, 2, 3]
+    assert chosen[2][2].has_fqa
+
+
+def test_prune_footnote_pngs_keeps_current_leaves(tmp_path):
+    from bsb_pdf_toolkit.compose_travel_footnotes import prune_footnote_pngs
+
+    keep = tmp_path / "john-multi.png"
+    leftover = tmp_path / "john-p10.png"
+    keep.write_bytes(b"keep")
+    leftover.write_bytes(b"stale")
+    removed = prune_footnote_pngs(tmp_path, ["john-multi", "john-reset"])
+    assert removed == [leftover]
+    assert keep.is_file()
+    assert not leftover.exists()
+    assert prune_footnote_pngs(tmp_path / "missing", ["john-multi"]) == []
+
+
+def test_validate_footnote_typst_requires_densify_and_notes():
+    from bsb_pdf_toolkit.compose_travel_footnotes import validate_footnote_typst
+
+    typst = (
+        "#let para-indent = 0.35in\n"
+        "costs: (hyphenation: 80%, runt: 160%)\n"
+        "#let body-leading-gap = 1.0pt\n"
+        "counter(footnote).update(0)\n"
+        '#set footnote(numbering: "a")\n'
+        "#let footnote-ink = rgb(76, 76, 76)\n"
+        "notes.map(n => n).join([#h(0.7em)])\n"
+        "#footnote[Or #emph[comprehended]]\n"
+    )
+    validate_footnote_typst(typst)
+    with pytest.raises(ValueError, match="does not use the live densify"):
+        validate_footnote_typst("#footnote[note]\n")
+    with pytest.raises(ValueError, match="does not reset counter"):
+        validate_footnote_typst(
+            "#let para-indent = 0.35in\n"
+            "costs: (hyphenation: 80%, runt: 160%)\n"
+            "#let body-leading-gap = 1.0pt\n"
+        )

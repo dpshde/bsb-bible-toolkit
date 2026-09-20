@@ -30,6 +30,8 @@ TRAVEL_HEADERS_PDF := drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf
 TRAVEL_HEADERS_DIR := drafts/travel/headers
 TRAVEL_WOC_PDF := drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
 TRAVEL_WOC_DIR := drafts/travel/woc
+TRAVEL_FOOTNOTES_PDF := drafts/travel/bsb-travel-footnotes-qa-grid-proof.pdf
+TRAVEL_FOOTNOTES_DIR := drafts/travel/footnotes
 TRAVEL_RANDOM_QA_DIR := drafts/travel/qa-random
 TRAVEL_MIXAM_PDF := drafts/travel/bsb-travel-john-mixam-dummy.pdf
 TRAVEL_MIXAM_PAGES := 52
@@ -39,7 +41,8 @@ GRID_DIR := fonts/grid-proof
 .PHONY: help usfm-source travel-john travel-john-typst travel-john-grid-proof \
 	travel-john-spreads travel-john-chapter-openers travel-john-mixam travel-hotspot-sampler \
 	travel-hyphenation-qa \
-	travel-poetry-qa travel-running-headers-qa travel-woc-qa travel-random-qa \
+	travel-poetry-qa travel-running-headers-qa travel-woc-qa travel-footnotes-qa \
+	travel-random-qa \
 	travel-bible-grid-proof \
 	travel-bible-ot-grid-proof travel-bible-nt-grid-proof test-travel \
 	test-travel-unit
@@ -57,6 +60,7 @@ help:
 	@echo "travel-poetry-qa            Psalm 1 + Psalm 119 poetry leaves (grid proof)"
 	@echo "travel-running-headers-qa   John verso/recto running-header leaves (grid proof)"
 	@echo "travel-woc-qa               Matthew/John Words of Christ blue leaves (grid proof)"
+	@echo "travel-footnotes-qa         John translator-note / footnote leaves (grid proof)"
 	@echo "travel-random-qa            Seeded ~16-page visual QA from the 66-book PDF"
 	@echo "travel-bible-grid-proof     66-book OFL metrics PDF (not the loved face)"
 	@echo "travel-bible-ot-grid-proof  OT-only fallback of the grid-proof compile"
@@ -143,6 +147,12 @@ travel-woc-qa: usfm-source
 		--usfm $(USFM) \
 		--output $(TRAVEL_WOC_PDF) \
 		--png-dir $(TRAVEL_WOC_DIR)
+
+travel-footnotes-qa: usfm-source
+	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_footnotes \
+		--usfm $(USFM) \
+		--output $(TRAVEL_FOOTNOTES_PDF) \
+		--png-dir $(TRAVEL_FOOTNOTES_DIR)
 
 travel-random-qa:
 	$(PYTHON) -m bsb_pdf_toolkit.compose_travel_random_qa \

@@ -171,6 +171,46 @@ Life”.
 | `woc/john-loved.png` | 162,065 | `1a43e99478a7c1f3cf052f9c5505d9c568452c0f5d5b12ee5e8ca0d547b6f080` |
 | `woc/john-farewell.png` | 159,098 | `654c39ad21ec14921ad2639abd9fb6af57372ba31a0cb1d9579763faf3a526c8` |
 
+## Footnotes QA (2026-09-20)
+
+`make travel-footnotes-qa` compiles John on the current densify
+compose (3.50 in measure, 0.35 in later-`\p` indent, 0.75-baseline gap
+only on long later `\p`, body leading −1.0 pt, hyphenation cost 80%)
+and extracts three native 4.75 × 7 leaves for SPEC §4 translator notes.
+USFM `\f` becomes alphabetic footnotes. Numbering resets at the start
+of every page (`counter(footnote)` in the header). Notes run in as one
+wrapping paragraph at the foot in `rgb(76, 76, 76)`; in-text letter
+markers stay body ink. `\fqa` alternate readings are italic. Notes are
+not moved into the side margin. Source Serif 4 stand-in. Not Milo.
+
+John-only is enough: page 1 has run-in **a–c** plus `\fqa` italic
+(*comprehended*, *tabernacled*, *Unique One*); page 2 restarts at
+**a–d**; page 5 is a later `\fqa` leaf (*born from above*).
+
+| Item | Value |
+|------|-------|
+| File | `drafts/travel/bsb-travel-footnotes-qa-grid-proof.pdf` |
+| Regen | `make travel-footnotes-qa` |
+| Engine | Typst 0.14.2 |
+| Compiled | 2026-09-20 |
+| Pages | 3 (native 4.75 × 7 in leaves) |
+| Size | 78,453 bytes |
+| SHA-256 | `a213788d5693f6ac83bc74dac0fcfe24447ce365bece076bd5e8c6f4850f06f6` |
+| Source compile | `drafts/travel/work/footnotes-john-grid-proof.pdf` (gitignored; 50 pages) |
+| PNGs | `drafts/travel/footnotes/*.png` (120 dpi) |
+
+| Leaf | Source page | Notes | What to check |
+|------|-------------|-------|---------------|
+| `john-multi` | 1 | a–c | Run-in foot block (not stacked lines); in-text *a*/*b*/*c*; `\fqa` italic *comprehended* / *tabernacled* / *Unique One*; grey note ink; notes at the foot, not the side |
+| `john-reset` | 2 | a–d | Marker `a` again after page 1; run-in a–d; in-text letters stay body ink; folio 2 |
+| `john-fqa` | 5 | a–c | Later `\fqa` italic *born from above*; drop 3; notes still a wrapping foot paragraph |
+
+| PNG | Bytes | SHA-256 |
+|-----|-------|---------|
+| `footnotes/john-multi.png` | 111,414 | `e77aca4cbfb530048a488d1f5c9a35c173eab1914d0bef811538777400d08b9e` |
+| `footnotes/john-reset.png` | 146,190 | `af5aed4eac6be62926f68c0ca2cdb351eb869c698bd680c8d0e8afd02dcf7a35` |
+| `footnotes/john-fqa.png` | 161,760 | `f87e0e157415039f70a9c6814e23ed783ea0ee9ae8b064bb97ab1d5e18afa27b` |
+
 ## Running-header QA (2026-09-19)
 
 `make travel-running-headers-qa` compiles John on the current densify

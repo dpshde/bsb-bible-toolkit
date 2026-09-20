@@ -35,6 +35,9 @@ not an official Berean Bible project.
  - `drafts/travel/spreads/john-spread-*.png` (120 dpi rasters of the older openings)
  - `drafts/travel/bsb-travel-bible-grid-proof.pdf` (66-book Source Serif
    metrics preview; never the loved face)
+ - `drafts/travel/bsb-travel-footnotes-qa-grid-proof.pdf` (John footnotes
+   QA; Source Serif stand-in; never the loved face)
+ - `drafts/travel/footnotes/*.png` (120 dpi rasters of those leaves)
 - If you add third-party assets, document their license and attribution in
   `NOTICE` or a nearby license file.
 

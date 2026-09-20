@@ -206,5 +206,6 @@ See `drafts/travel/README.md`.
 - Metrics only, John (OFL stand-in): `make travel-john-grid-proof`
 - Mixam John dummy (52-page saddle-stitch, OFL stand-in): `make travel-john-mixam`
 - John chapter-opener crops from the committed John PDF: `make travel-john-chapter-openers`
+- Footnotes QA (John leaves): `make travel-footnotes-qa`
 - Metrics only, 66-book canon (OFL stand-in): `make travel-bible-grid-proof`
 - Markup only: `make travel-john-typst`

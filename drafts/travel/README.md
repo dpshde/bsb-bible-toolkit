@@ -204,6 +204,24 @@ Output: `drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf`
 120 dpi PNG previews: `drafts/travel/headers/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
+## Footnotes QA
+
+`make travel-footnotes-qa` compiles John on the current densify compose
+and extracts three native leaves so SPEC §4 translator notes can be
+checked: alphabetic markers, per-page reset to `a`, run-in grey notes
+at the foot, in-text body letters, and `\fqa` italic. Still Source
+Serif 4. Not Milo.
+
+```bash
+make travel-footnotes-qa
+```
+
+Output: `drafts/travel/bsb-travel-footnotes-qa-grid-proof.pdf`
+(3 leaves, 78,453 bytes, SHA-256
+`a213788d5693f6ac83bc74dac0fcfe24447ce365bece076bd5e8c6f4850f06f6`).
+120 dpi PNG previews: `drafts/travel/footnotes/*.png`.
+Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
+
 ## Words of Christ blue QA
 
 `make travel-woc-qa` compiles Matthew + John on the current densify

@@ -29,6 +29,7 @@ dist/
 !drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf
 !drafts/travel/bsb-travel-running-headers-qa-grid-proof.pdf
 !drafts/travel/bsb-travel-woc-qa-grid-proof.pdf
+!drafts/travel/bsb-travel-footnotes-qa-grid-proof.pdf
 !drafts/travel/bsb-travel-bible-grid-proof.pdf
 !examples/*.pdf
 *.epub
@@ -46,6 +47,8 @@ dist/
 !drafts/travel/headers/*.png
 !drafts/travel/woc/
 !drafts/travel/woc/*.png
+!drafts/travel/footnotes/
+!drafts/travel/footnotes/*.png
 !drafts/travel/qa-random/
 !drafts/travel/qa-random/*.png
 !drafts/travel/qa-random/*.md
