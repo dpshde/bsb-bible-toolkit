@@ -26,20 +26,6 @@ on:
           - none
           - single-column
           - all
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - ".github/workflows/deliver-assets.yml"
-      - "design_bsb.py"
-      - "drafts/primary/**"
-      - "requirements.txt"
-      - "pyproject.toml"
-      - "setup.py"
-      - "scripts/**"
-      - "src/**"
-      - "reader/**"
 
 permissions:
   contents: write
