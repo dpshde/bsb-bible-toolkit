@@ -48,6 +48,7 @@ setup(
             "bsb-extract=bsb_pdf_toolkit.extract_bsb:main",
             "bsb-reflow-pdf=bsb_pdf_toolkit.generate_reflow_pdf:main",
             "bsb-typst-pdf=bsb_pdf_toolkit.generate_typst_pdf:main",
+            "bsb-travel-pdf=bsb_pdf_toolkit.generate_travel_pdf:main",
             "bsb-compare-renders=bsb_pdf_toolkit.compare_renders:main",
             "bsb-verify-artifacts=bsb_pdf_toolkit.verify_artifacts:main",
             "bsb-smoke-test=bsb_pdf_toolkit.smoke_test:main",

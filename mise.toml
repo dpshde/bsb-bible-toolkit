@@ -1,0 +1,63 @@
+[tools]
+python = "3.12"
+typst = "0.14.2"
+
+[tasks.usfm-source]
+description = "Download official BSB USFM if the toolkit archive is missing"
+run = "make usfm-source"
+
+[tasks.travel-john-typst]
+description = "Compose John Typst from toolkit USFM (no Milo required)"
+run = "make travel-john-typst"
+
+[tasks.travel-john]
+description = "Compile the compact travel John PDF (licensed FF Milo Serif required)"
+run = "make travel-john"
+
+[tasks.travel-john-grid-proof]
+description = "OFL metrics PDF (Source Serif stand-in; not Milo)"
+run = "make travel-john-grid-proof"
+
+[tasks.travel-john-mixam]
+description = "John Mixam saddle-stitch dummy, 52 pages, Source Serif stand-in"
+run = "make travel-john-mixam"
+
+[tasks.travel-john-spreads]
+description = "2-up densified John openings 2–3, 6–7, 18–19, 24–25 (not Milo)"
+run = "make travel-john-spreads"
+
+[tasks.travel-john-chapter-openers]
+description = "Half-leaf crops of densified John chapter opens 1–21 (not Milo)"
+run = "make travel-john-chapter-openers"
+
+[tasks.travel-hotspot-sampler]
+description = "Compact committed hotspot sampler PDF + 120 dpi PNGs (not Milo)"
+run = "make travel-hotspot-sampler"
+
+[tasks.travel-hyphenation-qa]
+description = "Hyphenation QA leaves: dense John, Psalm 119, Genesis 1 (not Milo)"
+run = "make travel-hyphenation-qa"
+
+[tasks.travel-poetry-qa]
+description = "Psalm 1 + Psalm 119 ragged-right poetry QA leaves (not Milo)"
+run = "make travel-poetry-qa"
+
+[tasks.travel-running-headers-qa]
+description = "John verso/recto running-header QA leaves (not Milo)"
+run = "make travel-running-headers-qa"
+
+[tasks.travel-woc-qa]
+description = "Matthew/John Words of Christ blue QA leaves (not Milo)"
+run = "make travel-woc-qa"
+
+[tasks.travel-footnotes-qa]
+description = "John translator-note / footnote QA leaves (not Milo)"
+run = "make travel-footnotes-qa"
+
+[tasks.travel-bible-grid-proof]
+description = "Full 66-book OFL metrics PDF (not the loved face; do not commit)"
+run = "make travel-bible-grid-proof"
+
+[tasks.test-travel]
+description = "Unit tests for the travel composer"
+run = "make test-travel"

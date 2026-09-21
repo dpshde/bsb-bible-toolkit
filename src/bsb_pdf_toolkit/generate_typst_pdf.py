@@ -16,7 +16,7 @@ from pathlib import Path, PurePosixPath
 from .add_route_links import build_url
 from .customize_epub import OSIS_BOOKS
 from .download_bsb import BOOK_NAMES
-from .generate_reflow_pdf import USFM_TO_BOOK, usfm_ref_to_route
+from .generate_reflow_pdf import USFM_TO_BOOK, usfm_ref_to_url as usfm_ref_to_route
 
 
 BOOK_ORDER = {name: num for num, name in BOOK_NAMES.items()}
@@ -49,8 +49,24 @@ def clean_spaces(text):
     return text
 
 
+# Leftover USFM machine slugs: `|1CH 2:9-10`, `|GEN`, `|RUT 4:18-22`.
+OSIS_DISPLAY_TAIL_RE = re.compile(
+    r"\|[1-3]?[A-Z]{2,3}(?:\s+\d+(?::[\d\-–]+)?)?(?=[\s,.;:)\]|\\]|$)"
+)
+
+
+def strip_osis_display_tails(text):
+    """Drop `|OSIS` / `|1CH 2:9-10` tails from footnote and xref display text."""
+    if not text or "|" not in text:
+        return text
+    return OSIS_DISPLAY_TAIL_RE.sub("", text)
+
+
 def plain_ref_text(text):
-    return re.sub(r"\\ref\s+([^\\]+?)\\ref\*", r"\1", text)
+    def _display(match):
+        return match.group(1).split("|", 1)[0]
+
+    return re.sub(r"\\ref\s+([^\\]+?)\\ref\*", _display, text)
 
 
 def escaped_chunk(text):
@@ -58,7 +74,7 @@ def escaped_chunk(text):
         return ""
     leading = " " if text[0].isspace() else ""
     trailing = " " if text[-1].isspace() else ""
-    value = clean_spaces(plain_ref_text(text))
+    value = clean_spaces(strip_osis_display_tails(plain_ref_text(text)))
     if not value:
         return leading or trailing
     return leading + typst_escape(value) + trailing
@@ -166,7 +182,10 @@ def paragraph_markup(para, osis, chapter):
     return f"#para[{content}]"
 
 
-def parse_usfm_zip(usfm_zip):
+def parse_usfm_zip(usfm_zip, book_names=None):
+    wanted = None
+    if book_names:
+        wanted = {str(name).lower() for name in book_names}
     books = []
     with zipfile.ZipFile(usfm_zip) as zf:
         names = [name for name in zf.namelist() if name.lower().endswith(".usfm")]
@@ -176,10 +195,14 @@ def parse_usfm_zip(usfm_zip):
             book = USFM_TO_BOOK.get(code)
             if not book:
                 continue
+            if wanted and book.lower() not in wanted and code.lower() not in wanted:
+                continue
             osis = OSIS_BOOKS[book]
             chapters = []
             current = None
             pending = None
+            title = book
+            heading = book
 
             def flush():
                 nonlocal pending
@@ -204,6 +227,12 @@ def parse_usfm_zip(usfm_zip):
                     current = {"chapter": int(rest), "paras": []}
                     chapters.append(current)
                 elif current is None:
+                    if marker == "toc1":
+                        title = rest.strip() or title
+                    elif marker == "mt1" and title == book:
+                        title = rest.strip() or title
+                    elif marker == "h":
+                        heading = rest.strip() or heading
                     continue
                 elif marker in {"s1", "s2", "s3"}:
                     flush()
@@ -212,9 +241,21 @@ def parse_usfm_zip(usfm_zip):
                     flush()
                     if current["paras"] and current["paras"][-1]["kind"] == "heading":
                         current["paras"][-1]["refs"] = rest
-                elif marker in {"p", "m", "pmo", "pm", "pi", "q1", "q2", "q3", "qc", "li1", "li2"}:
+                elif marker in {"p", "m", "pmo", "pm", "pi", "pc", "q", "q1", "q2", "q3", "qc", "qr", "li1", "li2"}:
                     flush()
                     pending = {"kind": "body", "marker": marker, "raw": [rest], "refs": ""}
+                elif marker == "ms":
+                    flush()
+                    pending = {"kind": "heading", "marker": marker, "raw": [rest], "refs": ""}
+                elif marker == "d":
+                    flush()
+                    if re.search(r"\\v\s+\d+", rest):
+                        pending = {"kind": "body", "marker": "d", "raw": [rest], "refs": ""}
+                    else:
+                        pending = {"kind": "superscription", "marker": marker, "raw": [rest], "refs": ""}
+                elif marker == "qa":
+                    flush()
+                    pending = {"kind": "acrostic", "marker": marker, "raw": [rest], "refs": ""}
                 elif marker == "v":
                     if pending is None or pending["kind"] != "body":
                         flush()
@@ -226,7 +267,13 @@ def parse_usfm_zip(usfm_zip):
                 elif pending:
                     pending["raw"].append(rest)
             flush()
-            books.append({"book": book, "osis": osis, "chapters": chapters})
+            books.append({
+                "book": book,
+                "osis": osis,
+                "title": title,
+                "heading": heading,
+                "chapters": chapters,
+            })
     return books
 
 
@@ -310,6 +357,17 @@ def generate_typst(usfm_zip, output_typ, testament="all"):
                         f"{typst_string(heading_url)}"
                         f"{refs_arg})"
                     )
+                elif para["kind"] == "superscription":
+                    text = clean_spaces(para["raw"])
+                    if text:
+                        lines.append(f"#para[{typst_escape(text)}]")
+                elif para["kind"] == "acrostic":
+                    title = clean_spaces(para["raw"])
+                    if title:
+                        heading_url = f"https://route.bible/{book['osis']}.{chapter['chapter']}"
+                        lines.append(
+                            f"#section({typst_string(title)}, {typst_string(heading_url)})"
+                        )
                 elif para["kind"] == "blank":
                     lines.append("#v(0.24em)")
                 else:
