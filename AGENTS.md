@@ -38,6 +38,10 @@ not an official Berean Bible project.
  - `drafts/travel/bsb-travel-footnotes-qa-grid-proof.pdf` (John footnotes
    QA; Source Serif stand-in; never the loved face)
  - `drafts/travel/footnotes/*.png` (120 dpi rasters of those leaves)
+ - `drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf` (John / Psalm
+   119 / Genesis 1 hyphenation QA; Source Serif stand-in; never the loved
+   face)
+ - `drafts/travel/hyphenation/*.png` (120 dpi rasters of those leaves)
 - If you add third-party assets, document their license and attribution in
   `NOTICE` or a nearby license file.
 

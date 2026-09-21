@@ -283,39 +283,53 @@ stanza pauses stay one extra baseline (21 pt) on the grid.
 | `poetry/psalm-1.png` | 97,747 | `cb47ce7d6c06a8c3bb9a06f38f2b49cd1703ed3149ec41e65769294bacbf455b` |
 | `poetry/psalm-119.png` | 125,567 | `b5042777cd9f120fb6f6c41cde3888c607773956cd1f1cae6d0859c70961d181` |
 
-## Hyphenation QA (2026-09-07)
+## Hyphenation QA (2026-09-21)
 
-`make travel-hyphenation-qa` compiles Genesis + Psalms + John and extracts
-three stress leaves. The travel preamble now uses `lang: "en"`,
-`hyphenate: true`, and hyphenation cost **80%** (was 120%). USFM `\nd`
-divine names render as `#divine` (`hyphenate: false` + smallcaps).
+`make travel-hyphenation-qa` compiles Genesis + Psalms + John on the
+current densify compose (3.50 in measure, 0.35 in later-`\p` indent,
+0.75-baseline gap only on long later `\p`, body leading −1.0 pt) and
+extracts three native 4.75 × 7 stress leaves for SPEC §3. Language
+`en`, `hyphenate: true`, hyphenation cost **80%** of Typst default.
+Body is justified with optimized linebreaks and SPEC justification
+limits (word space 80–150%; tracking −0.005 em to +0.01 em). USFM
+`\nd` renders as `#divine` (`hyphenate: false` + smallcaps) so LORD /
+GOD do not break. Source Serif 4 stand-in. Not Milo.
+
+The John selector skips the title page and takes the densest remaining
+prose leaf. Densify pagination moved that leaf from the old John 4
+Samaritan-woman page to John 3:10–29 (Nicodemus / 3:16), the same
+interior span as the WOC `john-loved` leaf.
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-hyphenation-qa-grid-proof.pdf` |
 | Regen | `make travel-hyphenation-qa` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-07 |
+| Compiled | 2026-09-21 |
 | Pages | 3 (native 4.75 × 7 in leaves) |
-| Size | 70,209 bytes |
-| SHA-256 | `49ffa72caf8532833de43b65ec7bb17067c752ecb3a40b51c8be9bd67d5b1f52` |
+| Size | 73,684 bytes |
+| SHA-256 | `faeb10afcb46fdd4eb97ae7626799a56d3ad9460ccda919f1d884a2680cfda9a` |
+| Links | 158 |
+| Source compile | `drafts/travel/work/hyphenation-books-grid-proof.pdf` (gitignored; 343 pages) |
 | PNGs | `drafts/travel/hyphenation/*.png` (120 dpi) |
 
 | Leaf | Source page | Hyphen breaks | What to check |
 |------|-------------|---------------|---------------|
-| `john-prose` | 300 (John 4) | 2 | `salva-` / `speak-` in dense Samaritan-woman prose |
-| `psalm-119` | 254 | 0 | Poetry + ALEPH; no tofu; LORD unhyphenated |
-| `genesis-1` | 1 | 0 | Title/drop open; early notes |
+| `john-prose` | 299 | 3 | 3.50 in justified prose; `be-lieve`, `bap-tized`, `bride-groom`; header `JOHN · 3:10–29`; folio prints 298 |
+| `psalm-119` | 254 | 0 | Poetry leaf: Ps 118:25–29 LORD lines stay whole; ALEPH + boxed drop 119; no Hebrew tofu; no divine-name breaks |
+| `genesis-1` | 1 | 1 | Title + drop 1 + notes a–c; one end-of-page `ac-` (`according`); `God` unhyphenated |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `hyphenation/john-prose.png` | 176,428 | `96a95c9613121d9fac7f0e127fc9ad84686cbd34e0ad270c97b19ce62fe53ac0` |
-| `hyphenation/psalm-119.png` | 125,274 | `e28e73343403103e960068d5680e8c07e405ee0bc474ab53d2a2fd0dcc6444c2` |
-| `hyphenation/genesis-1.png` | 104,081 | `bef78cd1dc51babe2d9188e9752682f44646bf923e7f90db540ed636c5f2cb41` |
+| `hyphenation/john-prose.png` | 162,227 | `62008a08cec17e557ea70e1c2db2deda780ed622bc2c1098cf93f515dc322ca1` |
+| `hyphenation/psalm-119.png` | 97,334 | `00fffeb4d78d19158a0be6efc1956c5a6b2d0637d41c2818d5273801b373a3ba` |
+| `hyphenation/genesis-1.png` | 96,271 | `9adb47940c08f7e30cd3c997bf7fc3c903182d3bbce6a908f6e895e77ab8385e` |
 
 John-only probe at the old 120% cost had **2** line-end hyphens in 49 pages;
-80% yields about **11**. 50% jumped to 34 and started chopping short stems
-(`bap-`, `tes-`). 80% is the travel setting.
+80% was about **11** before densify. On this 3.50 in densify compile the
+John 3 leaf still hyphenates (`be-`, `bride-`) and also shows a short
+stem (`bap-`). Genesis 1 ends with `ac-`. 50% previously jumped to 34
+and chopped `bap-` / `tes-` more often. 80% remains the travel setting.
 
 ## Compact sampler (2026-09-17)
 
