@@ -11,6 +11,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .compose_travel_headers import typst_uses_densify
 from .compose_travel_hotspots import (
     BookFace,
     HotspotSpec,
@@ -23,7 +24,7 @@ from .compose_travel_hotspots import (
     render_hotspot_pngs,
     validate_leaf,
 )
-from .generate_travel_pdf import DEFAULT_GRID_FONT_DIR, DEFAULT_USFM, GRID_PROOF_WATERMARK
+from .generate_travel_pdf import DEFAULT_GRID_FONT_DIR, DEFAULT_USFM, GRID_PROOF_WATERMARK, SPEC
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_WORK_PDF = REPO_ROOT / "drafts" / "travel" / "work" / "hyphenation-books-grid-proof.pdf"
@@ -52,13 +53,55 @@ def pick_most_hyphens(page_texts: list[str], start: int, end: int) -> int:
     return best_page
 
 
+def is_john_title_page(text: str) -> bool:
+    """True for the John book opener (title, no running head)."""
+    folded = text or ""
+    return "The Gospel According to John" in folded and "JOHN ·" not in folded
+
+
+def validate_hyphenation_typst(typst_text: str) -> None:
+    """Require live densify knobs plus SPEC §3 hyphenation / justification."""
+    if not typst_uses_densify(typst_text):
+        raise ValueError("Typst source does not use the live densify compose")
+    text = typst_text or ""
+    if 'lang: "en"' not in text:
+        raise ValueError("Typst source does not set lang: en")
+    if "hyphenate: true" not in text:
+        raise ValueError("Typst source does not enable hyphenation")
+    if f"hyphenation: {SPEC.hyphenation_cost_pct}%" not in text:
+        raise ValueError(
+            f"Typst source does not set hyphenation cost {SPEC.hyphenation_cost_pct}%"
+        )
+    if "#let divine(body) = text(hyphenate: false)" not in text:
+        raise ValueError("Typst source does not disable hyphenation on #divine")
+    if "justify: true" not in text:
+        raise ValueError("Typst source does not justify body prose")
+    if 'linebreaks: "optimized"' not in text:
+        raise ValueError("Typst source does not use optimized linebreaks")
+    if "justification-limits:" not in text:
+        raise ValueError("Typst source does not set justification limits")
+    if "spacing: (min: 80%, max: 150%)" not in text:
+        raise ValueError("Typst source does not set word-space justification limits")
+    if "tracking: (min: -0.005em, max: 0.01em)" not in text:
+        raise ValueError("Typst source does not set tracking justification limits")
+    if f"#let trim-width = {SPEC.trim_width_in}in" not in text:
+        raise ValueError("Typst source does not use the 4.75 in travel trim")
+    if f"#let margin-inside = {SPEC.margin_inside_in}in" not in text:
+        raise ValueError("Typst source does not use the 0.70 in inside margin")
+    if f"#let margin-outside = {SPEC.margin_outside_in}in" not in text:
+        raise ValueError("Typst source does not use the 0.55 in outside margin")
+
+
 def select_hyphenation_pages(
     page_texts: list[str],
     catalog: list[BookFace],
 ) -> list[tuple[HotspotSpec, int]]:
     ranges = book_ranges(page_texts, catalog)
     john_start, john_end = ranges["John"]
-    john_page = pick_most_hyphens(page_texts, john_start, john_end)
+    prose_start = john_start
+    if is_john_title_page(page_texts[john_start - 1]) and john_end > john_start:
+        prose_start = john_start + 1
+    john_page = pick_most_hyphens(page_texts, prose_start, john_end)
     psalm_spec = HotspotSpec(
         slug="psalm-119",
         label="Psalm 119 poetry",
@@ -154,6 +197,8 @@ def main(argv=None) -> int:
             catalog = [BookFace(book=name, title=name, heading=name) for name in HYPHEN_QA_BOOKS]
         page_texts = load_page_texts(args.source_pdf)
         chosen = select_hyphenation_pages(page_texts, catalog)
+        if args.typst_out.is_file():
+            validate_hyphenation_typst(args.typst_out.read_text(encoding="utf-8"))
     except (ValueError, FileNotFoundError) as exc:
         print(str(exc), file=sys.stderr)
         return 1

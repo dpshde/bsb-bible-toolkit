@@ -1267,6 +1267,73 @@ def test_hyphenation_qa_picks_densest_john_page():
     assert chosen[0][0].require == ()
 
 
+def test_hyphenation_qa_skips_john_title_when_picking_prose():
+    from bsb_pdf_toolkit.compose_travel_hyphenation import (
+        BookFace,
+        is_john_title_page,
+        select_hyphenation_pages,
+    )
+
+    assert is_john_title_page("The Gospel According to John\nIn the beginning was the Word.")
+    assert not is_john_title_page("JOHN · 1:16–33\nFrom His fullness we have all received.")
+
+    catalog = [
+        BookFace("Genesis", "Genesis", "Genesis"),
+        BookFace("Psalms", "Psalm", "Psalm"),
+        BookFace("John", "The Gospel According to John", "John"),
+    ]
+    pages = [
+        "GENESIS · 1\nIn the beginning God created.",
+        "PSALM · 119\nALEPH\nBlessed are those whose way is blameless.",
+        "The Gospel According to John\nIn the beginning was the Word.",
+        "JOHN · 4\nThe woman said to Him.",
+    ]
+    chosen = select_hyphenation_pages(pages, catalog)
+    assert [page_no for _, page_no in chosen] == [4, 2, 1]
+
+
+def test_validate_hyphenation_typst_requires_densify_and_spec():
+    from bsb_pdf_toolkit.compose_travel_hyphenation import validate_hyphenation_typst
+
+    typst = (
+        "#let trim-width = 4.75in\n"
+        "#let margin-inside = 0.7in\n"
+        "#let margin-outside = 0.55in\n"
+        "#let para-indent = 0.35in\n"
+        "costs: (hyphenation: 80%, runt: 160%)\n"
+        "#let body-leading-gap = 1.0pt\n"
+        'lang: "en",\n'
+        "hyphenate: true,\n"
+        "#let divine(body) = text(hyphenate: false)[#smallcaps[#body]]\n"
+        "justify: true,\n"
+        'linebreaks: "optimized",\n'
+        "justification-limits: (\n"
+        "    spacing: (min: 80%, max: 150%),\n"
+        "    tracking: (min: -0.005em, max: 0.01em),\n"
+        ")\n"
+    )
+    validate_hyphenation_typst(typst)
+    with pytest.raises(ValueError, match="does not use the live densify"):
+        validate_hyphenation_typst('lang: "en"\nhyphenate: true\n')
+    with pytest.raises(ValueError, match="does not disable hyphenation on #divine"):
+        validate_hyphenation_typst(
+            "#let trim-width = 4.75in\n"
+            "#let margin-inside = 0.7in\n"
+            "#let margin-outside = 0.55in\n"
+            "#let para-indent = 0.35in\n"
+            "costs: (hyphenation: 80%, runt: 160%)\n"
+            "#let body-leading-gap = 1.0pt\n"
+            'lang: "en",\n'
+            "hyphenate: true,\n"
+            "justify: true,\n"
+            'linebreaks: "optimized",\n'
+            "justification-limits: (\n"
+            "    spacing: (min: 80%, max: 150%),\n"
+            "    tracking: (min: -0.005em, max: 0.01em),\n"
+            ")\n"
+        )
+
+
 def test_poetry_lines_are_ragged_not_justified():
     preamble = travel_preamble()
     poetry_at = preamble.index("#let poetry(")
