@@ -12,6 +12,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .compose_travel_headers import typst_uses_densify
 from .compose_travel_hotspots import (
     BookFace,
     HotspotSpec,
@@ -22,7 +23,7 @@ from .compose_travel_hotspots import (
     render_hotspot_pngs,
     select_hotspot_pages,
 )
-from .generate_travel_pdf import DEFAULT_GRID_FONT_DIR, DEFAULT_USFM, GRID_PROOF_WATERMARK
+from .generate_travel_pdf import DEFAULT_GRID_FONT_DIR, DEFAULT_USFM, GRID_PROOF_WATERMARK, SPEC
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_WORK_PDF = REPO_ROOT / "drafts" / "travel" / "work" / "poetry-books-grid-proof.pdf"
@@ -50,6 +51,47 @@ POETRY_QA_LEAVES = (
         forbid=("א",),
     ),
 )
+
+
+def validate_poetry_typst(typst_text: str) -> None:
+    """Require live densify knobs plus SPEC §3 poetry rules."""
+    if not typst_uses_densify(typst_text):
+        raise ValueError("Typst source does not use the live densify compose")
+    text = typst_text or ""
+    if f"#let trim-width = {SPEC.trim_width_in}in" not in text:
+        raise ValueError("Typst source does not use the 4.75 in travel trim")
+    if f"#let margin-inside = {SPEC.margin_inside_in}in" not in text:
+        raise ValueError("Typst source does not use the 0.70 in inside margin")
+    if f"#let margin-outside = {SPEC.margin_outside_in}in" not in text:
+        raise ValueError("Typst source does not use the 0.55 in outside margin")
+    if f"#let para-indent = {SPEC.para_indent_in}in" not in text:
+        raise ValueError("Typst source does not use the 0.35 in later-\\p indent")
+    if f"#let para-above = {SPEC.para_above_baselines} * baseline-skip" not in text:
+        raise ValueError("Typst source does not keep the 0.75-baseline brick gap")
+    if "brick: false" not in text or "if brick" not in text:
+        raise ValueError("Typst source does not gate the brick gap on long later \\p")
+    if f"hyphenation: {SPEC.hyphenation_cost_pct}%" not in text:
+        raise ValueError(
+            f"Typst source does not set hyphenation cost {SPEC.hyphenation_cost_pct}%"
+        )
+    if "#let body-leading-gap = 1.0pt" not in text:
+        raise ValueError("Typst source does not use body leading −1.0 pt densify")
+    if 'font: "Source Serif 4"' not in text and "Source Serif 4" not in text:
+        raise ValueError("Typst source does not use Source Serif grid-proof fonts")
+    if "#let poetry(" not in text:
+        raise ValueError("Typst source does not define #poetry")
+    poetry_at = text.index("#let poetry(")
+    poetry_snippet = text[poetry_at : poetry_at + 420]
+    if "justify: false" not in poetry_snippet:
+        raise ValueError("Typst source does not keep poetry ragged-right")
+    if "0.18in * calc.max(0, level - 1)" not in poetry_snippet:
+        raise ValueError("Typst source does not step \\q2 poetry by 0.18 in")
+    if "hanging-indent: 0.18in" not in poetry_snippet:
+        raise ValueError("Typst source does not hang wrapped poetry in the indent column")
+    if "#let stanza(" not in text:
+        raise ValueError("Typst source does not define #stanza")
+    if "#v(baseline-skip)" not in text:
+        raise ValueError("Typst source does not emit \\b stanza blanks as one baseline")
 
 
 def main(argv=None) -> int:
@@ -95,6 +137,8 @@ def main(argv=None) -> int:
             catalog = [BookFace(book=name, title=name, heading=name) for name in POETRY_QA_BOOKS]
         page_texts = load_page_texts(args.source_pdf)
         chosen = select_hotspot_pages(page_texts, catalog, specs=POETRY_QA_LEAVES)
+        if args.typst_out.is_file():
+            validate_poetry_typst(args.typst_out.read_text(encoding="utf-8"))
     except (ValueError, FileNotFoundError) as exc:
         print(str(exc), file=sys.stderr)
         return 1

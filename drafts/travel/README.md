@@ -172,17 +172,18 @@ Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 
 ## Poetry QA
 
-`make travel-poetry-qa` compiles Genesis + Psalms and extracts Psalm 1 and
-Psalm 119 ALEPH so verse lines can be checked after the ragged-right,
-q1-on-measure / q2-step poetry change. Still Source Serif 4. Not Milo.
+`make travel-poetry-qa` compiles Genesis + Psalms on the current densify
+compose and extracts Psalm 1 and Psalm 119 ALEPH leaves so SPEC §3
+ragged-right poetry (q1 on measure, q2 +0.18 in, `\b` stanza blanks)
+can be checked without the 66-book PDF. Still Source Serif 4. Not Milo.
 
 ```bash
 make travel-poetry-qa
 ```
 
 Output: `drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf`
-(2 leaves, 48,582 bytes, SHA-256
-`767ad2fe1ec6635a1534d60815cab9f93406f2af738d7a9fb38cb4fd3a4a8e13`).
+(2 leaves, 46,103 bytes, SHA-256
+`8e115eff65a1ec673b7ec1c0b9aba69138170d1cd0446dd2bb71e68aa259ba94`).
 120 dpi PNG previews: `drafts/travel/poetry/*.png`.
 Hashes and leaf notes: [`HOTSPOTS.md`](HOTSPOTS.md).
 

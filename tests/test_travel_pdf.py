@@ -1359,6 +1359,57 @@ def test_poetry_qa_paths_and_leaf_order():
     assert [spec.slug for spec in POETRY_QA_LEAVES] == ["psalm-1", "psalm-119"]
 
 
+def test_validate_poetry_typst_requires_densify_and_spec():
+    from bsb_pdf_toolkit.compose_travel_poetry import validate_poetry_typst
+
+    typst = (
+        "#let trim-width = 4.75in\n"
+        "#let margin-inside = 0.7in\n"
+        "#let margin-outside = 0.55in\n"
+        "#let para-indent = 0.35in\n"
+        "#let para-above = 0.75 * baseline-skip\n"
+        "#let para(body, brick: false) = block(\n"
+        "  above: if brick { para-above } else { 0pt },\n"
+        ")[#h(para-indent)#body]\n"
+        "costs: (hyphenation: 80%, runt: 160%)\n"
+        "#let body-leading-gap = 1.0pt\n"
+        'font: "Source Serif 4"\n'
+        "#let poetry(level, body) = block(\n"
+        "  inset: (left: 0.18in * calc.max(0, level - 1)),\n"
+        ")[\n"
+        "  #set par(justify: false, leading: leading-gap, hanging-indent: 0.18in)\n"
+        "  #body\n"
+        "]\n"
+        "#let stanza(title) = block()[#title]\n"
+        "#v(baseline-skip)\n"
+    )
+    validate_poetry_typst(typst)
+    with pytest.raises(ValueError, match="does not use the live densify"):
+        validate_poetry_typst("#let poetry(level, body) = block()[]\n")
+    with pytest.raises(ValueError, match="does not keep poetry ragged-right"):
+        validate_poetry_typst(
+            "#let para-indent = 0.35in\n"
+            "costs: (hyphenation: 80%, runt: 160%)\n"
+            "#let body-leading-gap = 1.0pt\n"
+            "#let trim-width = 4.75in\n"
+            "#let margin-inside = 0.7in\n"
+            "#let margin-outside = 0.55in\n"
+            "#let para-above = 0.75 * baseline-skip\n"
+            "#let para(body, brick: false) = block(\n"
+            "  above: if brick { para-above } else { 0pt },\n"
+            ")[#h(para-indent)#body]\n"
+            'font: "Source Serif 4"\n'
+            "#let poetry(level, body) = block(\n"
+            "  inset: (left: 0.18in * calc.max(0, level - 1)),\n"
+            ")[\n"
+            "  #set par(justify: true, leading: leading-gap, hanging-indent: 0.18in)\n"
+            "  #body\n"
+            "]\n"
+            "#let stanza(title) = block()[#title]\n"
+            "#v(baseline-skip)\n"
+        )
+
+
 def test_travel_typst_emits_verse_chapter_for_running_headers(tmp_path):
     usfm = write_sample_zip(tmp_path / "sample.zip")
     out = tmp_path / "john.typ"

@@ -42,6 +42,9 @@ not an official Berean Bible project.
    119 / Genesis 1 hyphenation QA; Source Serif stand-in; never the loved
    face)
  - `drafts/travel/hyphenation/*.png` (120 dpi rasters of those leaves)
+ - `drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf` (Psalm 1 / Psalm
+   119 poetry QA; Source Serif stand-in; never the loved face)
+ - `drafts/travel/poetry/*.png` (120 dpi rasters of those leaves)
 - If you add third-party assets, document their license and attribution in
   `NOTICE` or a nearby license file.
 

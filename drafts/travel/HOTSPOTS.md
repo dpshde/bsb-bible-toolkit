@@ -255,33 +255,45 @@ Densify pagination moved the first cross-chapter span to page 4
 | `headers/john-recto.png` | 157,369 | `8c9e42118b94d50e37f45e007581e15cb6a10f44adcbb99b997edbca77c5d8a2` |
 | `headers/john-cross.png` | 152,697 | `c2d5914ccea1ca293abb04eb86c08c5eb99022a0a87d1f8dc7337a2c5ea3e0b5` |
 
-## Poetry QA (2026-09-08)
+## Poetry QA (2026-09-23)
 
-`make travel-poetry-qa` compiles Genesis + Psalms and extracts Psalm 1 and
-Psalm 119 ALEPH. Verse lines (`#poetry`) are **ragged-right**; `\q1` sits
-on the measure and `\q2` steps 0.18 in. Body prose stays justified. `\b`
-stanza pauses stay one extra baseline (21 pt) on the grid.
+`make travel-poetry-qa` compiles Genesis + Psalms on the current densify
+compose (3.50 in measure, 0.35 in later-`\p` indent, 0.75-baseline gap
+only on long later `\p`, body leading −1.0 pt, hyphenation cost 80%) and
+extracts Psalm 1 and Psalm 119 ALEPH as native 4.75 × 7 stress leaves.
+Verse lines (`#poetry`) are **ragged-right**; `\q1` sits on the measure
+and `\q2` steps 0.18 in. Body prose stays justified. `\b` stanza pauses
+stay one extra baseline (21 pt) on the grid. The composer fails closed
+unless the Typst source keeps those densify + SPEC §3 poetry knobs.
+Source Serif 4 stand-in. Not Milo.
+
+Densify pagination keeps the same source pages as the 2026-09-08 pack,
+but each leaf now carries a verse-range running head and more of the
+neighboring material (Psalm 1 into 2:1; ALEPH preceded by Psalm 118
+close).
 
 | Item | Value |
 |------|-------|
 | File | `drafts/travel/bsb-travel-poetry-qa-grid-proof.pdf` |
 | Regen | `make travel-poetry-qa` |
 | Engine | Typst 0.14.2 |
-| Compiled | 2026-09-08 |
+| Compiled | 2026-09-23 |
 | Pages | 2 (native 4.75 × 7 in leaves) |
-| Size | 48,582 bytes |
-| SHA-256 | `767ad2fe1ec6635a1534d60815cab9f93406f2af738d7a9fb38cb4fd3a4a8e13` |
+| Size | 46,103 bytes |
+| SHA-256 | `8e115eff65a1ec673b7ec1c0b9aba69138170d1cd0446dd2bb71e68aa259ba94` |
+| Links | 55 |
+| Source compile | `drafts/travel/work/poetry-books-grid-proof.pdf` (gitignored; 293 pages) |
 | PNGs | `drafts/travel/poetry/*.png` (120 dpi) |
 
 | Leaf | Source page | What to check |
 |------|-------------|---------------|
-| `psalm-1` | 96 | q1 on the measure; q2 +0.18 in; `\b` gaps after vv. 3 and 5 |
-| `psalm-119` | 254 | ALEPH couplets with the same step; no Hebrew tofu |
+| `psalm-1` | 96 | Header `PSALM · 1:1–2:1`; q1 on the measure; q2 +0.18 in; `\b` gaps after vv. 3 and 5; folio prints 96 |
+| `psalm-119` | 254 | Header `PSALM · 119:3–19`; Psalm 118 close then ALEPH + boxed drop 119; couplet step; no Hebrew tofu; folio prints 254 |
 
 | PNG | Bytes | SHA-256 |
 |-----|-------|---------|
-| `poetry/psalm-1.png` | 97,747 | `cb47ce7d6c06a8c3bb9a06f38f2b49cd1703ed3149ec41e65769294bacbf455b` |
-| `poetry/psalm-119.png` | 125,567 | `b5042777cd9f120fb6f6c41cde3888c607773956cd1f1cae6d0859c70961d181` |
+| `poetry/psalm-1.png` | 69,834 | `0fe913e9bdb28d343a8be2255838296d847e6e10d99198a553a0e606d11ba358` |
+| `poetry/psalm-119.png` | 96,777 | `1ba03173b44869a68fa8485bc59062470aa2b874a0c532eedbde690e89107ec7` |
 
 ## Hyphenation QA (2026-09-21)
 
