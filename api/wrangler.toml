@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Workers Logs. Keep this enabled so a deploy preserves the live setting.
+[observability]
+enabled = true
+
 # Production URL: https://bsb-api.dpshade.workers.dev
 # Arweave permanent origin (deferred): api_bsb undername on "scripture" ArNS name.
 # Gateway URL when deployed: https://api_bsb.scripture.ar-io.dev
