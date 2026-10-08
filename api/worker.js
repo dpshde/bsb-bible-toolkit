@@ -6,6 +6,8 @@
 //
 // R2 binding: the `BSB_DATASET` binding (declared in wrangler.toml) is
 // accessed inside api/src/cache.js for the persistent cache tier.
+// Rate limit: the `RATE_LIMITER` binding (100 requests / 60s per client IP).
+// Passage and resolve ranges are capped at 250 verses (see src/passage.js).
 //
 // Endpoints:
 //   GET  /v1/books                 - book catalog (66 books)
@@ -31,6 +33,7 @@ import {
   handleHealth,
 } from "./src/routes.js";
 import { optionsResponse, errorResponse } from "./src/respond.js";
+import { enforceRateLimit } from "./src/rate-limit.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -38,16 +41,20 @@ export default {
     const method = request.method.toUpperCase();
 
     // CORS preflight: every path answers OPTIONS with 204 + CORS headers.
+    // Preflight is not rate limited and does not touch R2 or Arweave.
     if (method === "OPTIONS") return optionsResponse();
 
-    if (method !== "GET" && method !== "HEAD") {
-      return errorResponse(405, `Method not allowed: ${method}. Use GET.`, { origin: "edge" });
-    }
-
-    const path = url.pathname;
-    const params = { url, env, ctx };
-
     try {
+      const limited = await enforceRateLimit(request, env);
+      if (limited) return limited;
+
+      if (method !== "GET" && method !== "HEAD") {
+        return errorResponse(405, `Method not allowed: ${method}. Use GET.`, { origin: "edge" });
+      }
+
+      const path = url.pathname;
+      const params = { url, env, ctx };
+
       // Static route: /v1/health
       if (path === "/v1/health") return await handleHealth(params);
 

@@ -192,11 +192,19 @@ reports raw PDF hashes.
 
 In addition to the PDF/EPUB tooling, this repo publishes a free, structured
 **BSB JSON API** that serves the public-domain Berean Standard Bible over
-HTTPS with no API key and no rate limit. The API is a Cloudflare Worker using
-a 4-tier cache-aside pattern: edge cache, then an R2 bucket, then the Arweave
+HTTPS with no API key. The API is a Cloudflare Worker using a 4-tier
+cache-aside pattern: edge cache, then an R2 bucket, then the Arweave
 permanent origin (`api_bsb` undername on the `scripture` ArNS name), and
 finally a 503 if every tier is exhausted. All Bible reference parsing is
 delegated to `grab-bcv`.
+
+`/v1/passage` and `/v1/resolve` compose at most **250 verses** per request
+(enough for Psalm 119, the longest chapter, at 176 verses). Longer ranges
+return HTTP 400 and do not read R2 or Arweave. Whole chapters and books stay
+on `/v1/chapter` and `/v1/book`, which are one object each. Every request
+except CORS `OPTIONS` is limited to **100 requests per 60 seconds** per
+client IP per Cloudflare location. Over-limit calls return HTTP 429 with
+`Retry-After: 60`.
 
 | Endpoint | Example | Returns |
 |----------|---------|---------|

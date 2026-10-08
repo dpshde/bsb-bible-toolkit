@@ -9,7 +9,7 @@
 
 import { fetchCached } from "./cache.js";
 import { jsonResponse, errorResponse, IMMUTABLE_CACHE, VALID_SOURCES, TRANSLATION_ID, TRANSLATION_NAME } from "./respond.js";
-import { parsePassageInput } from "./passage.js";
+import { parsePassageInput, MAX_PASSAGE_VERSES, passageCapError } from "./passage.js";
 import { parseResolveInput } from "./resolve.js";
 import { getVerseCount, isOsisBookCode, OSIS_BOOK_ORDER, OSIS_BOOK_CODES } from "grab-bcv";
 
@@ -126,6 +126,12 @@ export async function handlePassage({ params, env, ctx }) {
   }
 
   const refs = parsed.refs;
+  // Spend guard: parsePassageInput already rejects oversized ranges. This
+  // check is the handler boundary so a future parser change cannot fan out
+  // one request across the cache tiers.
+  if (refs.length > MAX_PASSAGE_VERSES) {
+    return errorResponse(400, passageCapError(), { origin: "edge" });
+  }
   const verses = [];
   const skipped = [];
   let worstOrigin = "edge"; // pick the "lowest" tier actually used to satisfy the request
@@ -203,6 +209,9 @@ export async function handleResolve({ params, env, ctx }) {
   }
 
   const refs = parsed.refs;
+  if (refs.length > MAX_PASSAGE_VERSES) {
+    return errorResponse(400, passageCapError(), { origin: "edge" });
+  }
   const verses = [];
   const skipped = [];
   let worstOrigin = "edge";

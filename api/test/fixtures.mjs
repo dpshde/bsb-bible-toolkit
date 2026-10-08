@@ -8,7 +8,7 @@
 // index entries for query terms used in tests, passage verses for the
 // references the tests expand).
 
-import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve, sep, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,8 +27,8 @@ function hasSeed(key) {
 // Verse OSIS refs we need for passage/verse tests. Each ref maps to two keys:
 // v1/verse/<ref>.json and v1/crossrefs/<ref>.json. We also need every verse in
 // the test passages (John 3:16-18, John 3:16-John 4:2, Psalm 119:1-3,
-// Matthew 1:1-Mark 1:1, John 3:16). To keep the fixture compact, we walk the
-// full ranges by listing seed-data/v1/verse for the relevant book prefixes.
+// John 3:16). Book-length ranges are rejected by the passage cap and are not
+// seeded.
 const PASSAGE_VERSE_REFS = collectPassageRefs();
 
 function collectPassageRefs() {
@@ -40,29 +40,10 @@ function collectPassageRefs() {
   refs.add("JHN.4.1"); refs.add("JHN.4.2");
   // Psalm 119:1-3
   refs.add("PSA.119.1"); refs.add("PSA.119.2"); refs.add("PSA.119.3");
-  // Matthew 1:1 - Mark 1:1 (every verse in Matthew 1 through Matthew 28 plus Mark 1:1)
-  // Matthew 1 has 25 verses. Matthew total = 28 chapters. Mark 1:1.
-  // For the cross-book passage test we need the entire Matthew book plus Mark 1:1.
-  for (const ref of listChapterVerseFiles("MAT")) refs.add(ref);
-  refs.add("MRK.1.1");
   // Standalone verses used in direct endpoint tests.
   refs.add("GEN.1.1"); refs.add("GEN.1.2"); refs.add("JUD.1.1");
   // Resolve endpoint (M4): 1 Corinthians 13:4-7 (VAL-RESOLVE-002, 013, 016)
   refs.add("1CO.13.4"); refs.add("1CO.13.5"); refs.add("1CO.13.6"); refs.add("1CO.13.7");
-  return refs;
-}
-
-// List every OSIS ref in a book by reading v1/verse/<book>.*.json filenames.
-function listChapterVerseFiles(bookOsis) {
-  const refs = [];
-  const dir = join(SEED_DIR, "v1", "verse");
-  if (!existsSync(dir)) return refs;
-  const prefix = `${bookOsis}.`;
-  for (const entry of readdirSync(dir)) {
-    if (entry.startsWith(prefix) && entry.endsWith(".json")) {
-      refs.push(entry.slice(0, -".json".length));
-    }
-  }
   return refs;
 }
 
@@ -79,8 +60,8 @@ for (const ref of PASSAGE_VERSE_REFS) {
   CROSSREF_KEYS.push(`v1/crossrefs/${ref}.json`);
 }
 
-// Books we need full per-book JSON for: GEN (book endpoint, MAT for passage).
-const BOOK_KEYS = ["v1/book/GEN.json", "v1/book/MAT.json"];
+// Books we need full per-book JSON for: GEN (book endpoint).
+const BOOK_KEYS = ["v1/book/GEN.json"];
 
 // Chapters we need full chapter JSON for: GEN/1.
 const CHAPTER_KEYS = ["v1/chapter/GEN/1.json"];

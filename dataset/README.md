@@ -5,7 +5,9 @@ A free, structured, queryable JSON dataset built from the public-domain
 cache-aside API (Cloudflare edge cache, then R2, then Arweave, then 503) so
 church apps, study tools, AI Scripture assistants, and reading-plan projects
 can fetch verses, chapters, passages, footnotes, and cross-references over
-HTTP with no API key, no rate limit, and permissive CORS.
+HTTP with no API key and permissive CORS. Passage ranges are capped at 250
+verses, and the Worker rate-limits each client IP to 100 requests per 60
+seconds (HTTP 429, `Retry-After: 60`).
 
 The BSB text is public domain / CC0. The dataset code is MIT licensed. See the
 [Licensing](#licensing) section for the cross-reference source attributions.
@@ -42,6 +44,22 @@ References may be OSIS (`GEN.1.1`, `JHN.3.16`) for `/v1/verse` and
 `/v1/crossrefs`, or human-readable (`John 3:16-18`) for `/v1/passage`. The
 `/v1/resolve/:input` endpoint accepts any format (see [Resolve endpoint](#resolve-endpoint)
 below). Always URL-encode spaces as `%20`.
+
+## Limits
+
+`/v1/passage` and `/v1/resolve` expand a range into one cache lookup per
+verse inside a single request. A request may include at most **250 verses**.
+That covers the longest chapter, Psalm 119 (176 verses), and a short range
+that crosses a chapter boundary. It rejects a book or the whole Bible
+(`GEN.1.1-REV.22.21`, 31,086 verses) with HTTP 400 and does not read R2 or
+Arweave. For a whole chapter or book, use `/v1/chapter/:osis/:ch` or
+`/v1/book/:osis` (one object each).
+
+Every method except CORS `OPTIONS` counts against a Workers Rate Limiting
+binding (`RATE_LIMITER`): **100 requests per 60 seconds** per
+`CF-Connecting-IP`, per Cloudflare location. The 101st request in that window
+returns HTTP 429 with `Retry-After: 60` and `Cache-Control: no-store`. No API
+key is required.
 
 ## JSON Schema
 

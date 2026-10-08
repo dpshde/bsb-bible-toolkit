@@ -47,10 +47,10 @@ export function jsonResponse(body, { status = 200, origin = "r2", cacheControl =
 
 // JSON error response. CORS headers are always present, even on errors
 // (VAL-API-028, VAL-API-034). Errors never get immutable cache headers.
-export function errorResponse(status, message, { origin = "r2", extra = {} } = {}) {
+export function errorResponse(status, message, { origin = "r2", cacheControl = null, extra = {} } = {}) {
   return new Response(JSON.stringify({ error: message, status }), {
     status,
-    headers: buildHeaders({ origin, cacheControl: null, extra }),
+    headers: buildHeaders({ origin, cacheControl, extra }),
   });
 }
 
