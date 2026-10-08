@@ -186,14 +186,13 @@ describe("GET /v1/passage/:ref", () => {
     expect(body.verses.map((v: any) => v.verse)).toEqual([1, 2, 3]);
   });
 
-  // VAL-API-040: cross-book range Matthew 1:1 - Mark 1:1.
-  test("'Matthew 1:1-Mark 1:1' spans books", async () => {
+  // Book-length ranges used to fan out one R2/Arweave read per verse.
+  // Matthew 1:1–Mark 1:1 is the whole of Matthew and is rejected before fetch.
+  test("'Matthew 1:1-Mark 1:1' exceeds the passage cap", async () => {
     const { res, body } = await fetchJson(SELF, "/v1/passage/Matthew%201:1-Mark%201:1");
-    expect(res.status).toBe(200);
-    expect(body.verses.length).toBeGreaterThan(0);
-    const refs = body.verses.map((v: any) => v.osisRef);
-    expect(refs[0]).toBe("MAT.1.1");
-    expect(refs[refs.length - 1]).toBe("MRK.1.1");
+    expect(res.status).toBe(400);
+    expect(body.error).toContain("250");
+    expect(body.verses).toBeUndefined();
   });
 
   // VAL-API-041: whitespace-only ref -> 400 or 404.

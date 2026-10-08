@@ -82,7 +82,7 @@ export function parseResolveInput(rawInput) {
   if (!expanded.ok) {
     return {
       ok: false,
-      status: 400,
+      status: expanded.status || 400,
       error: expanded.error || `Could not expand reference: "${raw}".`,
     };
   }

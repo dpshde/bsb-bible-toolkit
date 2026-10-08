@@ -11,6 +11,25 @@ import {
   OSIS_BOOK_NAMES,
 } from "grab-bcv";
 
+// Hard cap on verses composed by /v1/passage and /v1/resolve.
+//
+// Those routes do one edge-cache → R2 get → Arweave fetch per verse inside a
+// single request. A whole-Bible range (GEN.1.1–REV.22.21) is 31,086 verses, so
+// the cap has to be a constant, not something the caller can raise.
+//
+// 250 is just above the longest chapter, Psalm 119 (176 verses), so a full
+// chapter plus a short spill into the next chapter still fits (John 3:16–4:2
+// is 23 verses). A gospel or the whole Bible does not. Whole chapters and
+// books are already one object each at /v1/chapter and /v1/book.
+export const MAX_PASSAGE_VERSES = 250;
+
+export function passageCapError() {
+  return (
+    `Passage exceeds ${MAX_PASSAGE_VERSES} verses. ` +
+    "Request a shorter range, or use /v1/chapter/:osis/:ch for a whole chapter."
+  );
+}
+
 // Compare two OSIS book codes by canonical Protestant order.
 export function compareOsisBooks(a, b) {
   const ai = OSIS_BOOK_ORDER.get(a);
@@ -80,6 +99,11 @@ export function expandPassageToVerseRefs(parsed) {
       else lastVerse = total;
 
       for (let v = firstVerse; v <= lastVerse; v++) {
+        if (refs.length >= MAX_PASSAGE_VERSES) {
+          // Stop walking the canon once the next verse would exceed the cap.
+          // Callers must not fetch; a book-length range never becomes a ref list.
+          return { ok: false, status: 400, error: passageCapError() };
+        }
         refs.push(`${book}.${ch}.${v}`);
       }
     }
@@ -123,7 +147,11 @@ export function parsePassageInput(raw) {
 
   const expanded = expandPassageToVerseRefs(result.value);
   if (!expanded.ok) {
-    return { ok: false, status: 404, error: expanded.error || `Could not expand reference: "${raw}".` };
+    return {
+      ok: false,
+      status: expanded.status || 404,
+      error: expanded.error || `Could not expand reference: "${raw}".`,
+    };
   }
   return {
     ok: true,
