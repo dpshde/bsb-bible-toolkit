@@ -2,8 +2,13 @@ name: Deploy BSB JSON API
 
 # CI pipeline for the BSB JSON API: build the Python dataset, upload the
 # canonical origin to Arweave, pre-seed the Cloudflare R2 cache bucket, and
-# deploy the edge Worker. All publish steps are gated behind a dry-run flag
-# that defaults to true so test runs never publish external assets.
+# deploy the edge Worker. Publish steps are gated behind a dry-run flag that
+# defaults to true so test runs never publish external assets.
+#
+# workflow_dispatch input worker_only (default false) deploys only the bsb-api
+# Worker. That run skips dataset build/generation, the Arweave upload, and
+# every R2 write so the bsb-dataset bucket is reused unchanged. Push and
+# schedule runs do not see the input, so their behavior stays the same.
 #
 # Required repository secrets:
 #   DEPLOY_KEY              - Arweave upload wallet JWK (base64-encoded)
@@ -18,6 +23,11 @@ on:
         description: "Verify and build without publishing to Arweave, R2, or Workers."
         required: false
         default: true
+        type: boolean
+      worker_only:
+        description: "Deploy only the bsb-api Worker; skip dataset build/R2 upload."
+        required: false
+        default: false
         type: boolean
       release_version:
         description: "Semantic version label recorded in the dataset manifest (e.g. 1.0.0)."
@@ -50,6 +60,8 @@ jobs:
     name: Build dataset
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Push, schedule, and a normal dispatch still build. worker_only skips it.
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.worker_only }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -103,7 +115,8 @@ jobs:
     timeout-minutes: 45
     needs: build-dataset
     # Only publish when dry_run is explicitly false (manual dispatch).
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+    # worker_only never uploads the dataset.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && !inputs.worker_only }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -146,7 +159,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: build-dataset
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+    # Reuse bsb-dataset as-is on a worker-only dispatch; never write the bucket.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && !inputs.worker_only }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -257,7 +271,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: build-dataset
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false }}
+    # dry_run false deploys after a successful dataset build. worker_only
+    # deploys this Worker even though that build is skipped, including when
+    # dry_run stays at its default. Push and schedule runs do not deploy.
+    if: |
+      always() &&
+      !cancelled() &&
+      github.event_name == 'workflow_dispatch' &&
+      (
+        (
+          !inputs.worker_only &&
+          inputs.dry_run == false &&
+          needs.build-dataset.result == 'success'
+        ) ||
+        (
+          inputs.worker_only &&
+          (
+            needs.build-dataset.result == 'skipped' ||
+            needs.build-dataset.result == 'success'
+          )
+        )
+      )
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
