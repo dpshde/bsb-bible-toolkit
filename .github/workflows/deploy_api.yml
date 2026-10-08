@@ -6,9 +6,11 @@ name: Deploy BSB JSON API
 # defaults to true so test runs never publish external assets.
 #
 # workflow_dispatch input worker_only (default false) deploys only the bsb-api
-# Worker. That run skips dataset build/generation, the Arweave upload, and
-# every R2 write so the bsb-dataset bucket is reused unchanged. Push and
-# schedule runs do not see the input, so their behavior stays the same.
+# Worker, and only when dry_run is also false. That run skips dataset
+# build/generation, the Arweave upload, and every R2 write so the bsb-dataset
+# bucket is reused unchanged. dry_run still defaults to true, so a test
+# dispatch publishes nothing. Push and schedule runs do not see the input, so
+# their behavior stays the same.
 #
 # Required repository secrets:
 #   DEPLOY_KEY              - Arweave upload wallet JWK (base64-encoded)
@@ -271,9 +273,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: build-dataset
-    # dry_run false deploys after a successful dataset build. worker_only
-    # deploys this Worker even though that build is skipped, including when
-    # dry_run stays at its default. Push and schedule runs do not deploy.
+    # Publish only when dry_run is false: either after a successful dataset
+    # build, or on a worker-only dispatch whose dataset build was skipped.
+    # dry_run defaults to true, so a test dispatch never publishes. Push and
+    # schedule runs do not deploy. This job does not download dataset artifacts.
     if: |
       always() &&
       !cancelled() &&
@@ -286,6 +289,7 @@ jobs:
         ) ||
         (
           inputs.worker_only &&
+          inputs.dry_run == false &&
           (
             needs.build-dataset.result == 'skipped' ||
             needs.build-dataset.result == 'success'
