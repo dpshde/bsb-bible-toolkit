@@ -80,3 +80,6 @@ examples/tts/.venv*/
 audio/local/tui/bsb-tts-tui
 output/
 .secrets/
+# On-demand Worker profiles and the cf CLI cache (mise run profile)
+profiles/
+.cloudflare/
