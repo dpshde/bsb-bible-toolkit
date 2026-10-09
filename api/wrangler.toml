@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Upload source maps with each version so stack traces and on-demand CPU/memory
+# profiles (`mise run profile`) show worker.js/src names. Max 15 MB gzipped.
+upload_source_maps = true
+
 # Production URL: https://bsb-api.dpshade.workers.dev
 # Arweave permanent origin (deferred): api_bsb undername on "scripture" ArNS name.
 # Gateway URL when deployed: https://api_bsb.scripture.ar-io.dev
