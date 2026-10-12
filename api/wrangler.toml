@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Workers Logs. Keep this enabled so a deploy preserves the live setting.
+[observability]
+enabled = true
+
 # Upload source maps with each version so stack traces and on-demand CPU/memory
 # profiles (`mise run profile`) show worker.js/src names. Max 15 MB gzipped.
 upload_source_maps = true
